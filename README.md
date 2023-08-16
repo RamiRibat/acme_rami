@@ -71,6 +71,7 @@ To get up and running quickly just follow the steps below:
 
     ```bash
     pip install dm-acme[jax,tf]
+    pip install --upgrade 'jax[cuda]==0.04.14' -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
     ```
 
 1.  Finally, to install a few example environments (including [gym],
