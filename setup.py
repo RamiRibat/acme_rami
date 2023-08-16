@@ -59,7 +59,7 @@ jax_requirements = [
     'dm-haiku',
     'flax',
     'optax',
-    'rlax',
+    # 'rlax',
 ] + tensorflow
 
 tf_requirements = [
