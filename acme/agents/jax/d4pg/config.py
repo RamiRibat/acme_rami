@@ -21,6 +21,8 @@ from acme.adders import reverb as adders_reverb
 @dataclasses.dataclass
 class D4PGConfig:
   """Configuration options for D4PG."""
+  hyperparameters: dataclasses.InitVar[dict] = {}
+
   sigma: float = 0.3
   target_update_period: int = 100
   samples_per_insert: Optional[float] = 32.0
@@ -43,3 +45,7 @@ class D4PGConfig:
 
   # How many gradient updates to perform per step.
   num_sgd_steps_per_step: int = 1
+
+  locals.update(hyperparameters)
+  # for k, v in hyperparameters.items():
+
