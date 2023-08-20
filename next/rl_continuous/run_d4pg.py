@@ -13,38 +13,6 @@
 # limitations under the License.
 
 """Example running D4PG on continuous control tasks."""
-import sys
-import time
-from typing import Optional, Sequence, Tuple
-
-import acme
-from acme import core
-from acme import specs
-from acme import types
-from acme.jax import utils
-from acme.jax.experiments import config
-from acme.tf import savers
-from acme.utils import counting
-import dm_env
-import jax
-import reverb
-
-
-
-
-import jax
-import jax.numpy as jnp
-import haiku as hk
-import numpy as np
-import pandas as pd
-import optax
-import rlax
-import tensorflow as tf
-
-import reverb
-import matplotlib.pyplot as plt
-
-
 from absl import flags
 from acme.agents.jax import d4pg
 import helpers
@@ -53,40 +21,8 @@ from acme.jax import experiments
 from acme.utils import lp_utils
 import launchpad as lp
 
-from typing import Optional
-import collections
-from acme.utils import loggers
-
-"""""""
-import jax
-import jax.numpy as jnp
-import haiku as hk
-import numpy as np
-import pandas as pd
-import optax
-import rlax
-import tensorflow as tf
-
-import reverb
-import matplotlib.pyplot as plt
-
-import acme
-from acme import specs
-from acme import wrappers
-from acme.adders import reverb as reverb_adders
-from acme.agents.jax import actors
-from acme.agents.jax import actor_core as actor_core_lib
-from acme.agents.jax.d4pg import learning
-from acme.datasets import reverb as datasets
-from acme.jax import utils, variable_utils
-from acme.jax import networks as networks_lib
-from acme.jax.experiments.run_experiment import _disable_insert_blocking, _LearningActor
-from acme.utils import counting
-from acme.utils import loggers
-
-
-
 FLAGS = flags.FLAGS
+
 
 flags.DEFINE_bool(
     'run_distributed', False, 'Should an agent be executed in a distributed '
