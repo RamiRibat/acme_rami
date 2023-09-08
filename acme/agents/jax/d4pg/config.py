@@ -14,18 +14,22 @@
 
 """Config classes for D4PG."""
 import dataclasses
-from typing import Optional
+from typing import Optional, Sequence
 from acme.adders import reverb as adders_reverb
 
 
 @dataclasses.dataclass
 class D4PGConfig:
   """Configuration options for D4PG."""
-  hyperparameters: dataclasses.InitVar[dict] = {}
 
   sigma: float = 0.3
   target_update_period: int = 100
   samples_per_insert: Optional[float] = 32.0
+
+  # Network options
+  n_atoms: int = 51
+  policy_arch: Sequence[int] = (300, 200)
+  critic_arch: Sequence[int] = (400, 300)
 
   # Loss options
   n_step: int = 5
@@ -45,7 +49,3 @@ class D4PGConfig:
 
   # How many gradient updates to perform per step.
   num_sgd_steps_per_step: int = 1
-
-  locals.update(hyperparameters)
-  # for k, v in hyperparameters.items():
-
