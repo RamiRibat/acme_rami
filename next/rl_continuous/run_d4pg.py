@@ -81,11 +81,11 @@ def build_experiment_config():
         vmin=-vmax, vmax=vmax, num_atoms=d4pg_hyperparams['n_atoms']
     )
 
-  # exp_id = f"d4pg/{suite}/{task}/"
-  # logger_dict = collections.defaultdict(
-  #   loggers.CSVLogger(directory_or_file=f'~/logdir/acme/{exp_id}',
-  #                     label=f'seed_{FLAGS.seed}'))
-  logger = loggers.InMemoryLogger()
+  exp_id = f"d4pg/{suite}/{task}/"
+  logger = loggers.CSVLogger(
+    directory_or_file=f'~/logdir/acme/{exp_id}',
+    label=f'seed_{FLAGS.seed}')
+  # logger = loggers.InMemoryLogger()
   logger_dict = collections.defaultdict(logger)
   def logger_factory(
       name: str,
