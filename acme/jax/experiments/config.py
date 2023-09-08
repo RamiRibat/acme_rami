@@ -120,7 +120,8 @@ class CheckpointingConfig:
 
 
 @dataclasses.dataclass(frozen=True)
-class ExperimentConfig(Generic[builders.Networks, builders.Policy,
+class ExperimentConfig(Generic[builders.Networks,
+                               builders.Policy,
                                builders.Sample]):
   """Config which defines aspects of constructing an experiment.
 
