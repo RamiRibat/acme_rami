@@ -13,13 +13,20 @@
 # limitations under the License.
 
 """Example running D4PG on continuous control tasks."""
-from absl import flags
-from acme.agents.jax import d4pg
-import helpers
-from absl import app
-from acme.jax import experiments
-from acme.utils import lp_utils
+from typing import Optional
+
+from absl import app, flags
+import collections
+
 import launchpad as lp
+
+from acme.jax import experiments
+from acme.utils import lp_utils, loggers
+
+import helpers
+
+from acme.agents.jax import d4pg
+
 
 FLAGS = flags.FLAGS
 
@@ -44,7 +51,9 @@ d4pg_hyperparams = {
   'sigma': 0.2,
   'target_update_period': 100,
   'samples_per_insert': 32.0, # Controls the relative rate of sampled vs inserted items. In this case, items are n-step transitions.
-  'num_atoms': 51, # Atoms used by the categorical distributional critic.
+  'n_atoms': 51, # Atoms used by the categorical distributional critic.
+  'policy_arch': (256, 256, 256),
+  'critic_arch': (256, 256, 256),
   # 'critic_atoms' = jnp.linspace(-150., 150., num_atoms)
 }
 
@@ -62,24 +71,39 @@ def build_experiment_config():
   }
   vmax = vmax_values[suite]
 
+  environment_factory = lambda seed: helpers.make_environment(suite, task)
+
   def network_factory(spec) -> d4pg.D4PGNetworks:
     return d4pg.make_networks(
-        spec,
-        policy_layer_sizes=(256, 256, 256),
-        critic_layer_sizes=(256, 256, 256),
-        vmin=-vmax,
-        vmax=vmax,
-        num_atoms=d4pg_hyperparams['num_atoms']
+        spec=spec,
+        policy_layer_sizes=d4pg_hyperparams['policy_arch'],
+        critic_layer_sizes=d4pg_hyperparams['critic_arch'],
+        vmin=-vmax, vmax=vmax, num_atoms=d4pg_hyperparams['n_atoms']
     )
 
+  # exp_id = f"d4pg/{suite}/{task}/"
+  # logger_dict = collections.defaultdict(
+  #   loggers.CSVLogger(directory_or_file=f'~/logdir/acme/{exp_id}',
+  #                     label=f'seed_{FLAGS.seed}'))
+  logger = loggers.InMemoryLogger()
+  logger_dict = collections.defaultdict(logger)
+  def logger_factory(
+      name: str,
+      steps_key: Optional[str] = None,
+      task_id: Optional[int] = None,
+   ) -> loggers.Logger:
+    del steps_key, task_id
+    return logger_dict[name]
+
   # Configure the agent.
-  d4pg_config = d4pg.D4PGConfig(hyperparameters=d4pg_hyperparams)
+  d4pg_config = d4pg.D4PGConfig(**d4pg_hyperparams)
   d4pg_builder = d4pg.D4PGBuilder(config=d4pg_config)
 
   return experiments.ExperimentConfig(
       builder=d4pg_builder,
-      environment_factory=lambda seed: helpers.make_environment(suite, task),
+      environment_factory=environment_factory,
       network_factory=network_factory,
+      logger_factory=logger_factory,
       seed=FLAGS.seed,
       max_num_actor_steps=FLAGS.num_steps)
 
