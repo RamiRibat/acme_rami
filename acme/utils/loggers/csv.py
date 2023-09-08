@@ -41,7 +41,7 @@ class CSVLogger(base.Logger):
 
   def __init__(
       self,
-      directory_or_file: Union[str, TextIO] = '~/acme',
+      directory_or_file: Union[str, TextIO] = '~/logdir/acme',
       label: str = '',
       time_delta: float = 0.,
       add_uid: bool = True,
