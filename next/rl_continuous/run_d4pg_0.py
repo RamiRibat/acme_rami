@@ -23,14 +23,23 @@ import launchpad as lp
 
 FLAGS = flags.FLAGS
 
+# flags.DEFINE_bool(
+#     'run_distributed', True, 'Should an agent be executed in a distributed '
+#     'way. If False, will run single-threaded.')
 flags.DEFINE_bool(
-    'run_distributed', True, 'Should an agent be executed in a distributed '
+    'run_distributed', False, 'Should an agent be executed in a distributed '
     'way. If False, will run single-threaded.')
-flags.DEFINE_string('env_name', 'gym:HalfCheetah-v2', 'What environment to run')
+# flags.DEFINE_string('env_name', 'gym:HalfCheetah-v2', 'What environment to run')
+flags.DEFINE_string('env_name', 'control:walker:walk', 'What environment to run')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
-flags.DEFINE_integer('num_steps', 1_000_000, 'Number of env steps to run.')
-flags.DEFINE_integer('eval_every', 50_000, 'How often to run evaluation.')
-flags.DEFINE_integer('evaluation_episodes', 10, 'Evaluation episodes.')
+flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
+flags.DEFINE_integer('eval_every', 10_000, 'How often to run evaluation.')
+flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
+
+
+flags.DEFINE_string('acme_id', None, 'Experiment identifier to use for Acme.')
+
+# FLAGS.append_flags_into_file()
 
 
 def build_experiment_config():

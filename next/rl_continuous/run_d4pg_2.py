@@ -13,49 +13,39 @@
 # limitations under the License.
 
 """Example running D4PG on continuous control tasks."""
-from typing import Optional
-
-from absl import app, flags
-import collections
-
+from absl import flags
+from acme.agents.jax import d4pg
+import helpers
+from absl import app
+from acme.jax import experiments
+from acme.utils import lp_utils
 import launchpad as lp
 
-from acme.jax import experiments
-from acme.utils import lp_utils, loggers
+from acme.utils import observers as observers_lib
 
-import helpers
-
-from acme.agents.jax import d4pg
 
 
 FLAGS = flags.FLAGS
 
-
+# flags.DEFINE_bool(
+#     'run_distributed', True, 'Should an agent be executed in a distributed '
+#     'way. If False, will run single-threaded.')
 flags.DEFINE_bool(
     'run_distributed', False, 'Should an agent be executed in a distributed '
     'way. If False, will run single-threaded.')
-
 # flags.DEFINE_string('env_name', 'gym:HalfCheetah-v2', 'What environment to run')
 flags.DEFINE_string('env_name', 'control:walker:walk', 'What environment to run')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
-flags.DEFINE_integer('num_steps', 50_000, 'Number of env steps to run.')
-flags.DEFINE_integer('eval_every', 5_000, 'How often to run evaluation.')
-flags.DEFINE_integer('evaluation_episodes', 2, 'Evaluation episodes.')
+flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
+flags.DEFINE_integer('eval_every', 10_000, 'How often to run evaluation.')
+flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
 
+flags.DEFINE_string('agent', 'd4pg', 'What agent in use.')
 
-d4pg_hyperparams = {
-  'batch_size': 256,
-  'learning_rate': 3e-4,
-  'discount': 0.99,
-  'n_step': 5,  # The D4PG agent learns from n-step transitions.
-  'sigma': 0.2,
-  'target_update_period': 100,
-  'samples_per_insert': 32.0, # Controls the relative rate of sampled vs inserted items. In this case, items are n-step transitions.
-  'n_atoms': 51, # Atoms used by the categorical distributional critic.
-  'policy_arch': (256, 256, 256),
-  'critic_arch': (256, 256, 256),
-  # 'critic_atoms' = jnp.linspace(-150., 150., num_atoms)
-}
+flags.DEFINE_string('acme_id', None, 'Experiment identifier to use for Acme.')
+
+# FLAGS.append_flags_into_file()
+
 
 def build_experiment_config():
   """Builds D4PG experiment config which can be executed in different ways."""
@@ -71,42 +61,24 @@ def build_experiment_config():
   }
   vmax = vmax_values[suite]
 
-  environment_factory = lambda seed: helpers.make_environment(suite, task)
-
   def network_factory(spec) -> d4pg.D4PGNetworks:
     return d4pg.make_networks(
-        spec=spec,
-        policy_layer_sizes=d4pg_hyperparams['policy_arch'],
-        critic_layer_sizes=d4pg_hyperparams['critic_arch'],
-        vmin=-vmax, vmax=vmax, num_atoms=d4pg_hyperparams['n_atoms']
+        spec,
+        policy_layer_sizes=(256, 256, 256),
+        critic_layer_sizes=(256, 256, 256),
+        vmin=-vmax,
+        vmax=vmax,
     )
 
-  # exp_id = f"d4pg/{suite}/{task}/"
-  # logger = loggers.CSVLogger(
-  #   directory_or_file=f'~/logdir/acme/{exp_id}',
-  #   label=f'seed_{FLAGS.seed}')
-  logger = loggers.InMemoryLogger
-  logger_dict = collections.defaultdict(logger)
-  def logger_factory(
-      name: str,
-      steps_key: Optional[str] = None,
-      task_id: Optional[int] = None,
-   ) -> loggers.Logger:
-    del steps_key, task_id
-    return logger_dict[name]
-
   # Configure the agent.
-  d4pg_config = d4pg.D4PGConfig(**d4pg_hyperparams)
-  d4pg_builder = d4pg.D4PGBuilder(config=d4pg_config)
+  d4pg_config = d4pg.D4PGConfig(learning_rate=3e-4, sigma=0.2)
 
   return experiments.ExperimentConfig(
-      builder=d4pg_builder,
-      environment_factory=environment_factory,
+      builder=d4pg.D4PGBuilder(d4pg_config),
+      environment_factory=lambda seed: helpers.make_environment(suite, task),
       network_factory=network_factory,
-      logger_factory=logger_factory,
       seed=FLAGS.seed,
       max_num_actor_steps=FLAGS.num_steps)
-
 
 
 def main(_):
