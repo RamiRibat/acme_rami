@@ -171,6 +171,7 @@ def run_experiment(experiment: config.ExperimentConfig,
       observers=experiment.observers)
 
   steps = 0
+  steps += train_loop.run(num_steps=0)
   while steps < max_num_actor_steps:
     eval_loop.run(num_episodes=num_eval_episodes)
     num_steps = min(eval_every, max_num_actor_steps - steps)

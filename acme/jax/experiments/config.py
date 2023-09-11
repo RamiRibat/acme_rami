@@ -109,7 +109,8 @@ class CheckpointingConfig:
       Indefinite if set to None.
   """
   max_to_keep: int = 1
-  directory: str = '~/acme'
+  # directory: str = '~/acme'
+  directory: str = '~/logdir/acme'
   add_uid: bool = True
   time_delta_minutes: int = 5
   keep_checkpoint_every_n_hours: Optional[int] = None
