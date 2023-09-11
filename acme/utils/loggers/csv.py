@@ -82,8 +82,10 @@ class CSVLogger(base.Logger):
   ) -> TextIO:
     """Opens a file if input is a directory or use existing file."""
     if isinstance(directory_or_file, str):
+      # directory = paths.process_path(
+      #     directory_or_file, 'logs', label, add_uid=self._add_uid)
       directory = paths.process_path(
-          directory_or_file, 'logs', label, add_uid=self._add_uid)
+          directory_or_file, label, add_uid=self._add_uid)
       file_path = os.path.join(directory, 'logs.csv')
       self._file_owner = True
       return self._open(file_path, mode='a')

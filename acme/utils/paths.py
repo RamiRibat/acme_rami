@@ -22,8 +22,12 @@ from typing import Optional, Tuple
 
 from absl import flags
 
-ACME_ID = flags.DEFINE_string('acme_id', None,
-                              'Experiment identifier to use for Acme.')
+FLAGS = flags.FLAGS
+FLAGS.read_flags_from_files(f'--flagfile={os.getcwd()}')
+FLAGS.mark_as_parsed()
+
+# ACME_ID = flags.DEFINE_string('acme_id', None,
+#                               'Experiment identifier to use for Acme.')
 
 
 def process_path(path: str,
@@ -65,12 +69,23 @@ _DATETIME = time.strftime('%Y%m%d-%H%M%S')
 def get_unique_id() -> Tuple[str, ...]:
   """Makes a unique identifier for this process; override with --acme_id."""
   # By default we'll use the global id.
-  identifier = _DATETIME
+  # identifier = _DATETIME
+  time_id = _DATETIME
 
   # If the --acme_id flag is given prefer that; ignore if flag processing has
   # been skipped (this happens in colab or in tests).
   try:
-    identifier = ACME_ID.value or identifier
+    # identifier = ACME_ID.value or identifier
+    agent_id = FLAGS.agent
+    env_id = FLAGS.env_name.replace(':', '_')
+    if FLAGS.acme_id:
+      # base_id = f"{time_id}/{FLAGS.acme_id}"
+      full_id = f"{FLAGS.acme_id}/{agent_id}/{env_id}"
+    else:
+      full_id = f"{time_id}/{agent_id}/{env_id}"
+      
+    identifier = f"{full_id}/{FLAGS.seed}"
+    # identifier = base_id
   except flags.UnparsedFlagAccessError:
     pass
 
