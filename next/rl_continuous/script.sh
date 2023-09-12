@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TASKS=(
-    "cartplole:swingup" "walker:walk"
+    "cartpole:swingup" "walker:walk"
     "hopper:stand" "swimmer:swimmer6"
     "cheetah:run" "walker:run"
 )
