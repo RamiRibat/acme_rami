@@ -1,9 +1,9 @@
 #!/bin/bash
 
 TASKS=(
-    "cartplole_swingup" "walker_walk"
-    "hopper_stand" "swimmer_swimmer6"
-    "cheetah_run" "walker_run"
+    "cartplole:swingup" "walker:walk"
+    "hopper:stand" "swimmer:swimmer6"
+    "cheetah:run" "walker:run"
 )
 
 SEEDS=(1 2 3)
@@ -16,7 +16,7 @@ ID="$DATETIME"
 
 for T in ${TASKS[*]}
 do
-    ENVID="control_$T"
+    ENVID="control:$T"
     for S in ${SEEDS[*]}
     do
         echo $ENVID $S
