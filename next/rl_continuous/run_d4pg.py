@@ -13,34 +13,87 @@
 # limitations under the License.
 
 """Example running D4PG on continuous control tasks."""
-from typing import Optional
-
-from absl import app, flags
-import collections
-
+from absl import flags
+from acme.agents.jax import d4pg
+import helpers
+from absl import app
+from acme.jax import experiments
+from acme.utils import lp_utils
 import launchpad as lp
 
-from acme.jax import experiments
-from acme.utils import lp_utils, loggers
+from acme.utils import observers as observers_lib
 
-import helpers
+import warnings
+warnings.filterwarnings('ignore')
 
-from acme.agents.jax import d4pg
+# DMC_TASKS = {
+#   "cartpole:swingup": 'trivial',
+#   "walker:walk": 'trivial',
+#   "hopper:stand": 'easy',
+#   "swimmer:swimmer6": 'easy',
+#   "cheetah:run": 'medium',
+#   "walker:run": 'medium'
+# }
 
+# DMC_STEPS ={
+#   'trivial': 500_000,
+#   'easy': 1_000_000,
+#   'medium': 2_000_000
+# }
 
-FLAGS = flags.FLAGS
+# DMC_TASKS = {
+#     'trivial': {
+#       'num_steps': 500_000,
+#       'tasks': [
+#         'ball_in_cup_catch',
+#         'cartplole_balance',
+#         'cartplole_balance_sparse',
+#         'cartpole_swingup',
+#         'reacher_easy',
+#         'walker_stand',
+#         'walker_walk'
+#       ]
+#     },
 
-
-flags.DEFINE_bool(
-    'run_distributed', False, 'Should an agent be executed in a distributed '
-    'way. If False, will run single-threaded.')
-
-# flags.DEFINE_string('env_name', 'gym:HalfCheetah-v2', 'What environment to run')
-flags.DEFINE_string('env_name', 'control:walker:walk', 'What environment to run')
-flags.DEFINE_integer('seed', 0, 'Random seed.')
-flags.DEFINE_integer('num_steps', 50_000, 'Number of env steps to run.')
-flags.DEFINE_integer('eval_every', 5_000, 'How often to run evaluation.')
-flags.DEFINE_integer('evaluation_episodes', 2, 'Evaluation episodes.')
+#     'easy': {
+#       'num_steps': 1_000_000,
+#       'tasks': [
+#         'cartpole_swingup_sparse',
+#         'finger_turn_easy',
+#         'hopper_stand',
+#         'pendulum_swingup',
+#         'point_mass_easy',
+#         'reacher_hard',
+#         'swimmer_swimmer6'
+#       ]
+#     },
+    
+#     'medium': {
+#       'num_steps': 2_000_000,
+#       'tasks': [
+#         'cheetah_run',
+#         'finger_spin',
+#         'finger_turn_hard',
+#         'fish_swim',
+#         'fish_upright',
+#         'swimmer_swimmer_15',
+#         'walker_run'
+#       ]
+#     },
+    
+#     'hard': {
+#       'num_steps': 5_000_000,
+#       'tasks': [
+#         'acrobat_swingup',
+#         'acrobat_swingup_sparse',
+#         'hopper_hop',
+#         'humanoid_run',
+#         'humanoid_stand',
+#         'humanoid_walk',
+#         'manipulator_bring_ball'
+#         ]
+#     }
+# }
 
 
 d4pg_hyperparams = {
@@ -57,11 +110,37 @@ d4pg_hyperparams = {
   # 'critic_atoms' = jnp.linspace(-150., 150., num_atoms)
 }
 
+
+FLAGS = flags.FLAGS
+
+
+flags.DEFINE_bool(
+    'run_distributed', False, 'Should an agent be executed in a distributed '
+    'way. If False, will run single-threaded.')
+
+flags.DEFINE_string('acme_id', None, 'Experiment identifier to use for Acme.')
+flags.DEFINE_string('agent', 'd4pg', 'What agent in use.')
+flags.DEFINE_string('suite', 'control', 'Suite')
+flags.DEFINE_string('level', 'trivial', "Task level")
+flags.DEFINE_string('task', 'walker:walk', 'What environment to run')
+flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
+flags.DEFINE_integer('eval_every', 20, 'How often to run evaluation.')
+flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
+# flags.DEFINE_multi_integer('seed', [0], 'Random seed.')
+flags.DEFINE_string('seeds', '0', 'Random seed(s).')
+flags.DEFINE_integer('seed', 0, 'Random seed.')
+
+
+
+
+
+
 def build_experiment_config():
   """Builds D4PG experiment config which can be executed in different ways."""
 
   # Create an environment, grab the spec, and use it to create networks.
-  suite, task = FLAGS.env_name.split(':', 1)
+  # suite, task = FLAGS.env_name.split(':', 1)
+  suite, level, task = FLAGS.suite, FLAGS.level, FLAGS.task
 
   # Bound of the distributional critic. The reward for control environments is
   # normalized, not for gym locomotion environments hence the different scales.
@@ -81,20 +160,6 @@ def build_experiment_config():
         vmin=-vmax, vmax=vmax, num_atoms=d4pg_hyperparams['n_atoms']
     )
 
-  # exp_id = f"d4pg/{suite}/{task}/"
-  # logger = loggers.CSVLogger(
-  #   directory_or_file=f'~/logdir/acme/{exp_id}',
-  #   label=f'seed_{FLAGS.seed}')
-  logger = loggers.InMemoryLogger
-  logger_dict = collections.defaultdict(logger)
-  def logger_factory(
-      name: str,
-      steps_key: Optional[str] = None,
-      task_id: Optional[int] = None,
-   ) -> loggers.Logger:
-    del steps_key, task_id
-    return logger_dict[name]
-
   # Configure the agent.
   d4pg_config = d4pg.D4PGConfig(**d4pg_hyperparams)
   d4pg_builder = d4pg.D4PGBuilder(config=d4pg_config)
@@ -103,23 +168,40 @@ def build_experiment_config():
       builder=d4pg_builder,
       environment_factory=environment_factory,
       network_factory=network_factory,
-      logger_factory=logger_factory,
       seed=FLAGS.seed,
       max_num_actor_steps=FLAGS.num_steps)
 
 
-
 def main(_):
-  config = build_experiment_config()
-  if FLAGS.run_distributed:
-    program = experiments.make_distributed_experiment(
-        experiment=config, num_actors=4)
-    lp.launch(program, xm_resources=lp_utils.make_xm_docker_resources(program))
-  else:
-    experiments.run_experiment(
-        experiment=config,
-        eval_every=FLAGS.eval_every,
-        num_eval_episodes=FLAGS.evaluation_episodes)
+  import os, yaml, json
+  path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
+  config = yaml.safe_load(open(path))
+  SEEDS = FLAGS.seeds.split('_')
+  # print('tasks:\n', json.dumps(tasks, indent=4, sort_keys=False))
+  print('id: ', FLAGS.acme_id)
+  print('suite: ', FLAGS.suite)
+  for level_k, level_v in config[FLAGS.suite].items():
+    print('level: ', level_k)
+    FLAGS.level = level_k
+    FLAGS.num_steps = level_v['run']['steps']
+    FLAGS.eval_every = FLAGS.num_steps//20
+    for task in level_v['tasks']:
+      print('task: ', task)
+      FLAGS.task = task
+      # print('seeds: ', SEEDS)
+      for seed in SEEDS:
+        # print('seed: ', seed)
+        FLAGS.seed = int(seed)
+        config = build_experiment_config()
+        if FLAGS.run_distributed:
+          program = experiments.make_distributed_experiment(
+              experiment=config, num_actors=4)
+          lp.launch(program, xm_resources=lp_utils.make_xm_docker_resources(program))
+        else:
+          experiments.run_experiment(
+              experiment=config,
+              eval_every=FLAGS.eval_every,
+              num_eval_episodes=FLAGS.evaluation_episodes)
 
 
 if __name__ == '__main__':

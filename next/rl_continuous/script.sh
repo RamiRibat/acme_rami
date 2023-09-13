@@ -1,25 +1,23 @@
 #!/bin/bash
 
-TASKS=(
-    "cartpole:swingup" "walker:walk"
-    "hopper:stand" "swimmer:swimmer6"
-    "cheetah:run" "walker:run"
+TASK_SUITES=(
+    # 'gym'
+    'control'
+    # 'atari26'
+    # 'atari52'
+    # 'atari57'
 )
 
-SEEDS=(1 2 3)
+
+DATETIME=$(date +'%Y%m%d:%H%M%S')
+
+# ID="$DATETIME"
+ID=$DATETIME"__test"
 
 
-DATETIME=$(date +'%Y%m%d-%H%M%S')
-
-ID="$DATETIME"
-
-
-for T in ${TASKS[*]}
+for SUITE in ${TASK_SUITES[*]}
 do
-    ENVID="control:$T"
-    for S in ${SEEDS[*]}
-    do
-        echo $ENVID $S
-        python run_d4pg_2.py --acme_id $ID --env_name $ENVID --seed $S
-    done
+    echo "...INITIALIZE..."
+    # python run_d4pg.py --helpfull
+    python run_d4pg.py --acme_id $ID --suite $SUITE --seeds '1_2_3'
 done

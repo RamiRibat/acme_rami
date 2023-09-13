@@ -23,6 +23,20 @@ import launchpad as lp
 
 from acme.utils import observers as observers_lib
 
+DMC_TASKS = {
+  "cartpole:swingup": 'trivial',
+  "walker:walk": 'trivial',
+  "hopper:stand": 'easy',
+  "swimmer:swimmer6": 'easy',
+  "cheetah:run": 'medium',
+  "walker:run": 'medium'
+}
+
+DMC_STEPS ={
+  'trivial': 500_000,
+  'easy': 1_000_000,
+  'medium': 2_000_000
+}
 
 
 FLAGS = flags.FLAGS
@@ -37,7 +51,7 @@ flags.DEFINE_bool(
 flags.DEFINE_string('env_name', 'control:walker:walk', 'What environment to run')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
-flags.DEFINE_integer('eval_every', 10_000, 'How often to run evaluation.')
+flags.DEFINE_integer('eval_every', 20, 'How often to run evaluation.')
 flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
 
 flags.DEFINE_string('agent', 'd4pg', 'What agent in use.')
@@ -52,6 +66,10 @@ def build_experiment_config():
 
   # Create an environment, grab the spec, and use it to create networks.
   suite, task = FLAGS.env_name.split(':', 1)
+
+  dmc_level = DMC_TASKS[task]
+  FLAGS.num_steps = DMC_STEPS[dmc_level]
+  FLAGS.eval_every = FLAGS.num_steps//20
 
   # Bound of the distributional critic. The reward for control environments is
   # normalized, not for gym locomotion environments hence the different scales.
