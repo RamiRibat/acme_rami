@@ -1,4 +1,4 @@
-import os
+import os, yaml, json
 import argparse
 import pathlib
 
@@ -15,12 +15,13 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 
 
-DMC_TASK_NAMES = [
-    ['ball_in_cup_catch', 'cartplole_balance', 'cartplole_balance_sparse', 'cartpole_swingup', 'reacher_easy', 'walker_stand', 'walker_walk'],
-    ['cartpole_swingup_sparse', 'finger_turn_easy', 'hopper_stand', 'pendulum_swingup', 'point_mass_easy', 'reacher_hard', 'swimmer_swimmer6'],
-    ['cheetah_run', 'finger_spin', 'finger_turn_hard', 'fish_swim', 'fish_upright', 'swimmer_swimmer_15', 'walker_run'],
-    ['acrobat_swingup', 'acrobat_swingup_sparse', 'hopper_hop', 'humanoid_run', 'humanoid_stand', 'humanoid_walk', 'manipulator_bring_ball']
-]
+# DMC_TASK_NAMES = [
+#     ['ball_in_cup_catch', 'cartplole_balance', 'cartplole_balance_sparse', 'cartpole_swingup', 'reacher_easy', 'walker_stand', 'walker_walk'],
+#     ['cartpole_swingup_sparse', 'finger_turn_easy', 'hopper_stand', 'pendulum_swingup', 'point_mass_easy', 'reacher_hard', 'swimmer_swimmer6'],
+#     ['cheetah_run', 'finger_spin', 'finger_turn_hard', 'fish_swim', 'fish_upright', 'swimmer_swimmer_15', 'walker_run'],
+#     ['acrobat_swingup', 'acrobat_swingup_sparse', 'hopper_hop', 'humanoid_run', 'humanoid_stand', 'humanoid_walk', 'manipulator_bring_ball']
+# ]
+
 
 
 
@@ -33,31 +34,43 @@ def main(args):
     pdf = PdfPages(f'{logdir}/results.pdf')
 
 
+    path = os.path.join(os.getcwd()+'/config.yaml')
+    config = yaml.safe_load(open(path))
+    control_suite = config['control']
+    control_levels = ['trivial', 'easy', 'medium', 'hard']
+
+
     info = {}
-    agents, tasks, seeds, logged = None, None, None, None
-    base_level = str(logdir).count(os.path.sep)
+    agents, suites, levels, tasks, seeds, logged = None, None, None, None, None, None
+    base_ptr = str(logdir).count(os.path.sep)
 
     for root, dirs, files in os.walk(logdir):
-        level, ids = root.count(os.path.sep), root.rsplit(os.path.sep)
+        ptr, ids = root.count(os.path.sep), root.rsplit(os.path.sep)
 
-        if level == base_level:
+        if ptr == base_ptr:
             if agents is None: agents = dirs
-        if level == base_level+1:
-            if tasks is None: tasks = dirs # [x.replace('_', ':') for x in dirs]
+        if ptr == base_ptr+1:
+            if suites is None: suites = dirs
             info[ids[-1]] = {}
-        if level == base_level+2:
-            if seeds is None: seeds = dirs
+        if ptr == base_ptr+2:
+            if levels is None: levels = dirs
             info[ids[-2]][ids[-1]] = {}
-        if level == base_level+3: # seed level
-            if logged is None: logged = ['actor', 'learner', 'evaluator']
+        if ptr == base_ptr+3:
+            if tasks is None: tasks = dirs # [x.replace('_', ':') for x in dirs]
             info[ids[-3]][ids[-2]][ids[-1]] = {}
-        if level == base_level+4: # logged level
-            info[ids[-4]][ids[-3]][ids[-2]][ids[-1]] = {'path': None, 'metrics': {}}
+        if ptr == base_ptr+4:
+            if seeds is None: seeds = dirs
+            info[ids[-4]][ids[-3]][ids[-2]][ids[-1]] = {}
+        if ptr == base_ptr+5: # seed level
+            if logged is None: logged = ['actor', 'learner', 'evaluator']
+            info[ids[-5]][ids[-4]][ids[-3]][ids[-2]][ids[-1]] = {}
+        if ptr == base_ptr+6: # logged level
+            info[ids[-6]][ids[-5]][ids[-4]][ids[-3]][ids[-2]][ids[-1]] = {'path': None, 'metrics': {}}
             if ids[-1] == 'checkpoints':
                 pass
             else:
                 path = os.path.join(root, files[0])
-                info[ids[-4]][ids[-3]][ids[-2]][ids[-1]]['path'] = path
+                info[ids[-6]][ids[-5]][ids[-4]][ids[-3]][ids[-2]][ids[-1]]['path'] = path
                 if ids[-1] in logged_ids:
                     df = pd.DataFrame(pd.read_csv(path))
                     if ids[-1] == 'evaluator':
@@ -66,7 +79,7 @@ def main(args):
                         # print('evaluator.df(mean): ', df)
                     for metric in metrics:
                         # print(f'df[{metric}]: ', df[metric])
-                        info[ids[-4]][ids[-3]][ids[-2]][ids[-1]]['metrics'][metric] = df[metric].to_list()
+                        info[ids[-6]][ids[-5]][ids[-4]][ids[-3]][ids[-2]][ids[-1]]['metrics'][metric] = df[metric].to_list()
                         
 
     ratios = [1]*(8)
@@ -76,29 +89,30 @@ def main(args):
     fig.suptitle('DMC Episode Return', weight="bold")
     fig.supxlabel(args.x_axis)
     
-    for ax, level in zip(axs.flatten()[:4], ['trivial', 'easy', 'medium', 'hard']):
+    for ax, level in zip(axs.flatten()[:4], control_suite.keys()):
         ax.axis('off')
         ax.set_title(level)
 
     for agent in agents:
 
-        for task in tasks: # axs
-            X, Y = [], []
-            info[agent][task]['results'] = {}
-            for seed in seeds:
-                # print('seed: ', seed)
-                x_data = info[agent][task][seed]['evaluator']['metrics'][args.x_axis]
-                y_data = info[agent][task][seed]['evaluator']['metrics'][args.y_axis]
-                X = x_data if len(x_data) > len(X) else X
-                # print('y_data:', y_data)
-                Y.append(y_data)
-            info[agent][task]['results']['Y_MEAN'] = np.mean(Y, 0)
-            info[agent][task]['results']['Y_STD'] = np.std(Y, 0)
-            info[agent][task]['results']['X'] = X
+        for suite in suites:
+            for level in levels:
+                for task in tasks: # axs
+                    X, Y = [], []
+                    info[agent][suite][level][task]['results'] = {}
+                    for seed in seeds:
+                        x_data = info[agent][suite][level][task][seed]['evaluator']['metrics'][args.x_axis]
+                        y_data = info[agent][suite][level][task][seed]['evaluator']['metrics'][args.y_axis]
+                        X = x_data if len(x_data) > len(X) else X
+                        Y.append(y_data)
+                    info[agent][suite][level][task]['results']['Y_MEAN'] = np.mean(Y, 0)
+                    info[agent][suite][level][task]['results']['Y_STD'] = np.std(Y, 0)
+                    info[agent][suite][level][task]['results']['X'] = X
 
         for i in range(4):
+            TASKS = control_suite[control_levels[i]]['tasks']
             for j in range(1, 8):
-                task = DMC_TASK_NAMES[i][j-1]
+                task = TASKS[j-1]
                 axs[j][i].set_title(task, fontsize='small')
                 axs[j][i].set_yticks([0, 250, 500, 750, 1000])
                 
@@ -122,11 +136,10 @@ def main(args):
                 if i == 3:
                     axs[j][i].set_xlim(left=0, right=5_000_000)
 
-                if f'control_{task}' in tasks:
-                    task = f'control_{task}'
-                    X = info[agent][task]['results']['X']
-                    MEAN = info[agent][task]['results']['Y_MEAN']
-                    STD = info[agent][task]['results']['Y_STD']
+                if task in tasks:
+                    X = info[agent][suite][level][task]['results']['X']
+                    MEAN = info[agent][suite][level][task]['results']['Y_MEAN']
+                    STD = info[agent][suite][level][task]['results']['Y_STD']
                     axs[j][i].plot(X, MEAN)
                     axs[j][i].fill_between(X, MEAN-STD, MEAN+STD, alpha=0.2)
 
