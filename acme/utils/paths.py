@@ -76,16 +76,19 @@ def get_unique_id() -> Tuple[str, ...]:
   # been skipped (this happens in colab or in tests).
   try:
     # identifier = ACME_ID.value or identifier
-    agent_id = FLAGS.agent
-    env_id = FLAGS.env_name.replace(':', '_')
+    acme_id = FLAGS.acme_id
+    agent = FLAGS.agent
+    suite = FLAGS.suite
+    level = FLAGS.level
+    task = FLAGS.task#.replace(':', '_')
     if FLAGS.acme_id:
       # base_id = f"{time_id}/{FLAGS.acme_id}"
-      full_id = f"{FLAGS.acme_id}/{agent_id}/{env_id}"
+      full_id = f"{FLAGS.acme_id}/{agent}/{suite}/{level}/{task}"
     else:
-      full_id = f"{time_id}/{agent_id}/{env_id}"
+      full_id = f"{time_id}/{agent}/{suite}/{level}/{task}"
       
     identifier = f"{full_id}/{FLAGS.seed}"
-    # identifier = base_id
+    
   except flags.UnparsedFlagAccessError:
     pass
 
