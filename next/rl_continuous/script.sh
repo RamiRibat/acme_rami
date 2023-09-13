@@ -14,7 +14,7 @@ DATETIME=$(date +'%Y%m%d:%H%M%S')
 # ID="$DATETIME"
 ID="vector_"$DATETIME"_test_parallel_seeds"
 
-SEEDS=(1 2 3)
+SEEDS=(1 2)
 
 
 # for SUITE in ${TASK_SUITES[*]}
@@ -30,6 +30,6 @@ do
 
     for seed in ${SEEDS[*]}
     do
-        python run_d4pg.py --acme_id $ID --suite $SUITE --seed $seed
+        python run_d4pg.py --acme_id $ID --suite $SUITE --seed $seed &
     done
 done
