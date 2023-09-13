@@ -12,7 +12,7 @@ TASK_SUITES=(
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
 # ID="$DATETIME"
-ID=$DATETIME"__test"
+ID=$DATETIME"__vector_v"
 
 
 for SUITE in ${TASK_SUITES[*]}
