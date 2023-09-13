@@ -189,19 +189,19 @@ def main(_):
       print('task: ', task)
       FLAGS.task = task
       # print('seeds: ', SEEDS)
-      for seed in SEEDS:
-        # print('seed: ', seed)
-        FLAGS.seed = int(seed)
-        config = build_experiment_config()
-        if FLAGS.run_distributed:
-          program = experiments.make_distributed_experiment(
-              experiment=config, num_actors=4)
-          lp.launch(program, xm_resources=lp_utils.make_xm_docker_resources(program))
-        else:
-          experiments.run_experiment(
-              experiment=config,
-              eval_every=FLAGS.eval_every,
-              num_eval_episodes=FLAGS.evaluation_episodes)
+      # for seed in SEEDS:
+      #   # print('seed: ', seed)
+      #   FLAGS.seed = int(seed)
+      config = build_experiment_config()
+      if FLAGS.run_distributed:
+        program = experiments.make_distributed_experiment(
+            experiment=config, num_actors=4)
+        lp.launch(program, xm_resources=lp_utils.make_xm_docker_resources(program))
+      else:
+        experiments.run_experiment(
+            experiment=config,
+            eval_every=FLAGS.eval_every,
+            num_eval_episodes=FLAGS.evaluation_episodes)
 
 
 if __name__ == '__main__':
