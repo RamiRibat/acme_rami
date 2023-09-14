@@ -8,8 +8,8 @@
 #SBATCH --mem=24G
 #SBATCH --cpus-per-task=24
 
-#SBATCH --output=~/logdir/acme/slurm/slurm-%j.out
-#SBATCH --error=~/logdir/acme/slurm/slurm-%j.err
+#SBATCH --output=slurm/slurm-%j.out
+#SBATCH --error=slurm/slurm-%j.err
 
 # prepare your environment here
 module load cuda-11.4
