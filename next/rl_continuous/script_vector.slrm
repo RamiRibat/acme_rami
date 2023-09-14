@@ -38,7 +38,7 @@ SEEDS=(1 2 3)
 
 for SUITE in ${TASK_SUITES[*]}; do
     for i in ${!SEEDS[*]}; do
-        srun --exclusive -n 1 -c 16 --mem=16GB --gres=gpu:1 -p rtx6000 --qos=normal --pty bash bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} &
+        srun --exclusive -n 1 -c 16 --mem=16GB --gres=gpu:1 -p rtx6000 --qos=normal bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} &
     done
 done
 
