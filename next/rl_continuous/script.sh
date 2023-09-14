@@ -11,26 +11,16 @@ TASK_SUITES=(
 
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-# ID="$DATETIME"
 ID="vector_"$DATETIME
 
-
 SEEDS=(1 2 3)
+
 GPUS=(0 1 2)
 
-# for SUITE in ${TASK_SUITES[*]}
-# do
-#     echo "...INITIALIZE..."
-#     # python run_d4pg.py --helpfull
-#     python run_d4pg.py --acme_id $ID --suite $SUITE --seeds '1_2_3'
-# done
+conda activate acme
 
-for SUITE in ${TASK_SUITES[*]}
-do
-    # echo "...INITIALIZE..."
-
-    for s in ${!SEEDS[*]}
-    do
+for SUITE in ${TASK_SUITES[*]}; do
+    for s in ${!SEEDS[*]}; do
         CUDA_VISIBLE_DEVICES=${GPUS[s]} python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[s]} &
     done
 done
