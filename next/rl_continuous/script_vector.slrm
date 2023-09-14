@@ -33,7 +33,7 @@ ID="q_"$DATETIME
 
 SEEDS=(1 2 3)
 
-rm -f ~/logdir/vector.log
+# rm -f ~/logdir/vector.log
 
 for SUITE in ${TASK_SUITES[*]}; do
     for i in ${!SEEDS[*]}; do
