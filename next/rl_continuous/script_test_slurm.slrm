@@ -23,10 +23,10 @@ echo $SLURM_JOB_PARTITION >> ~/logdir/test.log              # log the job partit
 # source activate /scratch/gobi1/$USER/learning/       # LINE 23 - NOTE: set the path to your conda environment path
 source ~/.bashrc
 conda activate acme
-# echo $CONDA_PREFIX >> ~/logdir/test.log                     # log the active conda environment 
+echo $CONDA_PREFIX >> ~/logdir/test.log                     # log the active conda environment 
 
-# python --version >> ~/logdir/test.log                       # log Python version
+python --version >> ~/logdir/test.log                       # log Python version
 
-# python test.py >> ~/logdir/test.log                       # the script above, with its standard output appended to test.log
+python test.py >> ~/logdir/test.log                       # the script above, with its standard output appended to test.log
 
-# conda deactivate
+conda deactivate
