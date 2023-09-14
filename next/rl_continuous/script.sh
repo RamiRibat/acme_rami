@@ -17,6 +17,8 @@ SEEDS=(1)
 
 GPUS=(0)
 
+conda init bash
+
 conda activate acme
 
 for SUITE in ${TASK_SUITES[*]}; do
