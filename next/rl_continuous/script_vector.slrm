@@ -1,17 +1,19 @@
 #!/bin/bash
 
-#SBATCH --job-name=test_job
-#SBATCH --output=/h/rahmed/logdir/slurm/output-%N-%j.out          # LINES 4, 5 - NOTE: for output and error, use absolute paths that exists already
-#SBATCH --error=/h/rahmed/logdir/slurm/error-%N-%j.err            # LINES 4, 5 - NOTE: %N and %j will be replaced by the host name and job id, respectively
-#SBATCH --open-mode=append
-#SBATCH --partition=gpu                                           # self-explanatory, set to your preference (e.g. gpu or cpu on MaRS, p100, t4, or cpu on Vaughan)
-#SBATCH --cpus-per-task=1                                         # self-explanatory, set to your preference
-#SBATCH --ntasks-per-node=1
-#SBATCH --mem=4G                                                  # self-explanatory, set to your preference
-#SBATCH --gres=gpu:1                                              # NOTE: you need a GPU for CUDA support; self-explanatory, set to your preference 
-#SBATCH --nodes=1
-#SBATCH --qos=normal                                              # for "high" and "deadline" QoS, refer to https://support.vectorinstitute.ai/AboutVaughan2
+#SBATCH --job-name=q_dmc_d4pg
+#SBATCH --time=00:02:00
 
+#SBATCH --open-mode=append
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --qos=normal
+#SBATCH --mem=12G
+#SBATCH --cpus-per-task=12
+
+#SBATCH --output=/h/rahmed/logdir/slurm/output-%N-%j.out
+#SBATCH --error=/h/rahmed/logdir/slurm/error-%N-%j.err
 
 echo "..Initialize.."
 
