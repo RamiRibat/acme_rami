@@ -22,7 +22,8 @@ conda activate acme
 
 for SUITE in ${TASK_SUITES[*]}; do
     for s in ${!SEEDS[*]}; do
-        python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[s]}
+        # python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[s]}
+        python run_d4pg.py --acme_id $ID --suite $SUITE --level X --task X --seed ${SEEDS[s]}
     done
 done
 

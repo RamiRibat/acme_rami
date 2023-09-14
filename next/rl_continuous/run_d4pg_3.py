@@ -114,24 +114,32 @@ def main(_):
     
   path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
   config = yaml.safe_load(open(path))
-  # SEEDS = FLAGS.seeds.split('_')
+  SEEDS = FLAGS.seeds.split('_')
   # print('tasks:\n', json.dumps(tasks, indent=4, sort_keys=False))
   print('id: ', FLAGS.acme_id)
   print('suite: ', FLAGS.suite)
-  # for level_k, level_v in config[FLAGS.suite].items():
-  #   print('level: ', level_k)
-  #   FLAGS.level = level_k
-  level_info = config[FLAGS.level]
-  FLAGS.num_steps = level_info['run']['steps']
-  FLAGS.eval_every = FLAGS.num_steps//20
-  for task in level_info['tasks']:
-    # print('task: ', task)
-    FLAGS.task = task
-    experiment_cfg = build_experiment_config()
-    experiments.run_experiment(
-        experiment=experiment_cfg,
-        eval_every=FLAGS.eval_every,
-        num_eval_episodes=FLAGS.evaluation_episodes)
+  for level_k, level_v in config[FLAGS.suite].items():
+    print('level: ', level_k)
+    FLAGS.level = level_k
+    FLAGS.num_steps = level_v['run']['steps']
+    FLAGS.eval_every = FLAGS.num_steps//20
+    for task in level_v['tasks']:
+      print('task: ', task)
+      FLAGS.task = task
+      # print('seeds: ', SEEDS)
+      # for seed in SEEDS:
+      #   # print('seed: ', seed)
+      #   FLAGS.seed = int(seed)
+      config = build_experiment_config()
+      if FLAGS.run_distributed:
+        program = experiments.make_distributed_experiment(
+            experiment=config, num_actors=4)
+        lp.launch(program, xm_resources=lp_utils.make_xm_docker_resources(program))
+      else:
+        experiments.run_experiment(
+            experiment=config,
+            eval_every=FLAGS.eval_every,
+            num_eval_episodes=FLAGS.evaluation_episodes)
 
 
 if __name__ == '__main__':
