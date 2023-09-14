@@ -42,6 +42,8 @@ source ~/.bashrc
 
 conda activate acme
 
+rm -f ~/logdir/vector.log
+
 for SUITE in ${TASK_SUITES[*]}; do
     for s in ${!SEEDS[*]}; do
         # sleep 30
