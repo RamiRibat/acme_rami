@@ -34,7 +34,7 @@ DATETIME=$(date +'%Y%m%d:%H%M%S')
 
 ID="vector_"$DATETIME
 
-SEEDS=(1)
+SEEDS=(2)
 
 GPUS=(0)
 
@@ -44,9 +44,10 @@ conda activate acme
 
 for SUITE in ${TASK_SUITES[*]}; do
     for s in ${!SEEDS[*]}; do
-        sleep 30
+        # sleep 30
         echo "SEED " $s > ~/logdir/vector.log
-        CUDA_VISIBLE_DEVICES=${GPUS[s]} python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[s]} >> ~/logdir/vector.log &
+        python run_d4pg.py --acme_id $ID --suite $SUITE --seed 1 >> ~/logdir/vector.log
+        # CUDA_VISIBLE_DEVICES=${GPUS[s]} python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[s]} >> ~/logdir/vector.log &
     done
 done
 
