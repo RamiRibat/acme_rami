@@ -13,9 +13,9 @@ DATETIME=$(date +'%Y%m%d:%H%M%S')
 
 ID="vector_"$DATETIME
 
-SEEDS=(1)
+SEEDS=(1 2 3)
 
-GPUS=(0)
+GPUS=(0 1 2)
 
 source ~/.bashrc
 
