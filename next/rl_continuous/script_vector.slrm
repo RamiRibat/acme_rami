@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --job-name=q_dmc_d4pg
+#SBATCH --job-name=dmc_d4pg
 
 #SBATCH --open-mode=append
 #SBATCH --qos=normal
 #SBATCH --nodes=3
-#SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=12
+#SBATCH --gres=rtx6000,a40:1
+#SBATCH --cpus-per-task=16
 #SBATCH --mem-per-cpu=1G
 #SBATCH --partition=gpu
 
@@ -26,10 +26,11 @@ TASK_SUITES=(
     # 'atari57'
 )
 
+# CLUSTER=$1
 
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-ID="q_"$DATETIME
+ID="v_"$DATETIME
 
 SEEDS=(1 2 3)
 
