@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #SBATCH --job-name=q_dmc_d4pg
 #SBATCH --time=00:02:00
 
