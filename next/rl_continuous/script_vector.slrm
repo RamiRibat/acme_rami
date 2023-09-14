@@ -43,8 +43,8 @@ conda activate acme
 
 rm -f ~/logdir/vector.log
 
-srun --exclusive -n 1 --gres=gpu:1 --mem=8G python run_d4pg.py --acme_id $ID --suite $SUITE --seed 1 &
-srun --exclusive -n 1 --gres=gpu:1 --mem=8G python run_d4pg.py --acme_id $ID --suite $SUITE --seed 2 &
+srun --exclusive -n 1 --gres=gpu:1 --mem=8G python run_d4pg.py --acme_id $ID --suite $SUITE --seed 1
+srun --exclusive -n 1 --gres=gpu:1 --mem=8G python run_d4pg.py --acme_id $ID --suite $SUITE --seed 2
 
 # for SUITE in ${TASK_SUITES[*]}; do
 #     for i in ${!SEEDS[*]}; do
