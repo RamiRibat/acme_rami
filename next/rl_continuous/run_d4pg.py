@@ -121,7 +121,7 @@ def main(_):
   # for level_k, level_v in config[FLAGS.suite].items():
   #   print('level: ', level_k)
   #   FLAGS.level = level_k
-  level_info = config[FLAGS.level]
+  level_info = config[FLAGS.suite][FLAGS.level]
   FLAGS.num_steps = level_info['run']['steps']
   FLAGS.eval_every = FLAGS.num_steps//20
   for task in level_info['tasks']:
