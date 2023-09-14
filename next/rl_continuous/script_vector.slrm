@@ -37,25 +37,25 @@ SEEDS=(1 2)
 
 # GPUS=(0)
 
-source ~/.bashrc
+# source ~/.bashrc
 
-conda activate acme
+# conda activate acme
 
 rm -f ~/logdir/vector.log
 
-srun --exclusive -n 1 --gres=gpu:1 --mem=8G python run_d4pg.py --acme_id $ID --suite $SUITE --seed 1
-srun --exclusive -n 1 --gres=gpu:1 --mem=8G python run_d4pg.py --acme_id $ID --suite $SUITE --seed 2
+# srun --exclusive -n 1 --gres=gpu:1 --mem=8G python run_d4pg.py --acme_id $ID --suite $SUITE --seed 1
+# srun --exclusive -n 1 --gres=gpu:1 --mem=8G python run_d4pg.py --acme_id $ID --suite $SUITE --seed 2
 
-# for SUITE in ${TASK_SUITES[*]}; do
-#     for i in ${!SEEDS[*]}; do
-#         echo "SEED " ${SEEDS[i]} >> ~/logdir/vector.log
-#         # echo "CUDA " $CUDA_VISIBLE_DEVICES >> ~/logdir/vector.log
-#         # srun --exclusive --gres=gpu:1 --mem=8G echo "SUB_CUDA" $CUDA_VISIBLE_DEVICES >> ~/logdir/vector.log &
-#         srun --exclusive -n 1 --gres=gpu:1 --mem=8G python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[i]} &
-#         # CUDA_VISIBLE_DEVICES=${GPUS[i]} python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[i]} >> ~/logdir/vector.log &
-#     done
-# done
+for SUITE in ${TASK_SUITES[*]}; do
+    for i in ${!SEEDS[*]}; do
+        # echo "SEED " ${SEEDS[i]} >> ~/logdir/vector.log
+        # echo "CUDA " $CUDA_VISIBLE_DEVICES >> ~/logdir/vector.log
+        # srun --exclusive --gres=gpu:1 --mem=8G echo "SUB_CUDA" $CUDA_VISIBLE_DEVICES >> ~/logdir/vector.log &
+        srun --exclusive -n 1 --gres=gpu:1 --mem=8G bash script.sh ${SEEDS[i]}
+        # CUDA_VISIBLE_DEVICES=${GPUS[i]} python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[i]} >> ~/logdir/vector.log &
+    done
+done
 
 wait
 
-conda deactivate
+# conda deactivate
