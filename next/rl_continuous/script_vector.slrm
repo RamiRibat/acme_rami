@@ -29,7 +29,7 @@ TASK_SUITES=(
 
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-ID="vector_"$DATETIME
+ID="q_"$DATETIME
 
 SEEDS=(1 2 3)
 
