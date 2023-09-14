@@ -28,10 +28,8 @@ conda activate acme
 # done
 
 for SUITE in ${TASK_SUITES[*]}; do
-    if [ $1 == 1 ]; then
-        sleep 30
-    fi
     echo "SEED " $1 >> ~/logdir/vector.log
+    echo "CUDA " $CUDA_VISIBLE_DEVICES >> ~/logdir/vector.log
     # python run_d4pg.py --acme_id $ID --suite $SUITE --seed $1
 done
 
