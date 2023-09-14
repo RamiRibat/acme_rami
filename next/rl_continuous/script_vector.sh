@@ -4,9 +4,9 @@ source ~/.bashrc
 
 conda activate acme
 
-# if [ $3 == 1 ]; then
-#     sleep 30
-# fi
+if [ $3 == 1 ]; then
+    sleep 30
+fi
 
 echo "SEED " $3 >> ~/logdir/vector.log
 echo "CUDA " $CUDA_VISIBLE_DEVICES >> ~/logdir/vector.log
