@@ -5,7 +5,7 @@
 #SBATCH --open-mode=append
 #SBATCH --qos=normal
 #SBATCH --nodes=3
-#SBATCH --gres=gpu:3
+#SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=12
 #SBATCH --mem-per-cpu=1G
 #SBATCH --partition=gpu
@@ -33,11 +33,11 @@ ID="q_"$DATETIME
 
 SEEDS=(1 2 3)
 
-# rm -f ~/logdir/vector.log
+rm -f ~/logdir/vector.log
 
 for SUITE in ${TASK_SUITES[*]}; do
     for i in ${!SEEDS[*]}; do
-        srun --exclusive -n 1 --gres=gpu:1 --mem=8G bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} &
+        srun --exclusive -n 1 bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} &
     done
 done
 
