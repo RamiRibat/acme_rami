@@ -31,6 +31,6 @@ do
 
     for s in ${!SEEDS[*]}
     do
-        CUDA_VISIBLE_DEVICES=${GPUS[s]} python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[s]}
+        CUDA_VISIBLE_DEVICES=${GPUS[s]} python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[s]} &
     done
 done
