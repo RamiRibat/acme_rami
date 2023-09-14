@@ -1,15 +1,15 @@
 #!/bin/bash
-#SBATCH --job-name=dmc_d4pg
+#SBATCH --job-name=q_dmc_d4pg
 
-#SBATCH --partition=rtx6000,a40
+#SBATCH --partition=gpu
 
 #SBATCH --gres=gpu:3
 
 #SBATCH --qos=normal
 
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=24
 
-#SBATCH --mem-per-cpu=8G
+#SBATCH --mem-per-cpu=24G
 
 #SBATCH --output=slurm-%j.out
 
