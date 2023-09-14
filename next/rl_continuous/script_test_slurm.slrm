@@ -1,19 +1,32 @@
 #!/bin/bash
-#SBATCH --job-name=q_dmc_d4pg
-#SBATCH --time=00:05:00
 
-#SBATCH --partition=gpu
-#SBATCH --gres=gpu:3
-#SBATCH --qos=normal
-#SBATCH --mem=24G
-#SBATCH --cpus-per-task=24
+#SBATCH --job-name=test_job
+#SBATCH --output=/h/rahmed/output-%N-%j.out          # LINES 4, 5 - NOTE: for output and error, use absolute paths that exists already
+#SBATCH --error=/h/rahmed/error-%N-%j.err            # LINES 4, 5 - NOTE: %N and %j will be replaced by the host name and job id, respectively
+#SBATCH --open-mode=append
+#SBATCH --partition=gpu                              # self-explanatory, set to your preference (e.g. gpu or cpu on MaRS, p100, t4, or cpu on Vaughan)
+#SBATCH --cpus-per-task=1                            # self-explanatory, set to your preference
+#SBATCH --ntasks-per-node=1
+#SBATCH --mem=4G                                     # self-explanatory, set to your preference
+#SBATCH --gres=gpu:1                                 # NOTE: you need a GPU for CUDA support; self-explanatory, set to your preference 
+#SBATCH --nodes=1
+#SBATCH --qos=normal                                 # for "high" and "deadline" QoS, refer to https://support.vectorinstitute.ai/AboutVaughan2
 
-#SBATCH --output=slurm/slurm-%j.out
-#SBATCH --error=slurm/slurm-%j.err
+rm -f ~/logdir/test.log                                     # remove any previous copy of "test.log" which is used by "test.sh" to append its output
 
-# prepare your environment here
-module load cuda-11.4
+echo $SLURM_JOB_ID >> ~/logdir/test.log                     # log the job id
+echo $SLURM_JOB_PARTITION >> ~/logdir/test.log              # log the job partition
 
-# put your command here
+# export LD_LIBRARY_PATH=/pkgs/cuda-10.1/lib64:/pkgs/cudnn-10.1-v7.6.3.30/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}      # required for TensorFlow to see any GPU
 
-bash script.sh
+# export PATH=/pkgs/anaconda3/bin:$PATH                # exporting the binaries of your preferred version of conda
+# source activate /scratch/gobi1/$USER/learning/       # LINE 23 - NOTE: set the path to your conda environment path
+source ~/.bashrc
+conda activate acme
+echo $CONDA_PREFIX >> ~/logdir/test.log                     # log the active conda environment 
+
+python --version >> ~/logdir/test.log                       # log Python version
+
+python test.py >> ~/logdir/test.log                       # the script above, with its standard output appended to test.log
+
+source deactivate
