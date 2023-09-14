@@ -12,11 +12,11 @@ TASK_SUITES=(
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
 # ID="$DATETIME"
-ID="vector_"$DATETIME"_test_parallel_seeds"
+ID="vector_"$DATETIME
 
 
-SEEDS=(1 2)
-GPUS=(0 1)
+SEEDS=(1 2 3)
+GPUS=(0 1 2)
 
 # for SUITE in ${TASK_SUITES[*]}
 # do
@@ -27,7 +27,7 @@ GPUS=(0 1)
 
 for SUITE in ${TASK_SUITES[*]}
 do
-    echo "...INITIALIZE..."
+    # echo "...INITIALIZE..."
 
     for s in ${!SEEDS[*]}
     do
