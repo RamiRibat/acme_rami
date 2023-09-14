@@ -1,7 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=q_dmc_d4pg_test
-#SBATCH --time=00:02:00
+#SBATCH --job-name=q_dmc_d4pg
 
 #SBATCH --open-mode=append
 #SBATCH --qos=normal
@@ -34,8 +33,7 @@ ID="vector_"$DATETIME
 
 SEEDS=(1 2 3)
 
-rm -f ~/logdir/vector.log
-
+# rm -f ~/logdir/vector.log
 
 for SUITE in ${TASK_SUITES[*]}; do
     for i in ${!SEEDS[*]}; do
