@@ -48,7 +48,7 @@ for SUITE in ${TASK_SUITES[*]}; do
         echo "SEED " ${SEEDS[i]} >> ~/logdir/vector.log
         # echo "CUDA " $CUDA_VISIBLE_DEVICES >> ~/logdir/vector.log
         # srun --exclusive --gres=gpu:1 --mem=8G echo "SUB_CUDA" $CUDA_VISIBLE_DEVICES >> ~/logdir/vector.log &
-        srun --exclusive --gres=gpu:1 --mem=8G python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[i]} &
+        srun --exclusive --gres=gpu:1 --mem=8G python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[i]}
         # CUDA_VISIBLE_DEVICES=${GPUS[i]} python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[i]} >> ~/logdir/vector.log &
     done
 done
