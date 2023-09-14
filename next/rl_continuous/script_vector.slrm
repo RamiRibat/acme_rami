@@ -15,37 +15,37 @@
 #SBATCH --output=/h/rahmed/logdir/slurm/output-%N-%j.out
 #SBATCH --error=/h/rahmed/logdir/slurm/error-%N-%j.err
 
-echo "..Initialize.."
+# echo "..Initialize.."
 
 # put your command here
 
 # bash script.sh
 
-# TASK_SUITES=(
-#     # 'gym'
-#     'control'
-#     # 'atari26'
-#     # 'atari52'
-#     # 'atari57'
-# )
+TASK_SUITES=(
+    # 'gym'
+    'control'
+    # 'atari26'
+    # 'atari52'
+    # 'atari57'
+)
 
 
-# DATETIME=$(date +'%Y%m%d:%H%M%S')
+DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-# ID="vector_"$DATETIME
+ID="vector_"$DATETIME
 
-# SEEDS=(1)
+SEEDS=(1)
 
-# GPUS=(0)
+GPUS=(0)
 
-# source ~/.bashrc
+source ~/.bashrc
 
-# conda activate acme
+conda activate acme
 
-# for SUITE in ${TASK_SUITES[*]}; do
-#     for s in ${!SEEDS[*]}; do
-#         CUDA_VISIBLE_DEVICES=${GPUS[s]} python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[s]} &
-#     done
-# done
+for SUITE in ${TASK_SUITES[*]}; do
+    for s in ${!SEEDS[*]}; do
+        CUDA_VISIBLE_DEVICES=${GPUS[s]} python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[s]} &
+    done
+done
 
-# conda deactivate
+conda deactivate
