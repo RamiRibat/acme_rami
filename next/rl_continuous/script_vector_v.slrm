@@ -21,7 +21,7 @@
 
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-ID="v_"$DATETIME"_test_mem"
+ID="v_"$DATETIME
 
 SEEDS=(1 2 3)
 
