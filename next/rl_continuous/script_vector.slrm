@@ -45,4 +45,4 @@ for SUITE in ${TASK_SUITES[*]}; do
     done
 done
 
-
+wait
