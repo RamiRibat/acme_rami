@@ -27,10 +27,4 @@ conda activate acme
 #     done
 # done
 
-for SUITE in ${TASK_SUITES[*]}; do
-    echo "SEED " $1 >> ~/logdir/vector.log
-    echo "CUDA " $CUDA_VISIBLE_DEVICES >> ~/logdir/vector.log
-    # python run_d4pg.py --acme_id $ID --suite $SUITE --seed $1
-done
-
 conda deactivate
