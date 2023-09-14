@@ -12,7 +12,7 @@
 #SBATCH --nodes=1
 #SBATCH --qos=normal                                 # for "high" and "deadline" QoS, refer to https://support.vectorinstitute.ai/AboutVaughan2
 
-# rm -f ~/logdir/test.log                                     # remove any previous copy of "test.log" which is used by "test.sh" to append its output
+rm -f ~/logdir/test.log                                     # remove any previous copy of "test.log" which is used by "test.sh" to append its output
 
 echo $SLURM_JOB_ID >> ~/logdir/test.log                     # log the job id
 echo $SLURM_JOB_PARTITION >> ~/logdir/test.log              # log the job partition
