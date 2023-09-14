@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=dmc_d4pg
+#SBATCH --job-name=dmc_d4pg_x32
 
 #SBATCH --open-mode=append
 #SBATCH --qos=normal
