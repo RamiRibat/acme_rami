@@ -29,4 +29,4 @@ conda activate acme
 
 # python test.py >> ~/logdir/test.log                       # the script above, with its standard output appended to test.log
 
-source deactivate
+# conda deactivate
