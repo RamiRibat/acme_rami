@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Example running D4PG on continuous control tasks."""
+import os, yaml, json
 from absl import flags
 from acme.agents.jax import d4pg
 import helpers
@@ -26,74 +27,6 @@ from acme.utils import observers as observers_lib
 import warnings
 warnings.filterwarnings('ignore')
 
-# DMC_TASKS = {
-#   "cartpole:swingup": 'trivial',
-#   "walker:walk": 'trivial',
-#   "hopper:stand": 'easy',
-#   "swimmer:swimmer6": 'easy',
-#   "cheetah:run": 'medium',
-#   "walker:run": 'medium'
-# }
-
-# DMC_STEPS ={
-#   'trivial': 500_000,
-#   'easy': 1_000_000,
-#   'medium': 2_000_000
-# }
-
-# DMC_TASKS = {
-#     'trivial': {
-#       'num_steps': 500_000,
-#       'tasks': [
-#         'ball_in_cup_catch',
-#         'cartplole_balance',
-#         'cartplole_balance_sparse',
-#         'cartpole_swingup',
-#         'reacher_easy',
-#         'walker_stand',
-#         'walker_walk'
-#       ]
-#     },
-
-#     'easy': {
-#       'num_steps': 1_000_000,
-#       'tasks': [
-#         'cartpole_swingup_sparse',
-#         'finger_turn_easy',
-#         'hopper_stand',
-#         'pendulum_swingup',
-#         'point_mass_easy',
-#         'reacher_hard',
-#         'swimmer_swimmer6'
-#       ]
-#     },
-    
-#     'medium': {
-#       'num_steps': 2_000_000,
-#       'tasks': [
-#         'cheetah_run',
-#         'finger_spin',
-#         'finger_turn_hard',
-#         'fish_swim',
-#         'fish_upright',
-#         'swimmer_swimmer_15',
-#         'walker_run'
-#       ]
-#     },
-    
-#     'hard': {
-#       'num_steps': 5_000_000,
-#       'tasks': [
-#         'acrobat_swingup',
-#         'acrobat_swingup_sparse',
-#         'hopper_hop',
-#         'humanoid_run',
-#         'humanoid_stand',
-#         'humanoid_walk',
-#         'manipulator_bring_ball'
-#         ]
-#     }
-# }
 
 
 d4pg_hyperparams = {
@@ -129,6 +62,7 @@ flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
 # flags.DEFINE_multi_integer('seed', [0], 'Random seed.')
 flags.DEFINE_string('seeds', '0', 'Random seed(s).')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
+flags.DEFINE_integer('gpu', None, 'Random seed.')
 
 
 
@@ -173,7 +107,10 @@ def build_experiment_config():
 
 
 def main(_):
-  import os, yaml, json
+  if FLAGS.gpu:
+    GPUS = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+    os.environ['CUDA_VISIBLE_DEVICES'] = GPUS[FLAGS.gpu]
+    
   path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
   config = yaml.safe_load(open(path))
   SEEDS = FLAGS.seeds.split('_')
