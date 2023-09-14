@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=q_dmc_d4pg
+#SBATCH --job-name=q_dmc_d4pg_test
 #SBATCH --time=00:02:00
 
 #SBATCH --open-mode=append
@@ -39,7 +39,7 @@ rm -f ~/logdir/vector.log
 
 for SUITE in ${TASK_SUITES[*]}; do
     for i in ${!SEEDS[*]}; do
-        srun --exclusive -n 1 --gres=gpu:1 --mem=8G bash script_vector.sh ${SEEDS[i]} &
+        srun --exclusive -n 1 --gres=gpu:1 --mem=8G bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} &
     done
 done
 

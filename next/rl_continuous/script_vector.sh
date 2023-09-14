@@ -17,8 +17,8 @@ source ~/.bashrc
 
 conda activate acme
 
-echo "SEED " $1 >> ~/logdir/vector.log
-echo "CUDA " $CUDA_VISIBLE_DEVICES >> ~/logdir/vector.log
-# python run_d4pg.py --acme_id $ID --suite $SUITE --seed $1
+# echo "SEED " $1 >> ~/logdir/vector.log
+# echo "CUDA " $CUDA_VISIBLE_DEVICES >> ~/logdir/vector.log
+python run_d4pg.py --acme_id $1 --suite $2 --seed $3
 
 conda deactivate
