@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=v_dmc_d4pg
+#SBATCH --job-name=q_dmc_d4pg
 
 #SBATCH --open-mode=append
 #SBATCH --qos=normal
