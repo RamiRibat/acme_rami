@@ -17,7 +17,7 @@ SEEDS=(1)
 
 GPUS=(0)
 
-conda init bash
+source ~/.bashrc
 
 conda activate acme
 
