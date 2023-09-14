@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=q_dmc_d4pg
-#SBATCH --time=00:05:00
+#SBATCH --time=00:02:00
 
 #SBATCH --open-mode=append
 #SBATCH --nodes=1
@@ -14,33 +14,32 @@
 #SBATCH --output=/h/rahmed/logdir/slurm/output-%N-%j.out
 #SBATCH --error=/h/rahmed/logdir/slurm/error-%N-%j.err
 
-# prepare your environment here
-# module load cuda-11.4
+echo "..Initialize.."
 
 # put your command here
 
 # bash script.sh
 
-TASK_SUITES=(
-    # 'gym'
-    'control'
-    # 'atari26'
-    # 'atari52'
-    # 'atari57'
-)
+# TASK_SUITES=(
+#     # 'gym'
+#     'control'
+#     # 'atari26'
+#     # 'atari52'
+#     # 'atari57'
+# )
 
 
-DATETIME=$(date +'%Y%m%d:%H%M%S')
+# DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-ID="vector_"$DATETIME
+# ID="vector_"$DATETIME
 
-SEEDS=(1)
+# SEEDS=(1)
 
-GPUS=(0)
+# GPUS=(0)
 
-source ~/.bashrc
+# source ~/.bashrc
 
-conda activate acme
+# conda activate acme
 
 # for SUITE in ${TASK_SUITES[*]}; do
 #     for s in ${!SEEDS[*]}; do
@@ -48,4 +47,4 @@ conda activate acme
 #     done
 # done
 
-conda deactivate
+# conda deactivate
