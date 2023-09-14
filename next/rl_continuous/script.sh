@@ -13,9 +13,9 @@ DATETIME=$(date +'%Y%m%d:%H%M%S')
 
 ID="vector_"$DATETIME
 
-SEEDS=(1 2 3)
+SEEDS=(1)
 
-GPUS=(0 1 2)
+GPUS=(0)
 
 conda activate acme
 
