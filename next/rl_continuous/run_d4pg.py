@@ -107,10 +107,10 @@ def build_experiment_config():
 
 
 def main(_):
-  if FLAGS.gpu:
-    GPUS = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-    os.environ['CUDA_VISIBLE_DEVICES'] = GPUS[FLAGS.gpu]
-    jax.default_devic = jax.device('gpu')[FLAGS.gpu]
+  # if FLAGS.gpu:
+  #   GPUS = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
+  #   os.environ['CUDA_VISIBLE_DEVICES'] = GPUS[FLAGS.gpu]
+  #   jax.default_devic = jax.device('gpu')[FLAGS.gpu]
     
   path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
   config = yaml.safe_load(open(path))

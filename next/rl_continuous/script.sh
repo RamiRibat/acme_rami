@@ -30,6 +30,6 @@ do
 
     for seed in ${SEEDS[*]}
     do
-        python run_d4pg.py --acme_id $ID --suite $SUITE --seed 1 --gpu 0
+        CUDA_VISIBLE_DEVICES=0 python run_d4pg.py --acme_id $ID --suite $SUITE --seed 1
     done
 done
