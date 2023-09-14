@@ -27,7 +27,7 @@ from acme.utils import observers as observers_lib
 import warnings
 warnings.filterwarnings('ignore')
 
-
+import jax
 
 d4pg_hyperparams = {
   'batch_size': 256,
@@ -110,6 +110,7 @@ def main(_):
   if FLAGS.gpu:
     GPUS = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
     os.environ['CUDA_VISIBLE_DEVICES'] = GPUS[FLAGS.gpu]
+    jax.default_devic = jax.device('gpu')[FLAGS.gpu]
     
   path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
   config = yaml.safe_load(open(path))
