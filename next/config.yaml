@@ -1,22 +1,22 @@
 
 control: 
-    # trivial:
-    #   run: {steps: 500_000}
-    #   tasks: [
-    #     ball_in_cup:catch,
-    #     cartpole:balance,
-    #     cartpole:balance_sparse,
-    #     cartpole:swingup,
-    #     reacher:easy,
-    #     walker:stand,
-    #     walker:walk
-    #   ]
+    trivial:
+      run: {steps: 500_000}
+      tasks: [
+        ball_in_cup:catch,
+        cartpole:balance,
+        cartpole:balance_sparse,
+        cartpole:swingup,
+        reacher:easy,
+        walker:stand,
+        walker:walk
+      ]
 
     easy:
       run: {steps: 1_000_000}
       tasks: [
-        # cartpole:swingup_sparse,
-        # finger:turn_easy,
+        cartpole:swingup_sparse,
+        finger:turn_easy,
         hopper:stand,
         pendulum:swingup,
         point_mass:easy,
@@ -36,17 +36,17 @@ control:
         walker:run
       ]
     
-    # hard:
-    #   run: {steps: 5_000_000}
-    #   tasks: [
-    #     acrobat:swingup,
-    #     acrobat:swingup_sparse,
-    #     hopper:hop,
-    #     humanoid:run,
-    #     humanoid:stand,
-    #     humanoid:walk,
-    #     manipulator:bring_ball
-    #   ]
+    hard:
+      run: {steps: 5_000_000}
+      tasks: [
+        acrobat:swingup,
+        acrobat:swingup_sparse,
+        hopper:hop,
+        humanoid:run,
+        humanoid:stand,
+        humanoid:walk,
+        manipulator:bring_ball
+      ]
 
 
 # atari:
