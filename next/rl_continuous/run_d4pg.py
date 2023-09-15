@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """Example running D4PG on continuous control tasks."""
+
 import os, yaml, json
 from absl import flags
 from acme.agents.jax import d4pg
@@ -27,7 +28,6 @@ from acme.utils import observers as observers_lib
 import warnings
 warnings.filterwarnings('ignore')
 
-import jax
 
 d4pg_hyperparams = {
   'batch_size': 256,
@@ -57,7 +57,7 @@ flags.DEFINE_string('suite', 'control', 'Suite')
 flags.DEFINE_string('level', 'trivial', "Task level")
 flags.DEFINE_string('task', 'walker:walk', 'What environment to run')
 flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
-flags.DEFINE_integer('eval_every', 20, 'How often to run evaluation.')
+flags.DEFINE_integer('eval_every', 25_000, 'How often to run evaluation.')
 flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
 # flags.DEFINE_multi_integer('seed', [0], 'Random seed.')
 flags.DEFINE_string('seeds', '0', 'Random seed(s).')
@@ -107,23 +107,13 @@ def build_experiment_config():
 
 
 def main(_):
-  # if FLAGS.gpu:
-  #   GPUS = os.environ['CUDA_VISIBLE_DEVICES'].split(',')
-  #   os.environ['CUDA_VISIBLE_DEVICES'] = GPUS[FLAGS.gpu]
-  #   jax.default_devic = jax.device('gpu')[FLAGS.gpu]
     
   path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
   config = yaml.safe_load(open(path))
-  # SEEDS = FLAGS.seeds.split('_')
-  # print('tasks:\n', json.dumps(tasks, indent=4, sort_keys=False))
-  print('id: ', FLAGS.acme_id)
-  print('suite: ', FLAGS.suite)
-  # for level_k, level_v in config[FLAGS.suite].items():
-  #   print('level: ', level_k)
-  #   FLAGS.level = level_k
   level_info = config[FLAGS.suite][FLAGS.level]
   FLAGS.num_steps = level_info['run']['steps']
   FLAGS.eval_every = FLAGS.num_steps//20
+
   for task in level_info['tasks']:
     # print('task: ', task)
     FLAGS.task = task
