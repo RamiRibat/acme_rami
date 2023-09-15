@@ -32,7 +32,7 @@ SEEDS=(1 2 3)
 for i in ${!SEEDS[*]}; do
     # echo "Seed " ${SEEDS[i]}
     # srun --exclusive -n 1 bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} & # <-- SLOW
-    srun --exclusive -n 1 -c 16 --mem=32GB --gres=gpu:1 -p gpu --qos=normal bash script_vector.sh ${ID} ${SEEDS[i]} &
+    srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 -p gpu --qos=normal bash script_vector.sh ${ID} ${SEEDS[i]} &
 done
 
 wait
