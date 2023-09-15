@@ -15,8 +15,8 @@ control:
     easy:
       run: {steps: 1_000_000}
       tasks: [
-        # cartpole:swingup_sparse,
-        # finger:turn_easy,
+        cartpole:swingup_sparse,
+        finger:turn_easy,
         hopper:stand,
         pendulum:swingup,
         point_mass:easy,
