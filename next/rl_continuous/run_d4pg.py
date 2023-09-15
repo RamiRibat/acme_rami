@@ -74,7 +74,7 @@ def build_experiment_config():
 
   # Create an environment, grab the spec, and use it to create networks.
   # suite, task = FLAGS.env_name.split(':', 1)
-  suite, level, task = FLAGS.suite, FLAGS.level, FLAGS.task
+  suite, task = FLAGS.suite, FLAGS.task
 
   # Bound of the distributional critic. The reward for control environments is
   # normalized, not for gym locomotion environments hence the different scales.
@@ -107,7 +107,6 @@ def build_experiment_config():
 
 
 def main(_):
-    
   path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
   config = yaml.safe_load(open(path))
   level_info = config[FLAGS.suite][FLAGS.level]
