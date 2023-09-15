@@ -24,17 +24,17 @@ control:
         swimmer:swimmer6
       ]
     
-    # medium:
-    #   run: {steps: 2_000_000}
-    #   tasks: [
-    #     cheetah:run,
-    #     finger:spin,
-    #     finger:turn_hard,
-    #     fish:swim,
-    #     fish:upright,
-    #     swimmer:swimmer15,
-    #     walker:run
-    #   ]
+    medium:
+      run: {steps: 2_000_000}
+      tasks: [
+        cheetah:run,
+        finger:spin,
+        finger:turn_hard,
+        fish:swim,
+        fish:upright,
+        swimmer:swimmer15,
+        walker:run
+      ]
     
     hard:
       run: {steps: 5_000_000}
