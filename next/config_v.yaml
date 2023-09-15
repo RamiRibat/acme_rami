@@ -39,8 +39,8 @@ control:
     hard:
       run: {steps: 5_000_000}
       tasks: [
-        acrobat:swingup,
-        acrobat:swingup_sparse,
+        acrobot:swingup,
+        acrobot:swingup_sparse,
         hopper:hop,
         humanoid:run,
         humanoid:stand,
