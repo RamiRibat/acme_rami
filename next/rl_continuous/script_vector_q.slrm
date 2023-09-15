@@ -18,19 +18,9 @@
 # put your command here
 
 
-TASK_SUITES=(
-    # 'gym'
-    'control'
-    # 'atari26'
-    # 'atari52'
-    # 'atari57'
-)
-
-# CLUSTER=$1
-
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-ID="q_"$DATETIME
+ID="v_"$DATETIME
 
 SEEDS=(1 2 3)
 
@@ -38,11 +28,11 @@ SEEDS=(1 2 3)
 
 # echo "New experiment" >> ~/logdir/vector.log
 
-for SUITE in ${TASK_SUITES[*]}; do
-    for i in ${!SEEDS[*]}; do
-        # srun --exclusive -n 1 bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} & # <-- SLOW
-        srun --exclusive -n 1 -c 16 --mem=16GB --gres=gpu:1 -p gpu --qos=normal bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} &
-    done
+
+for i in ${!SEEDS[*]}; do
+    # echo "Seed " ${SEEDS[i]}
+    # srun --exclusive -n 1 bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} & # <-- SLOW
+    srun --exclusive -n 1 -c 16 --mem=32GB --gres=gpu:1 -p gpu --qos=normal bash script_vector.sh ${ID} ${SEEDS[i]} &
 done
 
 wait

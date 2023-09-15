@@ -1,30 +1,37 @@
 #!/bin/bash
 
-TASK_SUITES=(
+SUITES=(
     # 'gym'
     'control'
-    # 'atari26'
-    # 'atari52'
-    # 'atari57'
+    # 'atari'
+)
+
+LEVELS=(
+    # 'trivial'
+    'easy'
+    'medium'
+    # 'hard'
 )
 
 
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-ID="local_"$DATETIME
+# ID="local_"$DATETIME
+ID="local_20230914:041248"
 
-SEEDS=(1 2 3)
+SEEDS=(2 3)
 
 
 source ~/.bashrc
 
 conda activate acme
 
-for SUITE in ${TASK_SUITES[*]}; do
-    for s in ${!SEEDS[*]}; do
-        # python run_d4pg.py --acme_id $ID --suite $SUITE --seed ${SEEDS[s]}
-        python run_d4pg.py --acme_id $ID --suite $SUITE --level X --task X --seed ${SEEDS[s]}
+for SEED in ${SEEDS[*]}; do
+    for SUITE in ${SUITES[*]}; do
+        for LEVEL in ${LEVELS[*]}; do
+            python run_d4pg.py --acme_id $ID --seed $SEED --suite $SUITE --level $LEVEL
+        done
     done
-done
+done 
 
 conda deactivate
