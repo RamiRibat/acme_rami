@@ -6,7 +6,7 @@
 #SBATCH --qos=normal
 #SBATCH --nodes=3
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=32
 #SBATCH --mem-per-cpu=1G
 #SBATCH --partition=gpu
 
@@ -31,7 +31,6 @@ SEEDS=(1 2 3)
 
 for i in ${!SEEDS[*]}; do
     # echo "Seed " ${SEEDS[i]}
-    # srun --exclusive -n 1 bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} & # <-- SLOW
     srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 -p gpu --qos=normal bash script_vector.sh ${ID} ${SEEDS[i]} &
 done
 
