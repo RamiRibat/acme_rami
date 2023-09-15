@@ -12,9 +12,9 @@ SUITES=(
 
 LEVELS=(
     'trivial'
-    'easy'
-    'medium'
-    'hard'
+    # 'easy'
+    # 'medium'
+    # 'hard'
 )
 
 # echo "SEED " $3 >> ~/logdir/vector.log
