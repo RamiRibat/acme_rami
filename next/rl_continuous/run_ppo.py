@@ -71,7 +71,7 @@ def build_experiment_config():
   def network_factory(spec) -> ppo.PPONetworks:
     return ppo.make_networks(
         spec=spec,
-        layer_sizes=ppo_hyperparams['policy_arch']
+        hidden_layer_sizes=ppo_hyperparams['policy_arch']
     )
 
   ppo_config = ppo.PPOConfig(
