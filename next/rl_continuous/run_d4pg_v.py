@@ -40,8 +40,8 @@ d4pg_hyperparams = {
   'n_atoms': 51, # Atoms used by the categorical distributional critic.
   # 'policy_arch': (256, 256, 256),
   # 'critic_arch': (256, 256, 256),
-  'policy_arch': (512, 512),
-  'critic_arch': (512, 512),
+  'policy_arch': (256, 256),
+  'critic_arch': (256, 256),
   # 'critic_atoms' = jnp.linspace(-150., 150., num_atoms)
 }
 
