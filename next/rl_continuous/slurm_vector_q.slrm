@@ -6,7 +6,7 @@
 #SBATCH --qos=normal
 #SBATCH --nodes=3
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=64
 #SBATCH --mem-per-cpu=1G
 #SBATCH --partition=gpu
 
@@ -20,18 +20,12 @@
 
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-ID="q_"$DATETIME
+ID="q_64xcpu_"$DATETIME
 
 SEEDS=(1 2 3)
 
-# rm -f ~/logdir/vector.log
-
-# echo "New experiment" >> ~/logdir/vector.log
-
-
 for i in ${!SEEDS[*]}; do
-    # echo "Seed " ${SEEDS[i]}
-    srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 -p gpu --qos=normal bash script_vector.sh ${ID} ${SEEDS[i]} &
+    srun --exclusive -n 1 -c 64 --mem=32GB --gres=gpu:7 -p gpu --qos=normal bash script_vector.sh ${ID} ${SEEDS[i]} &
 done
 
 wait
