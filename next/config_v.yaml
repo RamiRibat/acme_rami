@@ -1,6 +1,6 @@
 
 control: 
-    trivial:
+    # trivial:
     #   run: {steps: 500_000}
     #   tasks: [
     #     ball_in_cup:catch,
@@ -36,17 +36,17 @@ control:
     #     walker:run
     #   ]
     
-    # hard:
-    #   run: {steps: 5_000_000}
-    #   tasks: [
-    #     acrobot:swingup,
-    #     acrobot:swingup_sparse,
-    #     hopper:hop,
-    #     humanoid:run,
-    #     humanoid:stand,
-    #     humanoid:walk,
-    #     manipulator:bring_ball
-    #   ]
+    hard:
+      run: {steps: 5_000_000}
+      tasks: [
+        # acrobot:swingup,
+        # acrobot:swingup_sparse,
+        # hopper:hop,
+        # humanoid:run,
+        # humanoid:stand,
+        # humanoid:walk,
+        manipulator:bring_ball
+      ]
 
     # extra:
     #   run: {steps: 1_000_000}
@@ -74,26 +74,6 @@ control:
     #     # stacker:stack_4,
     #   ]
     
-    # domains:  [
-    #   acrobot:,
-    #   ball_in_cup:,
-    #   cartpole:,
-    #   cheetah:,
-    #   dog:,
-    #   finger:,
-    #   fish:,
-    #   hopper:,
-    #   humanoid:,
-    #   lqr:,
-    #   manipulator:,
-    #   pendulum:,
-    #   point_mass:,
-    #   quadruped:,
-    #   reacher:,
-    #   stacker:,
-    #   swimmer:,
-    #   walker:,
-    # ]
 
 
 
