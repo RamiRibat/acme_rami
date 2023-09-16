@@ -19,7 +19,7 @@ LEVELS=(
 
 for SUITE in ${SUITES[*]}; do
     for LEVEL in ${LEVELS[*]}; do
-        python run_d4pg_v.py --acme_id $1 --seed $2 --suite $SUITE --level $LEVEL
+        MUJOCO_GL=egl python run_d4pg_v.py --acme_id $1 --seed $2 --suite $SUITE --level $LEVEL
     done
 done
 
