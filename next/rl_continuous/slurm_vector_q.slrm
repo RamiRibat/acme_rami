@@ -25,7 +25,7 @@ ID="q_64xcpu_"$DATETIME
 SEEDS=(1 2 3)
 
 for i in ${!SEEDS[*]}; do
-    srun --exclusive -n 1 -c 64 --mem=32GB --gres=gpu:7 -p gpu --qos=normal bash script_vector.sh ${ID} ${SEEDS[i]} &
+    srun --exclusive -n 1 -c 64 --mem=64GB --gres=gpu:1 -p gpu --qos=normal bash script_vector.sh ${ID} ${SEEDS[i]} &
 done
 
 wait
