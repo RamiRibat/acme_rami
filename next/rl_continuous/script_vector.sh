@@ -11,9 +11,9 @@ SUITES=(
 )
 
 LEVELS=(
-    # 'trivial'
-    # 'easy'
-    # 'medium'
+    'trivial'
+    'easy'
+    'medium'
     'hard'
 )
 

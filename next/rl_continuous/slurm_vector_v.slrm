@@ -21,8 +21,8 @@
 
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-# ID="v_"$DATETIME
-ID="v_20230914:185741"
+ID="v_"$DATETIME"_512x512"
+# ID="v_20230914:185741"
 
 SEEDS=(1 2 3)
 
@@ -31,10 +31,9 @@ SEEDS=(1 2 3)
 # echo "New experiment" >> ~/logdir/vector.log
 
 
-for i in ${!SEEDS[*]}; do
-    # echo "Seed " ${SEEDS[i]}
+for SEED in ${SEEDS[*]}; do
     # srun --exclusive -n 1 bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} & # <-- SLOW
-    srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 -p t4v2 --qos=normal bash script_vector.sh ${ID} ${SEEDS[i]} &
+    srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 -p t4v2 --qos=normal bash script_vector.sh ${ID} ${SEED} &
 done
 
 wait
