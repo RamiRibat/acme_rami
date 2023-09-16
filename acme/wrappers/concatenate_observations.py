@@ -36,7 +36,17 @@ def _concat(values: types.NestedArray) -> np.ndarray:
     The concatenated array.
   """
   leaves = list(map(np.atleast_1d, tree.flatten(values)))
-  return np.concatenate(leaves)
+  try:
+    # print('leaves: ', leaves)
+    # print('concatented: ', np.concatenate(leaves))
+    return np.concatenate(leaves)
+  except:
+    for i, leaf in enumerate(leaves):
+      if len(leaf.shape) > 1:
+        leaves[i] = leaf.reshape(-1,)
+    # print('leaves: ', leaves)
+    # print('concatented: ', np.concatenate(leaves))
+    return np.concatenate(leaves)
 
 
 def _zeros_like(nest, dtype=None):
