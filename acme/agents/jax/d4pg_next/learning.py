@@ -237,7 +237,7 @@ class D4PGLearner(acme.Learner):
     self._timestamp = None
 
   def _init_learner_state(self):
-    print('Initialize Learner State')
+    # print('Initialize Learner State')
     # Create the network parameters and copy into the target network parameters.
     key_policy, key_critic = jax.random.split(self._random_key)
     initial_policy_params = self._policy_network.init(key_policy)
@@ -269,7 +269,7 @@ class D4PGLearner(acme.Learner):
   def step(self):
     # print('D4PGLearner.step')
     if 'learner_steps' in self._counter.get_counts().keys():
-      print(f"counter.learner_steps: {self._counter.get_counts()['learner_steps']}")
+      # print(f"counter.learner_steps: {self._counter.get_counts()['learner_steps']}")
       learner_steps = self._counter.get_counts()['learner_steps']
       if learner_steps % self._reset_frequency == 0: self._init_learner_state()
     # Sample from replay and pack the data in a Transition.
