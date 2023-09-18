@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=d4pg_next
+#SBATCH --job-name=d4pg
 
 #SBATCH --open-mode=append
 #SBATCH --qos=normal
@@ -18,8 +18,8 @@
 
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-ID="v_next_"$DATETIME"_sr_32"
-# ID="v_20230914:185741"
+# ID="v_next_"$DATETIME"_sr_32"
+ID="v_20230917:204106_256x256"
 
 SEEDS=(1 2 3)
 
@@ -30,7 +30,7 @@ SEEDS=(1 2 3)
 
 for SEED in ${SEEDS[*]}; do
     # srun --exclusive -n 1 bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} & # <-- SLOW
-    srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 -p t4v2 --qos=normal --output=/h/rahmed/logdir/slurm/${ID}-${SEED}.out --error=/h/rahmed/logdir/slurm/${ID}-${SEED}.err bash script_vector.sh ${ID} ${SEED} &
+    srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 -p t4v2 --qos=normal --output=/h/rahmed/logdir/slurm/${ID}-${SEED}.out --error=/h/rahmed/logdir/slurm/${ID}-${SEED}.err bash script_vector_d4pg_next.sh ${ID} ${SEED} &
 done
 
 wait
