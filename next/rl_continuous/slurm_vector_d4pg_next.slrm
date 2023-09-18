@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=d4pg
+#SBATCH --job-name=d4pg_next
 
 #SBATCH --open-mode=append
 #SBATCH --qos=normal
@@ -18,8 +18,8 @@
 
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-# ID="v_next_"$DATETIME"_sr_32"
-ID="v_20230917:204106_256x256"
+ID="v_next_"$DATETIME"_sr_32"
+# ID="v_20230917:204106_256x256"
 
 SEEDS=(1 2 3)
 
