@@ -7,9 +7,9 @@ SUITES=(
 )
 
 LEVELS=(
-    # 'trivial'
-    'easy'
-    'medium'
+    'trivial'
+    # 'easy'
+    # 'medium'
     # 'hard'
 )
 
@@ -29,7 +29,8 @@ conda activate acme
 for SEED in ${SEEDS[*]}; do
     for SUITE in ${SUITES[*]}; do
         for LEVEL in ${LEVELS[*]}; do
-            python run_d4pg.py --acme_id $ID --seed $SEED --suite $SUITE --level $LEVEL
+            MUJOCO_GL=egl python run_d4pg.py --acme_id $ID --seed $SEED --suite $SUITE --level $LEVEL
+            # MUJOCO_GL=egl python run_d4pg.py --acme_id 'test_d4pg' --seed 0 --suite 'control' --level 'easy'
         done
     done
 done 

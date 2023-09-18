@@ -143,6 +143,7 @@ class EnvironmentLoop(core.Worker):
 
     # Collect the results and combine with counts.
     steps_per_second = episode_steps / (time.time() - episode_start_time)
+
     result = {
         'episode_length': episode_steps,
         'episode_return': episode_return,
@@ -151,9 +152,11 @@ class EnvironmentLoop(core.Worker):
         'select_action_duration_sec': np.mean(select_action_durations),
         'env_step_duration_sec': np.mean(env_step_durations),
     }
+    
     result.update(counts)
     for observer in self._observers:
       result.update(observer.get_metrics())
+
     return result
   
   def run_dummy_episode(self):
