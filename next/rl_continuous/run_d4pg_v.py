@@ -34,7 +34,7 @@ d4pg_hyperparams = {
   'learning_rate': 3e-4,
   'discount': 0.99,
   'n_step': 5,  # The D4PG agent learns from n-step transitions.
-  'sigma': 0.2,
+  'sigma': 0.2, # exploration noise
   'target_update_period': 100,
   'samples_per_insert': 32.0, # Controls the relative rate of sampled vs inserted items. In this case, items are n-step transitions.
   'n_atoms': 51, # Atoms used by the categorical distributional critic.

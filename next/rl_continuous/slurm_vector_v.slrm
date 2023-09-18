@@ -33,7 +33,7 @@ SEEDS=(1 2 3)
 
 for SEED in ${SEEDS[*]}; do
     # srun --exclusive -n 1 bash script_vector.sh ${ID} ${SUITE} ${SEEDS[i]} & # <-- SLOW
-    srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 -p t4v2,rtx6000 --qos=normal bash script_vector.sh ${ID} ${SEED} &
+    srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 -p t4v2,rtx6000 --qos=normal --output=/h/rahmed/logdir/slurm/%${ID}-%${SEED}.out --error=/h/rahmed/logdir/slurm/%${ID}-%${SEED}.err bash script_vector.sh ${ID} ${SEED} &
 done
 
 wait
