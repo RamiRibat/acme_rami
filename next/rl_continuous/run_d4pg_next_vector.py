@@ -41,7 +41,8 @@ d4pg_next_hyperparams = {
   'policy_arch': (256, 256),
   'critic_arch': (256, 256),
   # 'critic_atoms' = jnp.linspace(-150., 150., num_atoms)
-  'num_sgd_steps_per_step': 32
+  # 'num_sgd_steps_per_step': 32,
+  'num_sgd_steps_per_step': 128,
 }
 
 
