@@ -16,8 +16,8 @@ LEVELS=(
 
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-ID="local_next_"$DATETIME
-# ID="local_20230914:041248"
+# ID="local_next_"$DATETIME
+ID="local_next_20230918:045122"
 
 SEEDS=(1 2 3)
 

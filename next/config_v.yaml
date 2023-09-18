@@ -47,34 +47,78 @@ control:
         humanoid:walk,
         manipulator:bring_ball
       ]
-
-    # extra:
-    #   run: {steps: 1_000_000}
-    #   tasks: [
-    #     cartpole:balance,
-    #     # cartpole:two_poles,
-    #     # cartpole:three_poles,
-    #     # dog:stand,
-    #     # dog:walk,
-    #     # dog:trot,
-    #     # dog:run,
-    #     # dog:fetch,
-    #     manipulator:bring_ball,
-    #     # manipulator:bring_peg,
-    #     # manipulator:insert_ball,
-    #     # manipulator:insert_peg,
-    #     # point_mass:hard,
-    #     # quadruped:walk,
-    #     # quadruped:run,
-    #     # quadruped:escape,
-    #     # quadruped:fetch,
-    #     # reacher:easy,
-    #     # reacher:hard,
-    #     # stacker:stack_2,
-    #     # stacker:stack_4,
-    #   ]
     
 
+dmc_45: # 9x5
+    trivial:
+      run: {steps: 500_000}
+      tasks: [
+        ball_in_cup:catch,
+        cartpole:balance,
+        cartpole:balance_sparse,
+        cartpole:swingup,
+        hopper:stand, # ?trivial
+        point_mass:easy, # trivial
+        reacher:easy,
+        walker:stand,
+        walker:walk
+      ]
+
+    easy:
+      run: {steps: 1_000_000}
+      tasks: [
+        cartpole:swingup_sparse,
+        cartpole:two_poles, # (easy)-medium
+        cheetah:run, # easy
+        fish:upright, # easy
+        finger:turn_easy,
+        pendulum:swingup,
+        point_mass:hard, # (easy)-medium
+        reacher:hard,
+        swimmer:swimmer6
+      ]
+    
+    medium:
+      run: {steps: 2_000_000}
+      tasks: [
+        cartpole:three_poles, # (medium)-hard
+        dog:stand, # (medium)
+        finger:spin,
+        finger:turn_hard,
+        fish:swim,
+        humanoid:stand, # ?medium
+        stacker:stack_2, # (medium)
+        swimmer:swimmer15,
+        walker:run
+      ]
+    
+    hard:
+      run: {steps: 5_000_000}
+      tasks: [
+        acrobot:swingup,
+        acrobot:swingup_sparse,
+        dog:walk, # hard
+        dog:trot, # hard
+        hopper:hop,
+        humanoid:walk,
+        manipulator:bring_ball
+        quadruped:walk, # hard
+        stacker:stack_4, # hard
+      ]
+
+    extra:
+      run: {steps: 10_000_000}
+      tasks: [
+        dog:run, # hard+
+        dog:fetch, # hard+
+        humanoid:run, # hard+
+        manipulator:bring_peg, # hard+
+        manipulator:insert_ball, # hard+
+        manipulator:insert_peg, # hard+
+        quadruped:run, # hard+
+        quadruped:escape, # hard+
+        quadruped:fetch, # hard+
+      ]
 
 
 # atari:
