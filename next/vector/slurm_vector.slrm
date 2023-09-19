@@ -5,7 +5,7 @@
 #SBATCH --open-mode=append
 #SBATCH --qos=normal
 #SBATCH --nodes=3
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:9
 #SBATCH --cpus-per-task=32
 #SBATCH --mem-per-cpu=1G
 #SBATCH --partition=rtx6000
