@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=acme_mfrl
+#SBATCH --job-name=mfrl_dmc
 
 #SBATCH --open-mode=append
 #SBATCH --qos=normal
