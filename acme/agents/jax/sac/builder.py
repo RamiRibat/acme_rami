@@ -38,6 +38,8 @@ import optax
 import reverb
 from reverb import rate_limiters
 
+from acme.agents.jax.sac.config import target_entropy_from_env_spec
+
 
 @normalization.input_normalization_builder
 class SACBuilder(builders.ActorLearnerBuilder[sac_networks.SACNetworks,
@@ -66,6 +68,7 @@ class SACBuilder(builders.ActorLearnerBuilder[sac_networks.SACNetworks,
       replay_client: Optional[reverb.Client] = None,
       counter: Optional[counting.Counter] = None,
   ) -> core.Learner:
+    target_entropy = target_entropy_from_env_spec(environment_spec)
     del environment_spec, replay_client
 
     # Create optimizers
@@ -77,7 +80,8 @@ class SACBuilder(builders.ActorLearnerBuilder[sac_networks.SACNetworks,
         tau=self._config.tau,
         discount=self._config.discount,
         entropy_coefficient=self._config.entropy_coefficient,
-        target_entropy=self._config.target_entropy,
+        # target_entropy=self._config.target_entropy,
+        target_entropy=target_entropy,
         rng=random_key,
         reward_scale=self._config.reward_scale,
         num_sgd_steps_per_step=self._config.num_sgd_steps_per_step,

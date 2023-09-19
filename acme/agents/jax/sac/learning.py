@@ -227,36 +227,69 @@ class SACLearner(acme.Learner):
     # Use the JIT compiler.
     self._update_step = jax.jit(update_step)
 
-    def make_initial_state(key: networks_lib.PRNGKey) -> TrainingState:
-      """Initialises the training state (parameters and optimiser state)."""
-      key_policy, key_q, key = jax.random.split(key, 3)
+    # def make_initial_state(key: networks_lib.PRNGKey) -> TrainingState:
+    #   """Initialises the training state (parameters and optimiser state)."""
+    #   key_policy, key_q, key = jax.random.split(key, 3)
 
-      policy_params = networks.policy_network.init(key_policy)
-      policy_optimizer_state = policy_optimizer.init(policy_params)
+    #   policy_params = networks.policy_network.init(key_policy)
+    #   policy_optimizer_state = policy_optimizer.init(policy_params)
 
-      q_params = networks.q_network.init(key_q)
-      q_optimizer_state = q_optimizer.init(q_params)
+    #   q_params = networks.q_network.init(key_q)
+    #   q_optimizer_state = q_optimizer.init(q_params)
 
-      state = TrainingState(
-          policy_optimizer_state=policy_optimizer_state,
-          q_optimizer_state=q_optimizer_state,
-          policy_params=policy_params,
-          q_params=q_params,
-          target_q_params=q_params,
-          key=key)
+    #   state = TrainingState(
+    #       policy_optimizer_state=policy_optimizer_state,
+    #       q_optimizer_state=q_optimizer_state,
+    #       policy_params=policy_params,
+    #       q_params=q_params,
+    #       target_q_params=q_params,
+    #       key=key)
 
-      if adaptive_entropy_coefficient:
-        state = state._replace(alpha_optimizer_state=alpha_optimizer_state,
-                               alpha_params=log_alpha)
-      return state
+    #   if adaptive_entropy_coefficient:
+    #     state = state._replace(alpha_optimizer_state=alpha_optimizer_state,
+    #                            alpha_params=log_alpha)
+    #   return state
 
     # Create initial state.
-    self._state = make_initial_state(rng)
+    self._key = rng
+    self._networks = networks
+    self._policy_optimizer = policy_optimizer
+    self._q_optimizer = q_optimizer
+    self._adaptive_entropy_coefficient = adaptive_entropy_coefficient
+    self._alpha_optimizer_state = alpha_optimizer_state
+    self._log_alpha = log_alpha
+    # self._state = make_initial_state(rng)
+    self._state = self._make_initial_state()
 
     # Do not record timestamps until after the first learning step is done.
     # This is to avoid including the time it takes for actors to come online and
     # fill the replay buffer.
     self._timestamp = None
+
+  def _make_initial_state(self) -> TrainingState:
+    """Initialises the training state (parameters and optimiser state)."""
+    print('Learner._make_initial_state')
+    key = self._key
+    key_policy, key_q, key = jax.random.split(key, 3)
+
+    policy_params = self._networks.policy_network.init(key_policy)
+    policy_optimizer_state = self._policy_optimizer.init(policy_params)
+
+    q_params = self._networks.q_network.init(key_q)
+    q_optimizer_state = self._q_optimizer.init(q_params)
+
+    state = TrainingState(
+        policy_optimizer_state=policy_optimizer_state,
+        q_optimizer_state=q_optimizer_state,
+        policy_params=policy_params,
+        q_params=q_params,
+        target_q_params=q_params,
+        key=key)
+
+    if self._adaptive_entropy_coefficient:
+      state = state._replace(alpha_optimizer_state=self._alpha_optimizer_state,
+                              alpha_params=self._log_alpha)
+    return state
 
   def step(self):
     sample = next(self._iterator)

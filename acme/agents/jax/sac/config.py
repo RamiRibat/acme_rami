@@ -14,7 +14,7 @@
 
 """SAC config."""
 import dataclasses
-from typing import Any, Optional
+from typing import Any, Optional, Optional, Sequence
 
 from acme import specs
 from acme.adders import reverb as adders_reverb
@@ -37,6 +37,7 @@ class SACConfig(normalization.InputNormalizerConfig):
   target_entropy: float = 0.0
   # Target smoothing coefficient.
   tau: float = 0.005
+  hidden_layer_sizes: Sequence[int] = (256, 256)
 
   # Replay options
   min_replay_size: int = 10000
