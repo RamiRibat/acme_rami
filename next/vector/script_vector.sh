@@ -31,7 +31,7 @@ for SUITE in ${SUITES[*]}; do
         MUJOCO_GL=egl \
         # XLA_PYTHON_CLIENT_MEM_FRACTION=0.45 \
         python ../rl_continuous/run_ppo.py \
-        --acme_id 'v_test' --seed 0 --suite 'control' --level 'trivial' &
+        --acme_id 'v_test' --seed 0 --suite 'control' --level 'trivial'
         # MUJOCO_GL=egl \
         # XLA_PYTHON_CLIENT_MEM_FRACTION=0.45 \
         # python ../rl_continuous/run_sac.py \
