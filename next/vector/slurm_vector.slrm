@@ -28,6 +28,7 @@ AGENTS=(
 )
 
 SEEDS=(1 2 3)
+# GPU_frac = 0.9/${#SEEDS[@]}
 
 AGENT=$1
 
