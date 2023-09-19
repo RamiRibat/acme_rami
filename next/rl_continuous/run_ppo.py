@@ -23,6 +23,10 @@ from acme.jax import experiments
 from acme.utils import lp_utils
 import launchpad as lp
 
+import warnings
+warnings.filterwarnings('ignore')
+
+
 ppo_hyperparams = {
   'unroll_length': 8,
   'num_minibatches': 8,
@@ -30,8 +34,7 @@ ppo_hyperparams = {
   'learning_rate': 3e-4,
   'gae_lambda': 0.95,
   'discount': 0.99,
-  'policy_arch': (256, 256, 256),
-  'critic_arch': (256, 256, 256),
+  'hidden_layer_sizes': (256, 256),
   'normalize_advantage': True,
   'normalize_value': True
 }
@@ -61,17 +64,13 @@ flags.DEFINE_integer('gpu', None, 'Random seed.')
 def build_experiment_config():
   """Builds PPO experiment config which can be executed in different ways."""
   # Create an environment, grab the spec, and use it to create networks.
-  # suite, task = FLAGS.task.split(':', 1)
   suite, task = FLAGS.suite, FLAGS.task
-
   environment_factory = lambda seed: helpers.make_environment(suite, task)
-
-  # layer_sizes = (256, 256, 256)
 
   def network_factory(spec) -> ppo.PPONetworks:
     return ppo.make_networks(
         spec=spec,
-        hidden_layer_sizes=ppo_hyperparams['policy_arch']
+        hidden_layer_sizes=ppo_hyperparams['hidden_layer_sizes']
     )
 
   ppo_config = ppo.PPOConfig(
@@ -97,7 +96,6 @@ def main(_):
   FLAGS.eval_every = FLAGS.num_steps//20
 
   for task in level_info['tasks']:
-    # print('task: ', task)
     FLAGS.task = task
     experiment_cfg = build_experiment_config()
     experiments.run_experiment(

@@ -30,17 +30,17 @@ warnings.filterwarnings('ignore')
 
 
 d4pg_next_hyperparams = {
-  'batch_size': 256,
-  'learning_rate': 3e-4,
   'discount': 0.99,
-  'n_step': 5,  # The D4PG agent learns from n-step transitions.
   'sigma': 0.2, # exploration noise
   'target_update_period': 100,
-  'samples_per_insert': 32.0, # Controls the relative rate of sampled vs inserted items. In this case, items are n-step transitions.
   'n_atoms': 51, # Atoms used by the categorical distributional critic.
   'policy_arch': (256, 256),
   'critic_arch': (256, 256),
   # 'critic_atoms' = jnp.linspace(-150., 150., num_atoms)
+  'n_step': 5,  # The D4PG agent learns from n-step transitions.
+  'batch_size': 256,
+  'learning_rate': 3e-4,
+  'samples_per_insert': 32.0, # Controls the relative rate of sampled vs inserted items. In this case, items are n-step transitions.
   'num_sgd_steps_per_step': 32,
   # 'num_sgd_steps_per_step': 128,
 }

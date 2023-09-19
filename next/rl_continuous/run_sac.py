@@ -14,6 +14,7 @@
 
 """Example running SAC on continuous control tasks."""
 
+import os, yaml, json
 from absl import flags
 from acme import specs
 from acme.agents.jax import normalization
@@ -25,54 +26,99 @@ from acme.jax import experiments
 from acme.utils import lp_utils
 import launchpad as lp
 
+from acme.utils import observers as observers_lib
+
+import warnings
+warnings.filterwarnings('ignore')
+
+sac_hyperparams = {
+  'discount': 0.99,
+  'tau': 0.005,
+  'hidden_layer_sizes': (256, 256),
+  'n_step': 2,  # The D4PG agent learns from n-step transitions.
+  'batch_size': 256,
+  'learning_rate': 3e-4,
+  'prefetch_size': 4,
+  'samples_per_insert': 256, # Controls the relative rate of sampled vs inserted items. In this case, items are n-step transitions.
+  'num_sgd_steps_per_step': 1,
+  # 'num_sgd_steps_per_step': 32,
+  # 'num_sgd_steps_per_step': 128,
+}
+
 FLAGS = flags.FLAGS
 
+
 flags.DEFINE_bool(
-    'run_distributed', True, 'Should an agent be executed in a distributed '
+    'run_distributed', False, 'Should an agent be executed in a distributed '
     'way. If False, will run single-threaded.')
-flags.DEFINE_string('env_name', 'gym:HalfCheetah-v2', 'What environment to run')
+
+flags.DEFINE_string('acme_id', None, 'Experiment identifier to use for Acme.')
+flags.DEFINE_string('agent', 'sac', 'What agent in use.')
+flags.DEFINE_string('suite', 'control', 'Suite')
+flags.DEFINE_string('level', 'trivial', "Task level")
+flags.DEFINE_string('task', 'walker:walk', 'What environment to run')
+flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
+flags.DEFINE_integer('eval_every', 25_000, 'How often to run evaluation.')
+flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
+# flags.DEFINE_multi_integer('seed', [0], 'Random seed.')
+flags.DEFINE_string('seeds', '0', 'Random seed(s).')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
-flags.DEFINE_integer('num_steps', 1_000_000, 'Number of env steps to run.')
-flags.DEFINE_integer('eval_every', 50_000, 'How often to run evaluation.')
-flags.DEFINE_integer('evaluation_episodes', 10, 'Evaluation episodes.')
+flags.DEFINE_integer('gpu', None, 'Random seed.')
 
 
 def build_experiment_config():
   """Builds SAC experiment config which can be executed in different ways."""
   # Create an environment, grab the spec, and use it to create networks.
 
-  suite, task = FLAGS.env_name.split(':', 1)
-  environment = helpers.make_environment(suite, task)
+  # Create an environment, grab the spec, and use it to create networks.
+  # suite, task = FLAGS.env_name.split(':', 1)
+  suite, task = FLAGS.suite, FLAGS.task
 
-  environment_spec = specs.make_environment_spec(environment)
-  network_factory = (
-      lambda spec: sac.make_networks(spec, hidden_layer_sizes=(256, 256, 256)))
+  # Bound of the distributional critic. The reward for control environments is
+  # normalized, not for gym locomotion environments hence the different scales.
+  vmax_values = {
+      'gym': 1000.,
+      'control': 150.,
+  }
+  vmax = vmax_values[suite]
+
+  environment_factory = lambda seed: helpers.make_environment(suite, task)
+
+  def network_factory(spec) -> sac.SACNetworks:
+    return sac.make_networks(
+        spec=spec,
+        hidden_layer_sizes=sac_hyperparams['hidden_layer_sizes']
+    )
 
   # Construct the agent.
-  config = sac.SACConfig(
-      learning_rate=3e-4,
-      n_step=2,
-      target_entropy=sac.target_entropy_from_env_spec(environment_spec),
-      input_normalization=normalization.NormalizationConfig())
-  sac_builder = builder.SACBuilder(config)
+  sac_config = sac.SACConfig(
+      **sac_hyperparams,
+      # target_entropy=sac.target_entropy_from_env_spec(environment_spec), # TODO: Add if
+      input_normalization=normalization.NormalizationConfig()
+      )
+  sac_builder = sac.SACBuilder(config=sac_config)
 
   return experiments.ExperimentConfig(
       builder=sac_builder,
-      environment_factory=lambda seed: helpers.make_environment(suite, task),
+      environment_factory=environment_factory,
       network_factory=network_factory,
       seed=FLAGS.seed,
       max_num_actor_steps=FLAGS.num_steps)
 
 
 def main(_):
-  config = build_experiment_config()
-  if FLAGS.run_distributed:
-    program = experiments.make_distributed_experiment(
-        experiment=config, num_actors=4)
-    lp.launch(program, xm_resources=lp_utils.make_xm_docker_resources(program))
-  else:
+  path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
+  config = yaml.safe_load(open(path))
+  level_info = config[FLAGS.suite][FLAGS.level]
+  FLAGS.num_steps = level_info['run']['steps']
+  FLAGS.eval_every = FLAGS.num_steps//20
+
+  for task in level_info['tasks']:
+    # print('task: ', task)
+    FLAGS.task = task
+    experiment_cfg = build_experiment_config()
     experiments.run_experiment(
-        experiment=config,
+        experiment=experiment_cfg,
         eval_every=FLAGS.eval_every,
         num_eval_episodes=FLAGS.evaluation_episodes)
 

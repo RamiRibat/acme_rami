@@ -22,7 +22,6 @@ from absl import app
 from acme.jax import experiments
 from acme.utils import lp_utils
 import launchpad as lp
-
 from acme.utils import observers as observers_lib
 
 import warnings
@@ -43,9 +42,7 @@ d4pg_hyperparams = {
   # 'critic_atoms' = jnp.linspace(-150., 150., num_atoms)
 }
 
-
 FLAGS = flags.FLAGS
-
 
 flags.DEFINE_bool(
     'run_distributed', False, 'Should an agent be executed in a distributed '
@@ -64,19 +61,13 @@ flags.DEFINE_string('seeds', '0', 'Random seed(s).')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_integer('gpu', None, 'Random seed.')
 
-# flags.DEFINE_integer('replay_ratio', 20_000, 'Reset.')
-
-
-
-
-
 
 def build_experiment_config():
   """Builds D4PG experiment config which can be executed in different ways."""
 
   # Create an environment, grab the spec, and use it to create networks.
-  # suite, task = FLAGS.env_name.split(':', 1)
   suite, task = FLAGS.suite, FLAGS.task
+  environment_factory = lambda seed: helpers.make_environment(suite, task)
 
   # Bound of the distributional critic. The reward for control environments is
   # normalized, not for gym locomotion environments hence the different scales.
@@ -85,8 +76,6 @@ def build_experiment_config():
       'control': 150.,
   }
   vmax = vmax_values[suite]
-
-  environment_factory = lambda seed: helpers.make_environment(suite, task)
 
   def network_factory(spec) -> d4pg.D4PGNetworks:
     return d4pg.make_networks(
@@ -116,7 +105,6 @@ def main(_):
   FLAGS.eval_every = FLAGS.num_steps//20
 
   for task in level_info['tasks']:
-    # print('task: ', task)
     FLAGS.task = task
     experiment_cfg = build_experiment_config()
     experiments.run_experiment(
