@@ -36,6 +36,15 @@ spec.loader.exec_module(_metadata)
 # most recent stable versions of each library we'll be explicit just make make
 # sure this constraint is upheld.
 
+core_requirements = [
+    'absl-py',
+    'dm-env',
+    'dm-tree',
+    'numpy>=1.20',
+    'pillow',
+    'typing-extensions',
+]
+
 tensorflow = [
     'tensorflow==2.8.0',
     'tensorflow_probability==0.15.0',
@@ -44,26 +53,18 @@ tensorflow = [
     'dm-launchpad==0.5.2',
 ]
 
-core_requirements = [
-    'absl-py',
-    'dm-env',
-    'dm-tree',
-    'numpy',
-    'pillow',
-    'typing-extensions',
-]
-
 jax_requirements = [
-    'jax>=0.4.3',
-    'chex',
-    'dm-haiku',
+    'jax==0.4.3',
+    'jaxlib==0.4.3',
+    'chex==0.1.6',
+    'dm-haiku==0.0.10',
     'flax',
     'optax',
     'rlax',
 ] + tensorflow
 
 tf_requirements = [
-    'dm-sonnet',
+    'dm-sonnet==2.0.0',
     'trfl',
 ] + tensorflow
 
@@ -76,7 +77,7 @@ envs_requirements = [
     'atari-py',
     'bsuite',
     'dm-control',
-    'gym==0.25.0',
+    'gym==0.25',
     'gym[atari]',
     'pygame==2.1.0',
     'rlds',
