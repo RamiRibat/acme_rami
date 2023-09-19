@@ -19,7 +19,7 @@ LEVELS=(
 
 ID=$1
 AGENT=$2
-SEED=$2
+SEED=$3
 
 for SUITE in ${SUITES[*]}; do
     for LEVEL in ${LEVELS[*]}; do
