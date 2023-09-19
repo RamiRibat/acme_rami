@@ -237,7 +237,7 @@ class D4PGLearner(acme.Learner):
     self._timestamp = None
 
   def _init_learner_state(self):
-    # print('Initialize Learner State')
+    print('Initialize Learner State')
     # Create the network parameters and copy into the target network parameters.
     key_policy, key_critic = jax.random.split(self._random_key)
     initial_policy_params = self._policy_network.init(key_policy)

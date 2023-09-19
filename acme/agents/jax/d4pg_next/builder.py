@@ -170,7 +170,7 @@ class D4PGBuilder(builders.ActorLearnerBuilder[d4pg_networks.D4PGNetworks,
         counter=counter,
         logger=logger_fn('learner'),
         num_sgd_steps_per_step=self._config.num_sgd_steps_per_step,
-        reset_frequency=int(160000/self._config.num_sgd_steps_per_step)
+        reset_frequency=int(10000/self._config.num_sgd_steps_per_step)
         )
 
   def make_replay_tables(
