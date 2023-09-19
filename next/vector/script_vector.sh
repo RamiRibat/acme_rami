@@ -28,13 +28,20 @@ for SUITE in ${SUITES[*]}; do
         # XLA_PYTHON_CLIENT_MEM_FRACTION=0.5 \
         # python ../rl_continuous/run_$AGENT.py \
         # --acme_id $ID --seed $SEED --suite $SUITE --level $LEVEL
+
         # MUJOCO_GL=egl \
         # # XLA_PYTHON_CLIENT_MEM_FRACTION=0.45 \
         # python ../rl_continuous/run_ppo.py \
         # --acme_id 'v_test' --seed 0 --suite 'control' --level 'trivial' &
+
+        # MUJOCO_GL=egl \
+        # XLA_PYTHON_CLIENT_MEM_FRACTION=0.45 \
+        # python ../rl_continuous/run_sac.py \
+        # --acme_id 'v_test' --seed 0 --suite 'control' --level 'trivial' &
+
         MUJOCO_GL=egl \
-        XLA_PYTHON_CLIENT_MEM_FRACTION=0.45 \
-        python ../rl_continuous/run_sac.py \
+        # XLA_PYTHON_CLIENT_MEM_FRACTION=0.45 \
+        python ../rl_continuous/run_d4pg.py \
         --acme_id 'v_test' --seed 0 --suite 'control' --level 'trivial'
     done
 done
