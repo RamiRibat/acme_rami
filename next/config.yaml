@@ -24,29 +24,101 @@ control:
         swimmer:swimmer6
       ]
     
-    # medium:
-    #   run: {steps: 2_000_000}
-    #   tasks: [
-    #     cheetah:run,
-    #     finger:spin,
-    #     finger:turn_hard,
-    #     fish:swim,
-    #     fish:upright,
-    #     swimmer:swimmer15,
-    #     walker:run
-    #   ]
+    medium:
+      run: {steps: 2_000_000}
+      tasks: [
+        cheetah:run,
+        finger:spin,
+        finger:turn_hard,
+        fish:swim,
+        fish:upright,
+        swimmer:swimmer15,
+        walker:run
+      ]
     
-    # hard:
-    #   run: {steps: 5_000_000}
-    #   tasks: [
-    #     acrobot:swingup,
-    #     acrobot:swingup_sparse,
-    #     hopper:hop,
-    #     humanoid:run,
-    #     humanoid:stand,
-    #     humanoid:walk,
-    #     manipulator:bring_ball
-    #   ]
+    hard:
+      run: {steps: 5_000_000}
+      tasks: [
+        acrobot:swingup,
+        acrobot:swingup_sparse,
+        hopper:hop,
+        humanoid:run,
+        humanoid:stand,
+        humanoid:walk,
+        manipulator:bring_ball
+      ]
+    
+
+dmc_45: # 9x5
+    trivial:
+      run: {steps: 500_000}
+      tasks: [
+        ball_in_cup:catch,
+        cartpole:balance,
+        cartpole:balance_sparse,
+        cartpole:swingup,
+        hopper:stand, # ?trivial
+        point_mass:easy, # trivial
+        reacher:easy,
+        walker:stand,
+        walker:walk
+      ]
+
+    easy:
+      run: {steps: 1_000_000}
+      tasks: [
+        cartpole:swingup_sparse,
+        cartpole:two_poles, # (easy)-medium
+        cheetah:run, # easy
+        fish:upright, # easy
+        finger:turn_easy,
+        pendulum:swingup,
+        point_mass:hard, # (easy)-medium
+        reacher:hard,
+        swimmer:swimmer6
+      ]
+    
+    medium:
+      run: {steps: 2_000_000}
+      tasks: [
+        cartpole:three_poles, # (medium)-hard
+        dog:stand, # (medium)
+        finger:spin,
+        finger:turn_hard,
+        fish:swim,
+        humanoid:stand, # ?medium
+        stacker:stack_2, # (medium)
+        swimmer:swimmer15,
+        walker:run
+      ]
+    
+    hard:
+      run: {steps: 5_000_000}
+      tasks: [
+        acrobot:swingup,
+        acrobot:swingup_sparse,
+        dog:walk, # hard
+        dog:trot, # hard
+        hopper:hop,
+        humanoid:walk,
+        manipulator:bring_ball
+        quadruped:walk, # hard
+        stacker:stack_4, # hard
+      ]
+
+    extra:
+      run: {steps: 10_000_000}
+      tasks: [
+        dog:run, # hard+
+        dog:fetch, # hard+
+        humanoid:run, # hard+
+        manipulator:bring_peg, # hard+
+        manipulator:insert_ball, # hard+
+        manipulator:insert_peg, # hard+
+        quadruped:run, # hard+
+        quadruped:escape, # hard+
+        quadruped:fetch, # hard+
+      ]
 
 
 # atari:
