@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=d4pg
+#SBATCH --job-name=acme_dmc
 
 #SBATCH --open-mode=append
 #SBATCH --qos=normal
@@ -18,14 +18,10 @@
 
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
-ID="v_"$DATETIME"_256x256"
-# ID="v_20230917:204106_256x256"
+# ID="v_"$DATETIME"_256x256"
+ID="v_acme_mfrl_dmc_256x256"
 
 SEEDS=(1 2 3)
-
-# rm -f ~/logdir/vector.log
-
-# echo "New experiment" >> ~/logdir/vector.log
 
 
 for SEED in ${SEEDS[*]}; do
