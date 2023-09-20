@@ -34,7 +34,7 @@ for SEED in ${SEEDS[*]}; do
             # MUJOCO_GL=egl python run_d4pg.py --acme_id $ID --seed $SEED --suite $SUITE --level $LEVEL
             MUJOCO_GL=egl \
             XLA_PYTHON_CLIENT_MEM_FRACTION=0.7 \
-            python run_ppo.py \
+            python run_sac.py \
             --acme_id $ID --seed $SEED --suite $SUITE --level $LEVEL
         done
     done
