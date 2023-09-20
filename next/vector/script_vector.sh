@@ -22,7 +22,7 @@ AGENT=$2
 
 # SEED=$3
 SEEDS=(1 2 3)
-MEM_FRACTION = 0.75/${#SEEDS[@]}
+MEM_FRACTION=0.75/${#SEEDS[@]}
 
 for SUITE in ${SUITES[*]}; do
     for LEVEL in ${LEVELS[*]}; do
