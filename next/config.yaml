@@ -4,12 +4,12 @@ control:
       run: {steps: 500_000}
       tasks: [
         ball_in_cup:catch,
-        # cartpole:balance,
-        # cartpole:balance_sparse,
-        # cartpole:swingup,
-        # reacher:easy,
-        # walker:stand,
-        # walker:walk
+        cartpole:balance,
+        cartpole:balance_sparse,
+        cartpole:swingup,
+        reacher:easy,
+        walker:stand,
+        walker:walk
       ]
 
     easy:
