@@ -21,11 +21,11 @@ DATETIME=$(date +'%Y%m%d:%H%M%S')
 # ID="v_"$DATETIME"_256x256"
 ID="v_mfrl_dmc_256x256"
 
-AGENTS=(
-    'ppo'
-    'sac'
-    'd4pg'
-)
+# AGENTS=(
+#     'ppo'
+#     'sac'
+#     'd4pg'
+# )
 
 # SEEDS=(1 2 3)
 # GPU_frac = 0.9/${#SEEDS[@]}
