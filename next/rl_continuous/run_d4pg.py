@@ -44,10 +44,6 @@ d4pg_hyperparams = {
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_bool(
-    'run_distributed', False, 'Should an agent be executed in a distributed '
-    'way. If False, will run single-threaded.')
-
 flags.DEFINE_string('acme_id', None, 'Experiment identifier to use for Acme.')
 flags.DEFINE_string('agent', 'd4pg', 'What agent in use.')
 flags.DEFINE_string('suite', 'control', 'Suite')

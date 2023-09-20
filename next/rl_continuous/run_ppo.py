@@ -41,12 +41,6 @@ ppo_hyperparams = {
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_bool(
-    'run_distributed', False, 'Should an agent be executed in a distributed '
-    'way. If False, will run single-threaded.')
-flags.DEFINE_integer('num_distributed_actors', 64,
-                     'Number of actors to use in the distributed setting.')
-
 flags.DEFINE_string('acme_id', None, 'Experiment identifier to use for Acme.')
 flags.DEFINE_string('agent', 'ppo', 'What agent in use.')
 flags.DEFINE_string('suite', 'control', 'Suite')
