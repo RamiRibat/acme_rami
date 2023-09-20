@@ -35,12 +35,12 @@ for SUITE in ${SUITES[*]}; do
         # --acme_id 'v_test' --seed 0 --suite 'control' --level 'trivial' &
 
         MUJOCO_GL=egl \
-        XLA_PYTHON_CLIENT_MEM_FRACTION=0.45 \
+        XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 \
         python ../rl_continuous/run_sac.py \
         --acme_id 'v_test' --seed 0 --suite 'control' --level 'trivial' &
 
         MUJOCO_GL=egl \
-        XLA_PYTHON_CLIENT_MEM_FRACTION=0.45 \
+        XLA_PYTHON_CLIENT_MEM_FRACTION=0.4 \
         python ../rl_continuous/run_d4pg.py \
         --acme_id 'v_test' --seed 0 --suite 'control' --level 'trivial'
     done
