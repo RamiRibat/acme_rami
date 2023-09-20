@@ -26,7 +26,7 @@ MEM_FRACTION=0.8
 for SUITE in ${SUITES[*]}; do
     for LEVEL in ${LEVELS[*]}; do
         # for SEED in ${SEEDS[*]}; do
-        # XLA_PYTHON_CLIENT_MEM_FRACTION=false
+        XLA_PYTHON_CLIENT_MEM_FRACTION=false
 
         # MUJOCO_GL=egl python ../rl_continuous/run_$AGENT.py --acme_id $ID --seed $SEED --suite $SUITE --level $LEVEL
 
