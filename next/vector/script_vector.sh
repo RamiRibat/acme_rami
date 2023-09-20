@@ -33,7 +33,7 @@ for SUITE in ${SUITES[*]}; do
         MUJOCO_GL=egl \
         XLA_PYTHON_CLIENT_MEM_FRACTION=$MEM_FRACTION \
         python ../rl_continuous/run_$AGENT.py \
-        --acme_id $ID --seed $SEED --suite $SUITE --level $LEVEL &
+        --acme_id $ID --seed $SEED --suite $SUITE --level $LEVEL
 
         # MUJOCO_GL=egl \
         # XLA_PYTHON_CLIENT_MEM_FRACTION=0.25 \
