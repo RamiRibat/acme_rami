@@ -19,7 +19,8 @@
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
 # ID="v_"$DATETIME"_256x256"
-ID="v_mfrl_dmc_next"
+ID="v_mfrl_dmc_256x256"
+# ID="v_mfrl_dmc_next"
 
 # AGENTS=(
 #     'ppo'
