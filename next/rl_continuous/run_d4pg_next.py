@@ -42,6 +42,7 @@ d4pg_next_hyperparams = {
   'critic_arch': (256, 256),
   # 'critic_atoms' = jnp.linspace(-150., 150., num_atoms)
   'num_sgd_steps_per_step': 32
+  # 'num_sgd_steps_per_step': 128,
 }
 
 
@@ -117,7 +118,6 @@ def main(_):
   FLAGS.eval_every = FLAGS.num_steps//20
 
   for task in level_info['tasks']:
-    # print('task: ', task)
     FLAGS.task = task
     experiment_cfg = build_experiment_config()
     experiments.run_experiment(
