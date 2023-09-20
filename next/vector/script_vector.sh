@@ -23,18 +23,19 @@ AGENT=$2
 # SEED=$3
 SEEDS=(1 2 3)
 # MEM_FRACTION="0.75/${#SEEDS[@]}" | bc -l
-FRACTION=$( echo "0.75/${#SEEDS[@]}" | bc -l )
-MEM_FRACTION=FRACTION
+# FRACTION=$( echo "75/${#SEEDS[@]}" | bc -l )
+# FRACTION=$(("75/${#SEEDS[@]}"))
+MEM_FRACTION=0.$(("75/${#SEEDS[@]}"))
 
 for SUITE in ${SUITES[*]}; do
     for LEVEL in ${LEVELS[*]}; do
         for SEED in ${SEEDS[*]}; do
             echo "MEM_FRACTION " $MEM_FRACTION
-            
+
             # MUJOCO_GL=egl python ../rl_continuous/run_$AGENT.py --acme_id $ID --seed $SEED --suite $SUITE --level $LEVEL
 
             MUJOCO_GL=egl \
-            XLA_PYTHON_CLIENT_MEM_FRACTION=$MEM_FRACTION \
+            XLA_PYTHON_CLIENT_MEM_FRACTION=0.25 \
             python ../rl_continuous/run_$AGENT.py \
             --acme_id $ID --seed $SEED --suite $SUITE --level $LEVEL &
 
