@@ -30,6 +30,9 @@ import dm_env
 import jax
 import reverb
 
+import os
+os.environ['XLA_PYTHON_CLIENT_MEM_FRACTION']=0.25
+
 
 def run_experiment(experiment: config.ExperimentConfig,
                    eval_every: int = 100,
