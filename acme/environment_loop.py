@@ -162,6 +162,8 @@ class EnvironmentLoop(core.Worker):
   def run_dummy_episode(self):
     # Record counts.
     counts = self._counter.increment(episodes=0, steps=0)
+    # print('counter: ', self._counter.get_counts())
+    # print('logger: ', self._logger)
     
     result = {
         'episode_length': 0,
@@ -218,19 +220,17 @@ class EnvironmentLoop(core.Worker):
       episode_count += 0
       step_count += 0
       # Log the given episode results.
-      # print('\nresult(dummy): ', result)
       self._logger.write(result)
-    
-    with signals.runtime_terminator():
-      while not should_terminate(episode_count, step_count):
-        episode_start = time.time()
-        result = self.run_episode()
-        result = {**result, **{'episode_duration': time.time() - episode_start}}
-        episode_count += 1
-        step_count += int(result['episode_length'])
-        # Log the given episode results.
-        # print('\nresult: ', result)
-        self._logger.write(result)
+    else:
+      with signals.runtime_terminator():
+        while not should_terminate(episode_count, step_count):
+          episode_start = time.time()
+          result = self.run_episode()
+          result = {**result, **{'episode_duration': time.time() - episode_start}}
+          episode_count += 1
+          step_count += int(result['episode_length'])
+          # Log the given episode results.
+          self._logger.write(result)
     
 
 

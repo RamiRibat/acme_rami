@@ -170,13 +170,19 @@ def run_experiment(experiment: config.ExperimentConfig,
       logger=eval_logger,
       observers=experiment.observers)
 
+  if 'actor_steps' not in parent_counter.get_counts().keys():
+    train_loop.run(num_steps=0) # init csv columns
+    eval_loop.run(num_episodes=num_eval_episodes) # eval at t=0
+
   steps = 0
-  steps += train_loop.run(num_steps=0)
   while steps < max_num_actor_steps:
-    eval_loop.run(num_episodes=num_eval_episodes)
+    # eval_loop.run(num_episodes=num_eval_episodes), checkpointer.save()
     num_steps = min(eval_every, max_num_actor_steps - steps)
     steps += train_loop.run(num_steps=num_steps)
-  eval_loop.run(num_episodes=num_eval_episodes)
+
+    eval_loop.run(num_episodes=num_eval_episodes)
+
+  checkpointer.save()
 
   environment.close()
 
@@ -256,8 +262,8 @@ class _LearningActor(core.Actor):
     if self._maybe_train():
       # Update the actor weights only when learner was updated.
       self._actor.update()
-    if self._checkpointer:
-      self._checkpointer.save()
+    # if self._checkpointer:
+    #   self._checkpointer.save()
 
 
 def _disable_insert_blocking(

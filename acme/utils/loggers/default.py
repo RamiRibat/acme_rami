@@ -55,6 +55,7 @@ def make_default_logger(
   terminal_logger = terminal.TerminalLogger(label=label, print_fn=print_fn)
 
   loggers = [terminal_logger]
+  # loggers = []
 
   if save_data:
     loggers.append(csv.CSVLogger(label=label))
