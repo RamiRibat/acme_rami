@@ -1,5 +1,8 @@
 #!/bin/bash
 
+GPU=$1
+AGENT=$2
+
 #SBATCH --job-name=mfrl_dmc
 
 #SBATCH --open-mode=append
@@ -8,7 +11,7 @@
 #SBATCH --gres=gpu:3
 #SBATCH --cpus-per-task=32
 #SBATCH --mem-per-cpu=1G
-#SBATCH --partition=$1
+#SBATCH --partition=${GPU}
 
 # echo "..Initialize.."
 
@@ -30,8 +33,7 @@ ID="v_mfrl_dmc_256x256"
 SEEDS=(1 2 3)
 # GPU_frac = 0.9/${#SEEDS[@]}
 
-GPU=$1
-AGENT=$2
+
 
 
 # for AGENT in ${AGENTS[*]}; do
