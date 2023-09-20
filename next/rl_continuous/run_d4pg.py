@@ -96,17 +96,20 @@ def build_experiment_config():
 def main(_):
   path = os.path.join(os.path.dirname(os.getcwd())+'/config_sub.yaml')
   config = yaml.safe_load(open(path))
-  level_info = config[FLAGS.suite][FLAGS.level]
-  FLAGS.num_steps = level_info['run']['steps']
-  FLAGS.eval_every = FLAGS.num_steps//20
-
-  for task in level_info['tasks']:
-    FLAGS.task = task
-    experiment_cfg = build_experiment_config()
-    experiments.run_experiment(
-        experiment=experiment_cfg,
-        eval_every=FLAGS.eval_every,
-        num_eval_episodes=FLAGS.evaluation_episodes)
+  
+  if FLAGS.level in config[FLAGS.suite].keys():
+    level_info = config[FLAGS.suite][FLAGS.level]
+    FLAGS.num_steps = level_info['run']['steps']
+    FLAGS.eval_every = FLAGS.num_steps//20
+    for task in level_info['tasks']:
+      FLAGS.task = task
+      experiment_cfg = build_experiment_config()
+      experiments.run_experiment(
+          experiment=experiment_cfg,
+          eval_every=FLAGS.eval_every,
+          num_eval_episodes=FLAGS.evaluation_episodes)
+  else:
+    return  
 
 
 if __name__ == '__main__':
