@@ -22,8 +22,9 @@ AGENT=$2
 
 # SEED=$3
 SEEDS=(1 2 3)
-MEM_PERCENTAGE=75/${#SEEDS[@]}
-MEM_FRACTION=0.$MEM_PERCENTAGE
+# MEM_FRACTION="0.75/${#SEEDS[@]}" | bc -l
+MEM_FRACTION=$( echo "0.75/${#SEEDS[@]}" | bc -l )
+echo "MEM_FRACTION " $MEM_FRACTION
 
 for SUITE in ${SUITES[*]}; do
     for LEVEL in ${LEVELS[*]}; do
