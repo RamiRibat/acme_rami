@@ -27,7 +27,7 @@ ID="v_mfrl_dmc_256x256"
 #     'd4pg'
 # )
 
-# SEEDS=(1 2 3)
+SEEDS=(1 2 3)
 # GPU_frac = 0.9/${#SEEDS[@]}
 
 AGENT=$1
