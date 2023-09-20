@@ -33,13 +33,13 @@ ID="v_mfrl_dmc_256x256"
 AGENT=$1
 
 
-for AGENT in ${AGENTS[*]}; do
-    for SEED in ${SEEDS[*]}; do
-        srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 -p rtx6000 --qos=normal \
-        --output=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${SEED}.out \
-        --error=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${SEED}.err \
-        bash script_vector.sh ${ID} ${AGENT} ${SEED} &
-    done
+# for AGENT in ${AGENTS[*]}; do
+for SEED in ${SEEDS[*]}; do
+    srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 -p rtx6000 --qos=normal \
+    --output=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${SEED}.out \
+    --error=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${SEED}.err \
+    bash script_vector.sh ${ID} ${AGENT} ${SEED} &
 done
+# done
 
 wait
