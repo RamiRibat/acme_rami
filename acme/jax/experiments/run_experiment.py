@@ -90,7 +90,7 @@ def run_experiment(
 	dataset = utils.prefetch(dataset, buffer_size=1) # isn't defined b4?
 
 	# Create actor, adder, and learner for generating, storing, and consuming
-	# data respectively.
+	# data respectively. (by Builder)
 	# NOTE: These are created in (reverse order) as the actor needs to be given the
 	# adder and the learner (as a source of variables).
 	learner_key, key = jax.random.split(key)
@@ -108,7 +108,11 @@ def run_experiment(
 
 	actor_key, key = jax.random.split(key)
 	actor = experiment.builder.make_actor(
-		actor_key, policy, environment_spec, variable_source=learner, adder=adder
+		random_key=actor_key,
+		policy=policy,
+		environment_spec=environment_spec,
+		variable_source=learner,
+		adder=adder
 	)
 
 	# Create the environment loop used for training.
@@ -155,6 +159,7 @@ def run_experiment(
 	# 	return
 
 	# Create the evaluation actor and loop.
+	eval_actor_key, key = jax.random.split(key)#jax.random.PRNGKey(experiment.seed)
 	eval_counter = counting.Counter(
 		parent_counter, prefix='evaluator', time_delta=0.)
 	eval_logger = experiment.logger_factory('evaluator',
@@ -165,7 +170,8 @@ def run_experiment(
 		environment_spec=environment_spec,
 		evaluation=True)
 	eval_actor = experiment.builder.make_actor(
-		random_key=jax.random.PRNGKey(experiment.seed),
+		# random_key=jax.random.PRNGKey(experiment.seed),
+		random_key=eval_actor_key,
 		policy=eval_policy,
 		environment_spec=environment_spec,
 		variable_source=learner)
@@ -188,7 +194,8 @@ def run_experiment(
 
 		eval_loop.run(num_episodes=num_eval_episodes)
 
-	checkpointer.save() # save only at the end of learning
+	if steps == max_num_actor_steps:
+		checkpointer.save() # save only at the end of learning
 
 	environment.close()
 
