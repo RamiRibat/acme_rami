@@ -29,6 +29,8 @@ import jax.numpy as jnp
 import optax
 import reverb
 
+from termcolor import colored
+
 
 class TrainingState(NamedTuple):
 	"""Contains training state for the learner."""
@@ -150,7 +152,7 @@ class SACLearner(acme.Learner):
 		critic_grad = jax.value_and_grad(critic_loss)
 		actor_grad = jax.value_and_grad(actor_loss)
 
-		def update_step(
+		def sgd_step(
 			state: TrainingState,
 			transitions: types.Transition,
 		) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
@@ -241,8 +243,8 @@ class SACLearner(acme.Learner):
 		self._iterator = iterator
 
 		# Use the JIT compiler.
-		update_step = utils.process_multiple_batches(update_step, num_sgd_steps_per_step)
-		self._update_step = jax.jit(update_step)
+		sgd_step = utils.process_multiple_batches(sgd_step, num_sgd_steps_per_step)
+		self._sgd_step = jax.jit(sgd_step)
 
 		# Create initial state.
 		self._key = rng
@@ -262,7 +264,7 @@ class SACLearner(acme.Learner):
 
 	def _make_initial_state(self) -> TrainingState:
 		"""Initialises the training state (parameters and optimizer state)."""
-		print('Learner._make_initial_state')
+		print(colored('Learner._make_initial_state', 'red'))
 		# Create keys for policy & q and renew key
 		key_policy, key_q, self._key = jax.random.split(self._key, 3)
 
@@ -298,8 +300,10 @@ class SACLearner(acme.Learner):
 
 		sample = next(self._iterator)
 		transitions = types.Transition(*sample.data)
+		# print(colored(f'transitions.reward: {transitions.reward.shape}', 'blue'))
+		# print(colored(f"actor: {self._counter.get_counts()['actor_steps']} | transitions.shape: {transitions.reward.shape}", "blue"))
 
-		self._state, metrics = self._update_step(self._state, transitions)
+		self._state, metrics = self._sgd_step(self._state, transitions)
 
 		# Compute elapsed time.
 		timestamp = time.time()

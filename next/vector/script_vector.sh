@@ -22,7 +22,7 @@ AGENT=$2
 RR=$3
 SEED=$4
 
-MEM_FRACTION=0.8
+MEM_FRACTION=0.75
 
 for SUITE in ${SUITES[*]}; do
     for LEVEL in ${LEVELS[*]}; do
