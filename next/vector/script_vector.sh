@@ -19,7 +19,7 @@ LEVELS=(
 
 ID=$1
 AGENT=$2
-SUFFIX=$3
+RR=$3
 SEED=$4
 
 MEM_FRACTION=0.8
@@ -29,7 +29,7 @@ for SUITE in ${SUITES[*]}; do
         MUJOCO_GL=egl \
         XLA_PYTHON_CLIENT_MEM_FRACTION=$MEM_FRACTION \
         python ../rl_continuous/run_$AGENT.py \
-        --acme_id $ID --agent_id $AGENT"_"$SUFFIX --seed $SEED --suite $SUITE --level $LEVEL
+        --acme_id $ID --agent_id $AGENT"_sr_"$RR --replay_ratio $RR --seed $SEED --suite $SUITE --level $LEVEL
     done
 done
 
