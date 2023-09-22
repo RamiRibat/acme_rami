@@ -31,292 +31,302 @@ import reverb
 
 
 class TrainingState(NamedTuple):
-  """Contains training state for the learner."""
-  policy_optimizer_state: optax.OptState
-  q_optimizer_state: optax.OptState
-  policy_params: networks_lib.Params
-  q_params: networks_lib.Params
-  target_q_params: networks_lib.Params
-  key: networks_lib.PRNGKey
-  alpha_optimizer_state: Optional[optax.OptState] = None
-  alpha_params: Optional[networks_lib.Params] = None
+	"""Contains training state for the learner."""
+	key: networks_lib.PRNGKey
+	policy_optimizer_state: optax.OptState
+	q_optimizer_state: optax.OptState
+	policy_params: networks_lib.Params
+	q_params: networks_lib.Params
+	target_q_params: networks_lib.Params
+	alpha_optimizer_state: Optional[optax.OptState] = None
+	alpha_params: Optional[networks_lib.Params] = None
+    # steps: int
 
 
 class SACLearner(acme.Learner):
-  """SAC learner."""
+	"""SAC learner."""
 
-  _state: TrainingState
+	_state: TrainingState
 
-  def __init__(
-      self,
-      networks: sac_networks.SACNetworks,
-      rng: jnp.ndarray,
-      iterator: Iterator[reverb.ReplaySample],
-      policy_optimizer: optax.GradientTransformation,
-      q_optimizer: optax.GradientTransformation,
-      tau: float = 0.005,
-      reward_scale: float = 1.0,
-      discount: float = 0.99,
-      entropy_coefficient: Optional[float] = None,
-      target_entropy: float = 0,
-      counter: Optional[counting.Counter] = None,
-      logger: Optional[loggers.Logger] = None,
-      num_sgd_steps_per_step: int = 1):
-    """Initialize the SAC learner.
+	def __init__(
+		self,
+		rng: jnp.ndarray,
+		iterator: Iterator[reverb.ReplaySample],
+		networks: sac_networks.SACNetworks,
+		policy_optimizer: optax.GradientTransformation,
+		q_optimizer: optax.GradientTransformation,
+		tau: float = 0.005,
+		reward_scale: float = 1.0,
+		discount: float = 0.99,
+		entropy_coefficient: Optional[float] = None,
+		target_entropy: float = 0,
+		counter: Optional[counting.Counter] = None,
+		logger: Optional[loggers.Logger] = None,
+		num_sgd_steps_per_step: int = 1,
+		jit: bool = True,
+	):
+		"""Initialize the SAC learner.
 
-    Args:
-      networks: SAC networks
-      rng: a key for random number generation.
-      iterator: an iterator over training data.
-      policy_optimizer: the policy optimizer.
-      q_optimizer: the Q-function optimizer.
-      tau: target smoothing coefficient.
-      reward_scale: reward scale.
-      discount: discount to use for TD updates.
-      entropy_coefficient: coefficient applied to the entropy bonus. If None, an
-        adaptative coefficient will be used.
-      target_entropy: Used to normalize entropy. Only used when
-        entropy_coefficient is None.
-      counter: counter object used to keep track of steps.
-      logger: logger object to be used by learner.
-      num_sgd_steps_per_step: number of sgd steps to perform per learner 'step'.
-    """
-    adaptive_entropy_coefficient = entropy_coefficient is None
-    if adaptive_entropy_coefficient:
-      # alpha is the temperature parameter that determines the relative
-      # importance of the entropy term versus the reward.
-      log_alpha = jnp.asarray(0., dtype=jnp.float32)
-      alpha_optimizer = optax.adam(learning_rate=3e-4)
-      alpha_optimizer_state = alpha_optimizer.init(log_alpha)
-    else:
-      if target_entropy:
-        raise ValueError('target_entropy should not be set when '
-                         'entropy_coefficient is provided')
+		Args:
+			networks: SAC networks
+			rng: a key for random number generation.
+			iterator: an iterator over training data.
+			policy_optimizer: the policy optimizer.
+			q_optimizer: the Q-function optimizer.
+			tau: target smoothing coefficient.
+			reward_scale: reward scale.
+			discount: discount to use for TD updates.
+			entropy_coefficient: coefficient applied to the entropy bonus. If None, an
+			adaptative coefficient will be used.
+			target_entropy: Used to normalize entropy. Only used when
+			entropy_coefficient is None.
+			counter: counter object used to keep track of steps.
+			logger: logger object to be used by learner.
+			num_sgd_steps_per_step: number of sgd steps to perform per learner 'step'.
+		"""
+    
+		adaptive_entropy_coefficient = entropy_coefficient is None
+		if adaptive_entropy_coefficient:
+			# alpha is the temperature parameter that determines the relative
+			# importance of the entropy term versus the reward.
+			log_alpha = jnp.asarray(0., dtype=jnp.float32)
+			alpha_optimizer = optax.adam(learning_rate=3e-4)
+			alpha_optimizer_state = alpha_optimizer.init(log_alpha)
+		else:
+			if target_entropy:
+				raise ValueError('target_entropy should not be set when '
+									'entropy_coefficient is provided')
 
-    def alpha_loss(log_alpha: jnp.ndarray,
-                   policy_params: networks_lib.Params,
-                   transitions: types.Transition,
-                   key: networks_lib.PRNGKey) -> jnp.ndarray:
-      """Eq 18 from https://arxiv.org/pdf/1812.05905.pdf."""
-      dist_params = networks.policy_network.apply(
-          policy_params, transitions.observation)
-      action = networks.sample(dist_params, key)
-      log_prob = networks.log_prob(dist_params, action)
-      alpha = jnp.exp(log_alpha)
-      alpha_loss = alpha * jax.lax.stop_gradient(-log_prob - target_entropy)
-      return jnp.mean(alpha_loss)
+		def alpha_loss(log_alpha: jnp.ndarray,
+						policy_params: networks_lib.Params,
+						transitions: types.Transition,
+						key: networks_lib.PRNGKey) -> jnp.ndarray:
+			"""Eq 18 from https://arxiv.org/pdf/1812.05905.pdf."""
+			dist_params = networks.policy_network.apply(
+				policy_params, transitions.observation)
+			action = networks.sample(dist_params, key)
+			log_prob = networks.log_prob(dist_params, action)
+			alpha = jnp.exp(log_alpha)
+			alpha_loss = alpha * jax.lax.stop_gradient(-log_prob - target_entropy)
+			return jnp.mean(alpha_loss)
 
-    def critic_loss(q_params: networks_lib.Params,
-                    policy_params: networks_lib.Params,
-                    target_q_params: networks_lib.Params,
-                    alpha: jnp.ndarray,
-                    transitions: types.Transition,
-                    key: networks_lib.PRNGKey) -> jnp.ndarray:
-      q_old_action = networks.q_network.apply(
-          q_params, transitions.observation, transitions.action)
-      next_dist_params = networks.policy_network.apply(
-          policy_params, transitions.next_observation)
-      next_action = networks.sample(next_dist_params, key)
-      next_log_prob = networks.log_prob(next_dist_params, next_action)
-      next_q = networks.q_network.apply(
-          target_q_params, transitions.next_observation, next_action)
-      next_v = jnp.min(next_q, axis=-1) - alpha * next_log_prob
-      target_q = jax.lax.stop_gradient(transitions.reward * reward_scale +
-                                       transitions.discount * discount * next_v)
-      q_error = q_old_action - jnp.expand_dims(target_q, -1)
-      q_loss = 0.5 * jnp.mean(jnp.square(q_error))
-      return q_loss
+		def critic_loss(
+			q_params: networks_lib.Params,
+			policy_params: networks_lib.Params,
+			target_q_params: networks_lib.Params,
+			alpha: jnp.ndarray,
+			transitions: types.Transition,
+			key: networks_lib.PRNGKey
+			) -> jnp.ndarray:
+			# TODO(rami): How to use Dueling loss?
+			# TODO(rami): How to use Distributional loss?
+			q_old_action = networks.q_network.apply(q_params, transitions.observation, transitions.action)
+			next_dist_params = networks.policy_network.apply(policy_params, transitions.next_observation)
+			next_action = networks.sample(next_dist_params, key)
+			next_log_prob = networks.log_prob(next_dist_params, next_action)
+			next_q = networks.q_network.apply(target_q_params, transitions.next_observation, next_action)
+			next_v = jnp.min(next_q, axis=-1) - alpha * next_log_prob
+			target_q = jax.lax.stop_gradient(transitions.reward * reward_scale + transitions.discount * discount * next_v)
+			q_error = q_old_action - jnp.expand_dims(target_q, -1)
+			q_loss = 0.5 * jnp.mean(jnp.square(q_error))
+			return q_loss
 
-    def actor_loss(policy_params: networks_lib.Params,
-                   q_params: networks_lib.Params,
-                   alpha: jnp.ndarray,
-                   transitions: types.Transition,
-                   key: networks_lib.PRNGKey) -> jnp.ndarray:
-      dist_params = networks.policy_network.apply(
-          policy_params, transitions.observation)
-      action = networks.sample(dist_params, key)
-      log_prob = networks.log_prob(dist_params, action)
-      q_action = networks.q_network.apply(
-          q_params, transitions.observation, action)
-      min_q = jnp.min(q_action, axis=-1)
-      actor_loss = alpha * log_prob - min_q
-      return jnp.mean(actor_loss)
+		def actor_loss(
+			policy_params: networks_lib.Params,
+			q_params: networks_lib.Params,
+			alpha: jnp.ndarray,
+			transitions: types.Transition,
+			key: networks_lib.PRNGKey
+		) -> jnp.ndarray:
+			dist_params = networks.policy_network.apply(policy_params, transitions.observation)
+			new_action = networks.sample(dist_params, key)
+			log_prob = networks.log_prob(dist_params, new_action)
+			q_new_action = networks.q_network.apply(q_params, transitions.observation, new_action)
+			min_q = jnp.min(q_new_action, axis=-1)
+			actor_loss = alpha * log_prob - min_q
+			return jnp.mean(actor_loss)
 
-    alpha_grad = jax.value_and_grad(alpha_loss)
-    critic_grad = jax.value_and_grad(critic_loss)
-    actor_grad = jax.value_and_grad(actor_loss)
+		alpha_grad = jax.value_and_grad(alpha_loss)
+		critic_grad = jax.value_and_grad(critic_loss)
+		actor_grad = jax.value_and_grad(actor_loss)
 
-    def update_step(
-        state: TrainingState,
-        transitions: types.Transition,
-    ) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
+		def update_step(
+			state: TrainingState,
+			transitions: types.Transition,
+		) -> Tuple[TrainingState, Dict[str, jnp.ndarray]]:
 
-      key, key_alpha, key_critic, key_actor = jax.random.split(state.key, 4)
-      if adaptive_entropy_coefficient:
-        alpha_loss, alpha_grads = alpha_grad(state.alpha_params,
-                                             state.policy_params, transitions,
-                                             key_alpha)
-        alpha = jnp.exp(state.alpha_params)
-      else:
-        alpha = entropy_coefficient
-      critic_loss, critic_grads = critic_grad(state.q_params,
-                                              state.policy_params,
-                                              state.target_q_params, alpha,
-                                              transitions, key_critic)
-      actor_loss, actor_grads = actor_grad(state.policy_params, state.q_params,
-                                           alpha, transitions, key_actor)
+			key, key_alpha, key_critic, key_actor = jax.random.split(state.key, 4)
 
-      # Apply policy gradients
-      actor_update, policy_optimizer_state = policy_optimizer.update(
-          actor_grads, state.policy_optimizer_state)
-      policy_params = optax.apply_updates(state.policy_params, actor_update)
+			if adaptive_entropy_coefficient:
+				alpha_loss, alpha_grads = alpha_grad(
+					state.alpha_params,
+					state.policy_params, transitions,
+					key_alpha
+				)
+				alpha = jnp.exp(state.alpha_params)
+			else:
+				alpha = entropy_coefficient
 
-      # Apply critic gradients
-      critic_update, q_optimizer_state = q_optimizer.update(
-          critic_grads, state.q_optimizer_state)
-      q_params = optax.apply_updates(state.q_params, critic_update)
+			critic_loss, critic_grads = critic_grad(
+				state.q_params,
+				state.policy_params,
+				state.target_q_params,
+				alpha,
+				transitions,
+				key_critic
+			)
+			actor_loss, actor_grads = actor_grad(
+				state.policy_params,
+				state.q_params,
+				alpha,
+				transitions,
+				key_actor
+			)
 
-      new_target_q_params = jax.tree_map(lambda x, y: x * (1 - tau) + y * tau,
-                                         state.target_q_params, q_params)
+			# Apply policy gradients
+			actor_update, policy_optimizer_state = policy_optimizer.update(
+				actor_grads, state.policy_optimizer_state)
+			policy_params = optax.apply_updates(state.policy_params, actor_update)
 
-      metrics = {
-          'critic_loss': critic_loss,
-          'actor_loss': actor_loss,
-      }
+			# Apply critic gradients
+			critic_update, q_optimizer_state = q_optimizer.update(
+				critic_grads, state.q_optimizer_state)
+			q_params = optax.apply_updates(state.q_params, critic_update)
 
-      new_state = TrainingState(
-          policy_optimizer_state=policy_optimizer_state,
-          q_optimizer_state=q_optimizer_state,
-          policy_params=policy_params,
-          q_params=q_params,
-          target_q_params=new_target_q_params,
-          key=key,
-      )
-      if adaptive_entropy_coefficient:
-        # Apply alpha gradients
-        alpha_update, alpha_optimizer_state = alpha_optimizer.update(
-            alpha_grads, state.alpha_optimizer_state)
-        alpha_params = optax.apply_updates(state.alpha_params, alpha_update)
-        metrics.update({
-            'alpha_loss': alpha_loss,
-            'alpha': jnp.exp(alpha_params),
-        })
-        new_state = new_state._replace(
-            alpha_optimizer_state=alpha_optimizer_state,
-            alpha_params=alpha_params)
+			new_target_q_params = jax.tree_map(lambda x, y: x * (1 - tau) + y * tau,
+												state.target_q_params, q_params)
 
-      metrics['rewards_mean'] = jnp.mean(
-          jnp.abs(jnp.mean(transitions.reward, axis=0)))
-      metrics['rewards_std'] = jnp.std(transitions.reward, axis=0)
+			metrics = {
+				'critic_loss': critic_loss,
+				'actor_loss': actor_loss,
+			}
 
-      return new_state, metrics
+			new_state = TrainingState(
+				policy_optimizer_state=policy_optimizer_state,
+				q_optimizer_state=q_optimizer_state,
+				policy_params=policy_params,
+				q_params=q_params,
+				target_q_params=new_target_q_params,
+				key=key,
+			)
 
-    # General learner book-keeping and loggers.
-    self._counter = counter or counting.Counter()
-    self._logger = logger or loggers.make_default_logger(
-        'learner',
-        asynchronous=True,
-        serialize_fn=utils.fetch_devicearray,
-        steps_key=self._counter.get_steps_key())
+			if adaptive_entropy_coefficient:
+				# Apply alpha gradients
+				alpha_update, alpha_optimizer_state = alpha_optimizer.update(
+					alpha_grads, state.alpha_optimizer_state)
+				alpha_params = optax.apply_updates(state.alpha_params, alpha_update)
+				metrics.update({
+					'alpha_loss': alpha_loss,
+					'alpha': jnp.exp(alpha_params),
+				})
+				new_state = new_state._replace(
+					alpha_optimizer_state=alpha_optimizer_state,
+					alpha_params=alpha_params)
 
-    # Iterator on demonstration transitions.
-    self._iterator = iterator
+			metrics['rewards_mean'] = jnp.mean(
+				jnp.abs(jnp.mean(transitions.reward, axis=0)))
+			metrics['rewards_std'] = jnp.std(transitions.reward, axis=0)
 
-    update_step = utils.process_multiple_batches(update_step,
-                                                 num_sgd_steps_per_step)
-    # Use the JIT compiler.
-    self._update_step = jax.jit(update_step)
+			return new_state, metrics
 
-    # def make_initial_state(key: networks_lib.PRNGKey) -> TrainingState:
-    #   """Initialises the training state (parameters and optimiser state)."""
-    #   key_policy, key_q, key = jax.random.split(key, 3)
+		# General learner book-keeping and loggers.
+		self._counter = counter or counting.Counter()
+		self._logger = logger or loggers.make_default_logger(
+			'learner',
+			asynchronous=True,
+			serialize_fn=utils.fetch_devicearray,
+			steps_key=self._counter.get_steps_key())
 
-    #   policy_params = networks.policy_network.init(key_policy)
-    #   policy_optimizer_state = policy_optimizer.init(policy_params)
+		# Iterator on demonstration transitions.
+		self._iterator = iterator
 
-    #   q_params = networks.q_network.init(key_q)
-    #   q_optimizer_state = q_optimizer.init(q_params)
+		# Use the JIT compiler.
+		update_step = utils.process_multiple_batches(update_step, num_sgd_steps_per_step)
+		self._update_step = jax.jit(update_step)
 
-    #   state = TrainingState(
-    #       policy_optimizer_state=policy_optimizer_state,
-    #       q_optimizer_state=q_optimizer_state,
-    #       policy_params=policy_params,
-    #       q_params=q_params,
-    #       target_q_params=q_params,
-    #       key=key)
+		# Create initial state.
+		self._key = rng
+		self._networks = networks
+		self._policy_optimizer = policy_optimizer
+		self._q_optimizer = q_optimizer
+		self._adaptive_entropy_coefficient = adaptive_entropy_coefficient
+		self._alpha_optimizer_state = alpha_optimizer_state
+		self._log_alpha = log_alpha
+		self._state = self._make_initial_state()
 
-    #   if adaptive_entropy_coefficient:
-    #     state = state._replace(alpha_optimizer_state=alpha_optimizer_state,
-    #                            alpha_params=log_alpha)
-    #   return state
+		# Do not record timestamps until after the first learning step is done.
+		# This is to avoid including the time it takes for actors to come online and
+		# fill the replay buffer.
+		self._timestamp = None
 
-    # Create initial state.
-    self._key = rng
-    self._networks = networks
-    self._policy_optimizer = policy_optimizer
-    self._q_optimizer = q_optimizer
-    self._adaptive_entropy_coefficient = adaptive_entropy_coefficient
-    self._alpha_optimizer_state = alpha_optimizer_state
-    self._log_alpha = log_alpha
-    # self._state = make_initial_state(rng)
-    self._state = self._make_initial_state()
 
-    # Do not record timestamps until after the first learning step is done.
-    # This is to avoid including the time it takes for actors to come online and
-    # fill the replay buffer.
-    self._timestamp = None
+	def _make_initial_state(self) -> TrainingState:
+		"""Initialises the training state (parameters and optimizer state)."""
+		print('Learner._make_initial_state')
+		# Create keys for policy & q and renew key
+		key_policy, key_q, self._key = jax.random.split(self._key, 3)
 
-  def _make_initial_state(self) -> TrainingState:
-    """Initialises the training state (parameters and optimiser state)."""
-    print('Learner._make_initial_state')
-    key = self._key
-    key_policy, key_q, key = jax.random.split(key, 3)
+		policy_params = self._networks.policy_network.init(key_policy)
+		policy_optimizer_state = self._policy_optimizer.init(policy_params)
 
-    policy_params = self._networks.policy_network.init(key_policy)
-    policy_optimizer_state = self._policy_optimizer.init(policy_params)
+		q_params = self._networks.q_network.init(key_q)
+		q_optimizer_state = self._q_optimizer.init(q_params)
 
-    q_params = self._networks.q_network.init(key_q)
-    q_optimizer_state = self._q_optimizer.init(q_params)
+		state = TrainingState(
+			policy_optimizer_state=policy_optimizer_state,
+			q_optimizer_state=q_optimizer_state,
+			policy_params=policy_params,
+			q_params=q_params,
+			target_q_params=q_params,
+			key=self._key
+		)
 
-    state = TrainingState(
-        policy_optimizer_state=policy_optimizer_state,
-        q_optimizer_state=q_optimizer_state,
-        policy_params=policy_params,
-        q_params=q_params,
-        target_q_params=q_params,
-        key=key)
+		if self._adaptive_entropy_coefficient:
+			state = state._replace(
+				alpha_optimizer_state=self._alpha_optimizer_state,
+				alpha_params=self._log_alpha
+			)
 
-    if self._adaptive_entropy_coefficient:
-      state = state._replace(alpha_optimizer_state=self._alpha_optimizer_state,
-                              alpha_params=self._log_alpha)
-    return state
+		return state
 
-  def step(self):
-    sample = next(self._iterator)
-    transitions = types.Transition(*sample.data)
 
-    self._state, metrics = self._update_step(self._state, transitions)
+	def step(self):
+		# print('Learner.step')
+		if 'learner_steps' in self._counter.get_counts().keys():
+			if self._counter.get_counts()['learner_steps'] % 2560000 == 0:
+				self._state = self._make_initial_state()
 
-    # Compute elapsed time.
-    timestamp = time.time()
-    elapsed_time = timestamp - self._timestamp if self._timestamp else 0
-    self._timestamp = timestamp
+		sample = next(self._iterator)
+		transitions = types.Transition(*sample.data)
 
-    # Increment counts and record the current time
-    counts = self._counter.increment(steps=1, walltime=elapsed_time)
+		self._state, metrics = self._update_step(self._state, transitions)
 
-    # Attempts to write the logs.
-    self._logger.write({**metrics, **counts})
+		# Compute elapsed time.
+		timestamp = time.time()
+		elapsed_time = timestamp - self._timestamp if self._timestamp else 0
+		self._timestamp = timestamp
 
-  def get_variables(self, names: List[str]) -> List[Any]:
-    variables = {
-        'policy': self._state.policy_params,
-        'critic': self._state.q_params,
-    }
-    return [variables[name] for name in names]
+		# Increment counts and record the current time
+		counts = self._counter.increment(steps=1, walltime=elapsed_time)
+		# print(f"Learner.counter:\
+		# \n - actor={self._counter.get_counts()['actor_steps']}\
+		# \n - learner={self._counter.get_counts()['learner_steps']}\
+		# ")
 
-  def save(self) -> TrainingState:
-    return self._state
+		# Attempts to write the logs.
+		self._logger.write({**metrics, **counts})
 
-  def restore(self, state: TrainingState):
-    self._state = state
+
+	def get_variables(self, names: List[str]) -> List[Any]:
+		variables = {
+			'policy': self._state.policy_params,
+			'critic': self._state.q_params,
+		}
+		return [variables[name] for name in names]
+
+
+	def save(self) -> TrainingState:
+		return self._state
+
+	def restore(self, state: TrainingState):
+		self._state = state
