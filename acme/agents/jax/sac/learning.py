@@ -261,6 +261,8 @@ class SACLearner(acme.Learner):
 		# fill the replay buffer.
 		self._timestamp = None
 
+		self._num_sgd_steps_per_step = num_sgd_steps_per_step
+
 
 	def _make_initial_state(self) -> TrainingState:
 		"""Initialises the training state (parameters and optimizer state)."""
@@ -295,7 +297,7 @@ class SACLearner(acme.Learner):
 	def step(self):
 		# print('Learner.step')
 		if 'learner_steps' in self._counter.get_counts().keys():
-			if self._counter.get_counts()['learner_steps'] % 2560000 == 0:
+			if self._counter.get_counts()['learner_steps'] % (2560000//self._num_sgd_steps_per_step) == 0:
 				self._state = self._make_initial_state()
 
 		sample = next(self._iterator)
