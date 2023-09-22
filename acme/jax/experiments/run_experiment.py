@@ -65,15 +65,13 @@ def run_experiment(
 	)
 
 	# Create the (replay server) and grab its address.
-	replay_tables = experiment.builder.make_replay_tables(environment_spec,
-															policy)
+	replay_tables = experiment.builder.make_replay_tables(environment_spec, policy)
 
 	# Disable blocking of inserts by tables' rate limiters, as this function
 	# executes learning (sampling from the table) and data generation
 	# (inserting into the table) sequentially from the same thread
 	# which could result in blocked insert making the algorithm hang.
-	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(
-		replay_tables)
+	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(replay_tables)
 
 	replay_server = reverb.Server(replay_tables, port=None)
 	# dfn replay_client: used by dataset(iterator), learner, and adder
@@ -116,10 +114,8 @@ def run_experiment(
 	)
 
 	# Create the environment loop used for training.
-	train_counter = counting.Counter(
-		parent_counter, prefix='actor', time_delta=0.)
-	train_logger = experiment.logger_factory('actor',
-											train_counter.get_steps_key(), 0)
+	train_counter = counting.Counter( parent_counter, prefix='actor', time_delta=0.)
+	train_logger = experiment.logger_factory('actor', train_counter.get_steps_key(), 0)
 
 	checkpointer = None
 	if experiment.checkpointing is not None:
@@ -139,8 +135,14 @@ def run_experiment(
 	# any new data to learn from and if so it runs a learner step. The rate
 	# at which new data is released is controlled by the replay table's
 	# rate_limiter which is created by the builder.make_replay_tables call above.
-	actor = _LearningActor(actor, learner, dataset, replay_tables,
-							rate_limiters_max_diff, checkpointer)
+	actor = _LearningActor(
+		actor=actor,
+		learner=learner,
+		iterator=dataset,
+		replay_tables=replay_tables,
+		sample_sizes=rate_limiters_max_diff,
+		checkpointer=checkpointer
+	)
 
 	train_loop = acme.EnvironmentLoop(
 		environment,
@@ -160,10 +162,8 @@ def run_experiment(
 
 	# Create the evaluation actor and loop.
 	eval_actor_key, key = jax.random.split(key)#jax.random.PRNGKey(experiment.seed)
-	eval_counter = counting.Counter(
-		parent_counter, prefix='evaluator', time_delta=0.)
-	eval_logger = experiment.logger_factory('evaluator',
-											eval_counter.get_steps_key(), 0)
+	eval_counter = counting.Counter(parent_counter, prefix='evaluator', time_delta=0.)
+	eval_logger = experiment.logger_factory('evaluator', eval_counter.get_steps_key(), 0)
 	eval_policy = config.make_policy(
 		experiment=experiment,
 		networks=networks,
