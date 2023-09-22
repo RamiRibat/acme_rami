@@ -50,7 +50,7 @@ sac_hyperparams = {
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('acme_id', None, 'Experiment identifier to use for Acme.')
-flags.DEFINE_string('agent_id', 'sac_og', 'What agent in use.')
+flags.DEFINE_string('agent_id', 'sac', 'What agent in use.')
 flags.DEFINE_string('suite', 'control', 'Suite')
 flags.DEFINE_string('level', 'trivial', "Task level")
 flags.DEFINE_string('task', 'walker:walk', 'What environment to run')
