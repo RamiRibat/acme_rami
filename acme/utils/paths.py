@@ -81,9 +81,9 @@ def get_unique_id() -> Tuple[str, ...]:
     suite = FLAGS.suite
     level = FLAGS.level
     task = FLAGS.task#.replace(':', '_')
-    if FLAGS.acme_id:
+    if acme_id:
       # base_id = f"{time_id}/{FLAGS.acme_id}"
-      full_id = f"{FLAGS.acme_id}/{agent_id}/{suite}/{level}/{task}"
+      full_id = f"{acme_id}/{agent_id}/{suite}/{level}/{task}"
     else:
       full_id = f"{time_id}/{agent_id}/{suite}/{level}/{task}"
       
