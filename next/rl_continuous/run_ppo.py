@@ -107,7 +107,6 @@ flags.DEFINE_string('agent_id', 'ppo', 'What agent in use.')
 flags.DEFINE_string('suite', 'control', 'Suite')
 flags.DEFINE_string('level', 'trivial', "Task level")
 flags.DEFINE_string('task', 'walker:walk', 'What environment to run')
-# flags.DEFINE_string('replay_ratio', '2', 'What environment to run')
 flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
 flags.DEFINE_integer('eval_every', 25_000, 'How often to run evaluation.')
 flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
@@ -128,8 +127,6 @@ def build_experiment_config():
 	environment_factory = lambda seed: helpers.make_environment(suite, task)
 
 	ppo_hyperparams = ppo_hyperparams_list[FLAGS.hp - 1]
-
-	# ppo_hyperparams['num_epochs'] = eval(FLAGS.replay_ratio)
 
 	def network_factory(spec) -> ppo.PPONetworks:
 		return ppo.make_networks(
