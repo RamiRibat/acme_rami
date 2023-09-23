@@ -20,32 +20,36 @@ from acme.adders import reverb as adders_reverb
 
 @dataclasses.dataclass
 class D4PGConfig:
-  """Configuration options for D4PG."""
+	"""
+	Configuration options for D4PG.
+	"""
 
-  sigma: float = 0.3
-  target_update_period: int = 100
-  samples_per_insert: Optional[float] = 32.0
+	""" General hyper-parameters """
+	sigma: float = 0.3
 
-  # Network options
-  n_atoms: int = 51
-  policy_arch: Sequence[int] = (300, 200)
-  critic_arch: Sequence[int] = (400, 300)
+	""" Network/Optz hyper-parameters """
+	policy_arch: Sequence[int] = (300, 200)
+	critic_arch: Sequence[int] = (400, 300)
+	n_atoms: int = 51
 
-  # Loss options
-  n_step: int = 5
-  discount: float = 0.99
-  batch_size: int = 256
-  learning_rate: float = 1e-4
-  clipping: bool = True
+	""" Learner (Loss) hyper-parameters """
+	batch_size: int = 256
+	learning_rate: float = 1e-4
+	discount: float = 0.99
+	n_step: int = 5
+	target_update_period: int = 100
+	clipping: bool = True # ?
 
-  # Replay options
-  min_replay_size: int = 1000
-  max_replay_size: int = 1000000
-  replay_table_name: str = adders_reverb.DEFAULT_PRIORITY_TABLE
-  prefetch_size: int = 4
-  # Rate to be used for the SampleToInsertRatio rate limitter tolerance.
-  # See a formula in make_replay_tables for more details.
-  samples_per_insert_tolerance_rate: float = 0.1
+	""" Replay hyper-parameters """
+	replay_table_name: str = adders_reverb.DEFAULT_PRIORITY_TABLE
+	min_replay_size: int = 1000
+	max_replay_size: int = 1000000
+	prefetch_size: int = 4 # ?
+	samples_per_insert: Optional[float] = 32.0
+	# Rate to be used for the SampleToInsertRatio rate limitter tolerance.
+	# See a formula in make_replay_tables for more details.
+	samples_per_insert_tolerance_rate: float = 0.1
+	# How many gradient updates to perform per step.
+	num_sgd_steps_per_step: int = 1
 
-  # How many gradient updates to perform per step.
-  num_sgd_steps_per_step: int = 1
+	reset_interval: int = 0
