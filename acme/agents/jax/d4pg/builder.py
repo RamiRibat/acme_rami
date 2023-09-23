@@ -308,8 +308,8 @@ class D4PGBuilder(builders.ActorLearnerBuilder[d4pg_networks.D4PGNetworks,
 		else:
 			policy = d4pg_networks.get_default_behavior_policy(networks, self._config)
 
-		# return actor_core_lib.batched_feed_forward_to_actor_core(policy)
-		return policy
+		return actor_core_lib.batched_feed_forward_to_actor_core(policy)
+		# return policy
 
 
 	def make_actor(
@@ -324,7 +324,7 @@ class D4PGBuilder(builders.ActorLearnerBuilder[d4pg_networks.D4PGNetworks,
 
 		assert variable_source is not None
 
-		actor_core = actor_core_lib.batched_feed_forward_to_actor_core(policy)
+		# actor_core = actor_core_lib.batched_feed_forward_to_actor_core(policy)
 
 		# Inference happens on CPU, so it's better to move variables there too.
 		variable_client = variable_utils.VariableClient(
@@ -332,7 +332,7 @@ class D4PGBuilder(builders.ActorLearnerBuilder[d4pg_networks.D4PGNetworks,
 		)
 
 		actor = actors.GenericActor(
-			actor_core, random_key, variable_client, adder, backend='cpu'
+			policy, random_key, variable_client, adder, backend='cpu'
 		)
 		
 		# return actors.GenericActor(
