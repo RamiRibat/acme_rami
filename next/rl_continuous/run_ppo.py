@@ -115,7 +115,7 @@ flags.DEFINE_integer('gpu', None, 'Random seed.')
 flags.DEFINE_integer('hp', 1, 'Hyper-parameters.')
 
 flags.DEFINE_bool(
-    'run_distributed', True, 'Should an agent be executed in a distributed '
+    'run_distributed', False, 'Should an agent be executed in a distributed '
     'way. If False, will run single-threaded.')
 flags.DEFINE_integer('num_distributed_actors', 4,
                      'Number of actors to use in the distributed setting.')
