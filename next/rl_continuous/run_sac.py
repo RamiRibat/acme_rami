@@ -42,8 +42,7 @@ sac_hyperparams = {
 	'prefetch_size': 4,
 	'samples_per_insert': 256,
 	'num_sgd_steps_per_step': 1,
-	# 'num_sgd_steps_per_step': 32,
-	# 'num_sgd_steps_per_step': 128,
+	'reset_interval': 2560000,
 }
 
 FLAGS = flags.FLAGS
@@ -53,7 +52,7 @@ flags.DEFINE_string('agent_id', 'sac', 'What agent in use.')
 flags.DEFINE_string('suite', 'control', 'Suite')
 flags.DEFINE_string('level', 'trivial', "Task level")
 flags.DEFINE_string('task', 'walker:walk', 'What environment to run')
-flags.DEFINE_integer('replay_ratio', 1, 'What environment to run')
+flags.DEFINE_string('replay_ratio', '1', 'What environment to run')
 flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
 flags.DEFINE_integer('eval_every', 25_000, 'How often to run evaluation.')
 flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
@@ -68,19 +67,11 @@ def build_experiment_config():
 	# Create an environment, grab the spec, and use it to create networks.
 	# suite, task = FLAGS.env_name.split(':', 1)
 	suite, task = FLAGS.suite, FLAGS.task
-
-	# Bound of the distributional critic. The reward for control environments is
-	# normalized, not for gym locomotion environments hence the different scales.
-	vmax_values = {
-		'gym': 1000.,
-		'control': 150.,
-	}
-	vmax = vmax_values[suite]
-
 	environment_factory = lambda seed: helpers.make_environment(suite, task)
 
-	sac_hyperparams['samples_per_insert'] *= FLAGS.replay_ratio
-	sac_hyperparams['num_sgd_steps_per_step'] *= FLAGS.replay_ratio
+	replay_ratio = eval(FLAGS.replay_ratio)
+	sac_hyperparams['samples_per_insert'] = int(replay_ratio * sac_hyperparams['batch_size'])
+	sac_hyperparams['num_sgd_steps_per_step'] = int(replay_ratio * (sac_hyperparams['batch_size']/sac_hyperparams['samples_per_insert']))
 
 	def network_factory(spec) -> sac.SACNetworks:
 		return sac.make_networks(
@@ -107,17 +98,20 @@ def build_experiment_config():
 def main(_):
 	path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
 	config = yaml.safe_load(open(path))
-	level_info = config[FLAGS.suite][FLAGS.level]
-	FLAGS.num_steps = level_info['run']['steps']
-	FLAGS.eval_every = FLAGS.num_steps//20
 
-	for task in level_info['tasks']:
-		FLAGS.task = task
-		experiment_cfg = build_experiment_config()
-		experiments.run_experiment(
-			experiment=experiment_cfg,
-			eval_every=FLAGS.eval_every,
-			num_eval_episodes=FLAGS.evaluation_episodes)
+	if FLAGS.level in config[FLAGS.suite].keys():
+		level_info = config[FLAGS.suite][FLAGS.level]
+		FLAGS.num_steps = level_info['run']['steps']
+		FLAGS.eval_every = FLAGS.num_steps//20
+		for task in level_info['tasks']:
+			FLAGS.task = task
+			experiment_cfg = build_experiment_config()
+			experiments.run_experiment(
+				experiment=experiment_cfg,
+				eval_every=FLAGS.eval_every,
+				num_eval_episodes=FLAGS.evaluation_episodes)
+	else:
+		return
 
 
 if __name__ == '__main__':

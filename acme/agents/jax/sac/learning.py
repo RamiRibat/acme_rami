@@ -65,6 +65,7 @@ class SACLearner(acme.Learner):
 		counter: Optional[counting.Counter] = None,
 		logger: Optional[loggers.Logger] = None,
 		num_sgd_steps_per_step: int = 1,
+		reset_interval: int = 0,
 		jit: bool = True,
 	):
 		"""Initialize the SAC learner.
@@ -262,6 +263,7 @@ class SACLearner(acme.Learner):
 		self._timestamp = None
 
 		self._num_sgd_steps_per_step = num_sgd_steps_per_step
+		self._reset_interval = reset_interval
 
 
 	def _make_initial_state(self) -> TrainingState:
@@ -300,10 +302,9 @@ class SACLearner(acme.Learner):
 			if self._counter.get_counts()['learner_steps'] % (2560000//self._num_sgd_steps_per_step) == 0:
 				self._state = self._make_initial_state()
 
+		# Sample from replay and pack the data in a Transition.
 		sample = next(self._iterator)
 		transitions = types.Transition(*sample.data)
-		# print(colored(f'transitions.reward: {transitions.reward.shape}', 'blue'))
-		# print(colored(f"actor: {self._counter.get_counts()['actor_steps']} | transitions.shape: {transitions.reward.shape}", "blue"))
 
 		self._state, metrics = self._sgd_step(self._state, transitions)
 
@@ -314,10 +315,6 @@ class SACLearner(acme.Learner):
 
 		# Increment counts and record the current time
 		counts = self._counter.increment(steps=1, walltime=elapsed_time)
-		# print(f"Learner.counter:\
-		# \n - actor={self._counter.get_counts()['actor_steps']}\
-		# \n - learner={self._counter.get_counts()['learner_steps']}\
-		# ")
 
 		# Attempts to write the logs.
 		self._logger.write({**metrics, **counts})

@@ -98,8 +98,9 @@ class SACConfig(normalization.InputNormalizerConfig):
 	# Rate to be used for the SampleToInsertRatio rate limitter tolerance.
 	# See a formula in make_replay_tables for more details.
 	samples_per_insert_tolerance_rate: float = 0.1
-
 	# How many gradient updates to perform per step.
 	num_sgd_steps_per_step: int = 1
+
+	reset_interval: int = 0
 
 	input_normalization: Optional[normalization.NormalizationConfig] = None
