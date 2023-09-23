@@ -321,7 +321,10 @@ def make_continuous_networks(
 
     def _policy_network(obs: networks_lib.Observation):
       h = utils.batch_concat(obs)
-      h = hk.nets.MLP(policy_layer_sizes, activate_final=True)(h)
+      h = hk.nets.MLP(
+        output_sizes=policy_layer_sizes,
+        activate_final=True
+      )(h)
 
       # tfd distributions have a weird bug in jax when vmapping is used, so the
       # safer implementation in general is for the policy network to output the
@@ -358,7 +361,9 @@ def make_continuous_networks(
 
     value_network = hk.Sequential([
         utils.batch_concat,
-        hk.nets.MLP(value_layer_sizes, activate_final=True),
+        hk.nets.MLP(
+          output_sizes=value_layer_sizes,
+          activate_final=True),
         hk.Linear(1),
         lambda x: jnp.squeeze(x, axis=-1)
     ])
