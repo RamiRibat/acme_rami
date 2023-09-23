@@ -34,7 +34,7 @@ _PMAP_AXIS_NAME = 'data'
 
 class TrainingState(NamedTuple):
 	"""Contains training state for the learner."""
-	key: networks_lib.PRNGKey # rami
+	# key: networks_lib.PRNGKey # rami
 	policy_opt_state: optax.OptState
 	critic_opt_state: optax.OptState
 	policy_params: networks_lib.Params
