@@ -51,7 +51,7 @@ flags.DEFINE_string('agent', 'd4pg', 'What agent in use.')
 flags.DEFINE_string('suite', 'control', 'Suite')
 flags.DEFINE_string('level', 'trivial', "Task level")
 flags.DEFINE_string('task', 'walker:walk', 'What environment to run')
-flags.DEFINE_integer('replay_ratio', 1/8, 'What environment to run')
+flags.DEFINE_string('replay_ratio', '0.125', 'What environment to run')
 flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
 flags.DEFINE_integer('eval_every', 25_000, 'How often to run evaluation.')
 flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
@@ -76,8 +76,9 @@ def build_experiment_config():
 	}
 	vmax = vmax_values[suite]
 
-	d4pg_hyperparams['samples_per_insert'] *= (FLAGS.replay_ratio * d4pg_hyperparams['batch_size'])
-	d4pg_hyperparams['num_sgd_steps_per_step'] *= (FLAGS.replay_ratio * (d4pg_hyperparams['batch_size']/d4pg_hyperparams['samples_per_insert']))
+	replay_ratio = eval(FLAGS.replay_ratio)
+	d4pg_hyperparams['samples_per_insert'] *= (replay_ratio * d4pg_hyperparams['batch_size'])
+	d4pg_hyperparams['num_sgd_steps_per_step'] *= (replay_ratio * (d4pg_hyperparams['batch_size']/d4pg_hyperparams['samples_per_insert']))
 
 	def network_factory(spec) -> d4pg.D4PGNetworks:
 		return d4pg.make_networks(
