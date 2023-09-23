@@ -112,6 +112,7 @@ flags.DEFINE_integer('eval_every', 25_000, 'How often to run evaluation.')
 flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_integer('gpu', None, 'Random seed.')
+flags.DEFINE_integer('hp', 1, 'Hyper-parameters.')
 
 flags.DEFINE_bool(
     'run_distributed', True, 'Should an agent be executed in a distributed '
