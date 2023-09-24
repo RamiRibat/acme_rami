@@ -41,8 +41,8 @@ HP=$2
 # for AGENT in ${AGENTS[*]}; do
 for SEED in ${SEEDS[*]}; do
     srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 --qos=normal \
-    --output=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${RR}-${SEED}.out \
-    --error=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${RR}-${SEED}.err \
+    --output=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${HP}-${SEED}.out \
+    --error=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${HP}-${SEED}.err \
     bash script_vector_ppo.sh ${ID} ${AGENT} ${HP} ${SEED} &
 done
 # done
