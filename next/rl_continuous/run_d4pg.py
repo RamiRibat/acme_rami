@@ -41,7 +41,8 @@ d4pg_hyperparams = {
 	'target_update_period': 100,
 	'samples_per_insert': 32.0, # Controls the relative rate of sampled vs inserted items. In this case, items are n-step transitions.
 	'num_sgd_steps_per_step': 1,
-	'reset_interval': 2560000,
+	'reset_interval': 320000,
+	# 'reset_interval': 2560000,
 }
 
 FLAGS = flags.FLAGS
@@ -79,7 +80,6 @@ def build_experiment_config():
 	replay_ratio = eval(FLAGS.replay_ratio)
 	d4pg_hyperparams['samples_per_insert'] = int(replay_ratio * d4pg_hyperparams['batch_size'])
 	d4pg_hyperparams['num_sgd_steps_per_step'] = int(replay_ratio * (d4pg_hyperparams['batch_size']/d4pg_hyperparams['samples_per_insert']))
-	print('d4pg_hyperparams: ', d4pg_hyperparams)
 
 	def network_factory(spec) -> d4pg.D4PGNetworks:
 		return d4pg.make_networks(
