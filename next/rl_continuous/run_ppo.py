@@ -169,6 +169,50 @@ ppo_hyperparams_v8 = { # ~ v4
 	'reset_interval': 0,
 }
 
+ppo_hyperparams_v9 = { # ~ v4
+	# replay = n_epochs x mini_batches = 256 (rr=1/64)
+	'num_epochs': 64,
+	'num_minibatches': 4,
+	# full batch = batch_size x unroll_length = 16,384
+	'batch_size': 8,
+	'unroll_length': 1024,
+	'learning_rate': 3e-4,
+	'gae_lambda': 0.95,
+	'discount': 0.99,
+	'normalize_advantage': True,
+	'normalize_value': True,
+	'max_gradient_norm': 0.25,
+	'value_clipping_epsilon': 0.25,
+	'ppo_clipping_epsilon': 0.25,
+	'hidden_layer_sizes': (256, 256),
+	'use_tanh_gaussian_policy': True,
+	'independent_scale': True,
+	'entropy_cost': 0,
+	'reset_interval': 0,
+}
+
+ppo_hyperparams_v10 = { # ~ v4
+	# replay = n_epochs x mini_batches = 256 (rr=1/64)
+	'num_epochs': 64,
+	'num_minibatches': 4,
+	# full batch = batch_size x unroll_length = 16,384
+	'batch_size': 16,
+	'unroll_length': 1024,
+	'learning_rate': 3e-4,
+	'gae_lambda': 0.95,
+	'discount': 0.99,
+	'normalize_advantage': True,
+	'normalize_value': True,
+	'max_gradient_norm': 0.25,
+	'value_clipping_epsilon': 0.25,
+	'ppo_clipping_epsilon': 0.25,
+	'hidden_layer_sizes': (256, 256),
+	'use_tanh_gaussian_policy': True,
+	'independent_scale': True,
+	'entropy_cost': 0,
+	'reset_interval': 0,
+}
+
 
 ppo_hyperparams_list = [
     ppo_hyperparams_v1,
@@ -179,6 +223,7 @@ ppo_hyperparams_list = [
     ppo_hyperparams_v6,
     ppo_hyperparams_v7,
     ppo_hyperparams_v8,
+    ppo_hyperparams_v9,
 ]
 
 FLAGS = flags.FLAGS
@@ -233,7 +278,7 @@ def build_experiment_config():
 
 
 def main(_):
-	path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
+	path = os.path.join(os.path.dirname(os.getcwd())+'/config_local.yaml')
 	config = yaml.safe_load(open(path))
 
 	if FLAGS.level in config[FLAGS.suite].keys():
