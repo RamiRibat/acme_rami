@@ -279,7 +279,7 @@ def build_experiment_config():
 
 
 def main(_):
-	path = os.path.join(os.path.dirname(os.getcwd())+'/config_local.yaml')
+	path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
 	config = yaml.safe_load(open(path))
 
 	if FLAGS.level in config[FLAGS.suite].keys():
