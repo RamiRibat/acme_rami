@@ -28,7 +28,7 @@ warnings.filterwarnings('ignore')
 
 
 ppo_hyperparams_v1 = {
-	# replay = n_epochs x mini_batches = 16
+	# replay = n_epochs x mini_batches = 16 (rr=1/128)
 	'num_epochs': 2,
 	'num_minibatches': 8,
 	# full batch = batch_size x unroll_length = 2,048
@@ -37,9 +37,12 @@ ppo_hyperparams_v1 = {
 	'learning_rate': 3e-4,
 	'gae_lambda': 0.95,
 	'discount': 0.99,
-	'hidden_layer_sizes': (256, 256),
 	'normalize_advantage': True,
 	'normalize_value': True,
+	'hidden_layer_sizes': (256, 256),
+	# 'use_tanh_gaussian_policy': True,
+	# 'independent_scale': True,
+	'entropy_cost': 0,
 	'reset_interval': 0,
 }
 
@@ -117,9 +120,52 @@ ppo_hyperparams_v6 = { # ~ v4
 	'learning_rate': 3e-4,
 	'gae_lambda': 0.95,
 	'discount': 0.99,
-	'hidden_layer_sizes': (256, 256),
 	'normalize_advantage': True,
 	'normalize_value': True,
+	'hidden_layer_sizes': (256, 256),
+	# 'use_tanh_gaussian_policy': True,
+	# 'independent_scale': True,
+	'entropy_cost': 0,
+	'reset_interval': 0,
+}
+
+
+# independent_scale
+ppo_hyperparams_v7 = { # ~ v4
+	# replay = n_epochs x mini_batches = 256 (rr=1/64)
+	'num_epochs': 16,
+	'num_minibatches': 8,
+	# full batch = batch_size x unroll_length = 8,192
+	'batch_size': 8,
+	'unroll_length': 1024,
+	'learning_rate': 3e-4,
+	'gae_lambda': 0.95,
+	'discount': 0.99,
+	'normalize_advantage': True,
+	'normalize_value': True,
+	'hidden_layer_sizes': (256, 256),
+	'use_tanh_gaussian_policy': True,
+	'independent_scale': True,
+	'entropy_cost': 0,
+	'reset_interval': 0,
+}
+
+ppo_hyperparams_v8 = { # ~ v4
+	# replay = n_epochs x mini_batches = 256 (rr=1/32)
+	'num_epochs': 32,
+	'num_minibatches': 8,
+	# full batch = batch_size x unroll_length = 8,192
+	'batch_size': 8,
+	'unroll_length': 1024,
+	'learning_rate': 3e-4,
+	'gae_lambda': 0.95,
+	'discount': 0.99,
+	'normalize_advantage': True,
+	'normalize_value': True,
+	'hidden_layer_sizes': (256, 256),
+	'use_tanh_gaussian_policy': True,
+	'independent_scale': True,
+	'entropy_cost': 0,
 	'reset_interval': 0,
 }
 
@@ -131,6 +177,8 @@ ppo_hyperparams_list = [
     ppo_hyperparams_v4,
     ppo_hyperparams_v5,
     ppo_hyperparams_v6,
+    ppo_hyperparams_v7,
+    ppo_hyperparams_v8,
 ]
 
 FLAGS = flags.FLAGS
@@ -165,7 +213,9 @@ def build_experiment_config():
 	def network_factory(spec) -> ppo.PPONetworks:
 		return ppo.make_networks(
 			spec=spec,
-			hidden_layer_sizes=ppo_hyperparams['hidden_layer_sizes']
+			hidden_layer_sizes=ppo_hyperparams['hidden_layer_sizes'],
+			use_tanh_gaussian_policy=ppo_hyperparams['use_tanh_gaussian_policy'],
+			independent_scale=ppo_hyperparams['independent_scale'],
 		)
 
 	ppo_config = ppo.PPOConfig(

@@ -217,8 +217,12 @@ class PPOBuilder(
 		environment_spec: specs.EnvironmentSpec,
 		evaluation: bool = False
 	) -> actor_core_lib.FeedForwardPolicyWithExtra:
+		# print(f'PPOBuilder.make_policy [evaluation:{evaluation}]')
 		del environment_spec
-		return ppo_networks.make_inference_fn(networks, evaluation)
+		return ppo_networks.make_inference_fn(
+			ppo_networks=networks,
+			evaluation=evaluation
+		)
 
 
 	def make_actor(

@@ -66,6 +66,8 @@ class PPOConfig:
 	hidden_layer_sizes: Sequence[int] = (256, 256)
 	adam_epsilon: float = 1e-7
 	max_gradient_norm: float = 0.5
+	use_tanh_gaussian_policy: bool = True
+	independent_scale: bool = False
 
 	""" Learning (Loss) hyper-parameters """
 	num_epochs: int = 2
