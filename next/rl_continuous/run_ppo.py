@@ -193,10 +193,10 @@ ppo_hyperparams_v9 = { # ~ v4
 
 ppo_hyperparams_v10 = { # ~ v4
 	# replay = n_epochs x mini_batches = 256 (rr=1/64)
-	'num_epochs': 64,
+	'num_epochs': 128,
 	'num_minibatches': 4,
 	# full batch = batch_size x unroll_length = 16,384
-	'batch_size': 16,
+	'batch_size': 8,
 	'unroll_length': 1024,
 	'learning_rate': 3e-4,
 	'gae_lambda': 0.95,
@@ -210,7 +210,7 @@ ppo_hyperparams_v10 = { # ~ v4
 	'use_tanh_gaussian_policy': True,
 	'independent_scale': True,
 	'entropy_cost': 0,
-	'reset_interval': 0,
+	'reset_interval': 16384,
 }
 
 
@@ -224,6 +224,7 @@ ppo_hyperparams_list = [
     ppo_hyperparams_v7,
     ppo_hyperparams_v8,
     ppo_hyperparams_v9,
+    ppo_hyperparams_v10,
 ]
 
 FLAGS = flags.FLAGS
