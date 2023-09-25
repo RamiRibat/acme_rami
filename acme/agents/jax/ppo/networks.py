@@ -156,6 +156,7 @@ def make_continuous_networks(
 			h = utils.batch_concat(obs)
 			h = hk.nets.MLP(
 			output_sizes=policy_layer_sizes,
+			activation=jax.nn.tanh,
 			activate_final=True
 			)(h)
 
@@ -200,6 +201,7 @@ def make_continuous_networks(
 			utils.batch_concat,
 			hk.nets.MLP(
 				output_sizes=value_layer_sizes,
+				activation=jax.nn.tanh,
 				activate_final=True
 			),
 			hk.Linear(1),
