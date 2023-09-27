@@ -19,7 +19,7 @@ import dm_env
 import gym
 
 
-_VALID_TASK_SUITES = ('gym', 'control')
+_VALID_TASK_SUITES = ('gym', 'control', 'dmc')
 
 
 def make_environment(suite: str, task: str) -> dm_env.Environment:
@@ -43,7 +43,7 @@ def make_environment(suite: str, task: str) -> dm_env.Environment:
     # Make sure the environment obeys the dm_env.Environment interface.
     env = wrappers.GymWrapper(env)
 
-  elif suite == 'control':
+  elif suite in ('control', 'dmc'):
     # Load dm_suite lazily not require Mujoco license when not using it.
     from dm_control import suite as dm_suite  # pylint: disable=g-import-not-at-top
     domain_name, task_name = task.split(':')
