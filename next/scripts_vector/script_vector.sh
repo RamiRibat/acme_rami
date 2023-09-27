@@ -6,7 +6,8 @@ conda activate acme
 
 SUITES=(
     # 'gym'
-    'control'
+    # 'control'
+    'dmc'
     # 'atari'
 )
 
@@ -15,6 +16,7 @@ LEVELS=(
     'easy'
     'medium'
     'hard'
+    # 'extra'
 )
 
 ID=$1
