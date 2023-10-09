@@ -100,7 +100,7 @@ class SACConfig(normalization.InputNormalizerConfig):
 	samples_per_insert_tolerance_rate: float = 0.1
 	# How many gradient updates to perform per step.
 	num_sgd_steps_per_step: int = 1
-
+	replay_ratio: int = 1
 	reset_interval: int = 0
 
 	input_normalization: Optional[normalization.NormalizationConfig] = None
