@@ -53,17 +53,17 @@ sac_hp_list = [
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('config', 'config', 'Suite')
+flags.DEFINE_string('config', 'config', 'Configurations')
 flags.DEFINE_string('acme_id', None, 'Experiment identifier to use for Acme.')
 flags.DEFINE_string('agent_id', 'sac', 'What agent in use.')
-flags.DEFINE_string('suite', 'control', 'Suite')
+flags.DEFINE_string('suite', 'dmc', 'Suite')
 flags.DEFINE_string('level', 'trivial', "Task level")
 flags.DEFINE_string('task', 'walker:walk', 'What environment to run')
 flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
 flags.DEFINE_integer('eval_every', 25_000, 'How often to run evaluation.')
 flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
-flags.DEFINE_integer('gpu', None, 'Random seed.')
+flags.DEFINE_integer('gpu', None, 'GPU')
 flags.DEFINE_integer('hp', 1, 'Hyper-parameters.')
 
 flags.DEFINE_bool(
@@ -132,7 +132,7 @@ def main(_):
 					experiment=experiment_cfg,
 					eval_every=FLAGS.eval_every,
 					num_eval_episodes=FLAGS.evaluation_episodes)
-	elif FLAGS.suite in ('control', 'dmc'):
+	elif FLAGS.suite == 'dmc':
 		if FLAGS.level in config[FLAGS.suite].keys():
 			level_info = config[FLAGS.suite][FLAGS.level]
 			FLAGS.num_steps = level_info['run']['steps']
