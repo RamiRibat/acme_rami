@@ -268,7 +268,7 @@ class SACLearner(acme.Learner):
 
 	def _make_initial_state(self) -> TrainingState:
 		"""Initialises the training state (parameters and optimizer state)."""
-		print(colored('Learner._make_initial_state', 'red'))
+		# print(colored('Learner._make_initial_state', 'red'))
 		# Create keys for policy & q and renew key
 		key_policy, key_q, self._key = jax.random.split(self._key, 3)
 
