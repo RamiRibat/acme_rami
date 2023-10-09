@@ -65,7 +65,7 @@ class SACLearner(acme.Learner):
 		counter: Optional[counting.Counter] = None,
 		logger: Optional[loggers.Logger] = None,
 		num_sgd_steps_per_step: int = 1,
-		reset_interval: int = 0,
+		reset_interval: Optional[int] = None,
 		jit: bool = True,
 	):
 		"""Initialize the SAC learner.
@@ -299,8 +299,10 @@ class SACLearner(acme.Learner):
 	def step(self):
 		# print('Learner.step')
 		if 'learner_steps' in self._counter.get_counts().keys():
-			if self._counter.get_counts()['learner_steps'] % (2560000//self._num_sgd_steps_per_step) == 0:
-				self._state = self._make_initial_state()
+			if self._reset_interval:
+				reset_freq = self._reset_interval/self._num_sgd_steps_per_step
+				if self._counter.get_counts()['learner_steps'] % reset_freq == 0:
+					self._state = self._make_initial_state()
 
 		# Sample from replay and pack the data in a Transition.
 		sample = next(self._iterator)
