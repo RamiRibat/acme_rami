@@ -124,85 +124,85 @@ class CheckpointingConfig:
 class ExperimentConfig(Generic[builders.Networks,
                                builders.Policy,
                                builders.Sample]):
-  """Config which defines aspects of constructing an experiment.
+	"""Config which defines aspects of constructing an experiment.
 
-  Attributes:
-    builder: Builds components of an RL agent (Learner, Actor...).
-    network_factory: Builds networks used by the agent.
-    environment_factory: Returns an instance of an environment.
-    max_num_actor_steps: How many environment steps to perform.
-    seed: Seed used for agent initialization.
-    policy_network_factory: Policy network factory which is used actors to
-      perform inference.
-    evaluator_factories: Factories of policy evaluators. When not specified the
-      default evaluators are constructed using eval_policy_network_factory. Set
-      to an empty list to disable evaluators.
-    eval_policy_network_factory: Policy network factory used by evaluators.
-      Should be specified to use the default evaluators (when
-      evaluator_factories is not provided).
-    environment_spec: Specification of the environment. Can be specified to
-      reduce the number of times environment_factory is invoked (for performance
-      or resource usage reasons).
-    observers: Observers used for extending logs with custom information.
-    logger_factory: Loggers factory used to construct loggers for learner,
-      actors and evaluators.
-    checkpointing: Configuration options for checkpointing. If None,
-      checkpointing and snapshotting is disabled.
-  """
-  # Below fields must be explicitly specified for any Agent.
-  builder: builders.ActorLearnerBuilder[builders.Networks, builders.Policy,
-                                        builders.Sample]
-  network_factory: NetworkFactory[builders.Networks]
-  environment_factory: types.EnvironmentFactory
-  max_num_actor_steps: int
-  seed: int
-  # policy_network_factory is deprecated. Use builder.make_policy to
-  # create the policy.
-  policy_network_factory: Optional[DeprecatedPolicyFactory[
-      builders.Networks, builders.Policy]] = None
-  # Fields below are optional. If you just started with Acme do not worry about
-  # them. You might need them later when you want to customize your RL agent.
-  # TODO(stanczyk): Introduce a marker for the default value (instead of None).
-  evaluator_factories: Optional[Sequence[EvaluatorFactory[
-      builders.Policy]]] = None
-  # eval_policy_network_factory is deprecated. Use builder.make_policy to
-  # create the policy.
-  eval_policy_network_factory: Optional[DeprecatedPolicyFactory[
-      builders.Networks, builders.Policy]] = None
-  environment_spec: Optional[specs.EnvironmentSpec] = None
-  observers: Sequence[observers_lib.EnvLoopObserver] = ()
-  logger_factory: loggers.LoggerFactory = dataclasses.field(
-      default_factory=experiment_utils.create_experiment_logger_factory)
-  checkpointing: Optional[CheckpointingConfig] = CheckpointingConfig()
+	Attributes:
+	builder: Builds components of an RL agent (Learner, Actor...).
+	network_factory: Builds networks used by the agent.
+	environment_factory: Returns an instance of an environment.
+	max_num_actor_steps: How many environment steps to perform.
+	seed: Seed used for agent initialization.
+	policy_network_factory: Policy network factory which is used actors to
+		perform inference.
+	evaluator_factories: Factories of policy evaluators. When not specified the
+		default evaluators are constructed using eval_policy_network_factory. Set
+		to an empty list to disable evaluators.
+	eval_policy_network_factory: Policy network factory used by evaluators.
+		Should be specified to use the default evaluators (when
+		evaluator_factories is not provided).
+	environment_spec: Specification of the environment. Can be specified to
+		reduce the number of times environment_factory is invoked (for performance
+		or resource usage reasons).
+	observers: Observers used for extending logs with custom information.
+	logger_factory: Loggers factory used to construct loggers for learner,
+		actors and evaluators.
+	checkpointing: Configuration options for checkpointing. If None,
+		checkpointing and snapshotting is disabled.
+	"""
+	# Below fields must be explicitly specified for any Agent.
+	builder: builders.ActorLearnerBuilder[builders.Networks, builders.Policy,
+										builders.Sample]
+	network_factory: NetworkFactory[builders.Networks]
+	environment_factory: types.EnvironmentFactory
+	max_num_actor_steps: int
+	seed: int
+	# policy_network_factory is deprecated. Use builder.make_policy to
+	# create the policy.
+	policy_network_factory: Optional[DeprecatedPolicyFactory[
+		builders.Networks, builders.Policy]] = None
+	# Fields below are optional. If you just started with Acme do not worry about
+	# them. You might need them later when you want to customize your RL agent.
+	# TODO(stanczyk): Introduce a marker for the default value (instead of None).
+	evaluator_factories: Optional[Sequence[EvaluatorFactory[
+		builders.Policy]]] = None
+	# eval_policy_network_factory is deprecated. Use builder.make_policy to
+	# create the policy.
+	eval_policy_network_factory: Optional[DeprecatedPolicyFactory[
+		builders.Networks, builders.Policy]] = None
+	environment_spec: Optional[specs.EnvironmentSpec] = None
+	observers: Sequence[observers_lib.EnvLoopObserver] = ()
+	logger_factory: loggers.LoggerFactory = dataclasses.field(
+		default_factory=experiment_utils.create_experiment_logger_factory)
+	checkpointing: Optional[CheckpointingConfig] = CheckpointingConfig()
 
-  # TODO(stanczyk): Make get_evaluator_factories a standalone function.
-  def get_evaluator_factories(self):
-    """Constructs the evaluator factories."""
-    if self.evaluator_factories is not None:
-      return self.evaluator_factories
+	# TODO(stanczyk): Make get_evaluator_factories a standalone function.
+	def get_evaluator_factories(self):
+		"""Constructs the evaluator factories."""
+		if self.evaluator_factories is not None:
+			return self.evaluator_factories
 
-    def eval_policy_factory(networks: builders.Networks,
-                            environment_spec: specs.EnvironmentSpec,
-                            evaluation: bool) -> builders.Policy:
-      del evaluation
-      # The config factory has precedence until all agents are migrated to use
-      # builder.make_policy
-      if self.eval_policy_network_factory is not None:
-        return self.eval_policy_network_factory(networks)
-      else:
-        return self.builder.make_policy(
-            networks=networks,
-            environment_spec=environment_spec,
-            evaluation=True)
+		def eval_policy_factory(networks: builders.Networks,
+								environment_spec: specs.EnvironmentSpec,
+								evaluation: bool) -> builders.Policy:
+			del evaluation
+			# The config factory has precedence until all agents are migrated to use
+			# builder.make_policy
+			if self.eval_policy_network_factory is not None:
+				return self.eval_policy_network_factory(networks)
+			else:
+				return self.builder.make_policy(
+					networks=networks,
+					environment_spec=environment_spec,
+					evaluation=True)
 
-    return [
-        default_evaluator_factory(
-            environment_factory=self.environment_factory,
-            network_factory=self.network_factory,
-            policy_factory=eval_policy_factory,
-            logger_factory=self.logger_factory,
-            observers=self.observers)
-    ]
+		return [
+			default_evaluator_factory(
+				environment_factory=self.environment_factory,
+				network_factory=self.network_factory,
+				policy_factory=eval_policy_factory,
+				logger_factory=self.logger_factory,
+				observers=self.observers)
+		]
 
 
 @dataclasses.dataclass
@@ -314,18 +314,27 @@ def default_evaluator_factory(
   return evaluator
 
 
-def make_policy(experiment: ExperimentConfig[builders.Networks, builders.Policy,
-                                             Any], networks: builders.Networks,
-                environment_spec: specs.EnvironmentSpec,
-                evaluation: bool) -> builders.Policy:
-  """Constructs a policy. It is only meant to be used internally."""
-  # TODO(sabela): remove and update callers once all agents use
-  # builder.make_policy
-  if not evaluation and experiment.policy_network_factory:
-    return experiment.policy_network_factory(networks)
-  if evaluation and experiment.eval_policy_network_factory:
-    return experiment.eval_policy_network_factory(networks)
-  return experiment.builder.make_policy(
-      networks=networks,
-      environment_spec=environment_spec,
-      evaluation=evaluation)
+def make_policy(
+	experiment: ExperimentConfig[
+    	builders.Networks,
+    	builders.Policy,
+		Any],
+    networks: builders.Networks,
+	environment_spec: specs.EnvironmentSpec,
+	evaluation: bool
+) -> builders.Policy:
+	"""Constructs a policy. It is only meant to be used internally."""
+	# print(f'config.make_policy [evaluation:{evaluation}]')
+   
+	# TODO(sabela): remove and update callers once all agents use
+	# builder.make_policy
+	if not evaluation and experiment.policy_network_factory:
+		return experiment.policy_network_factory(networks)
+	if evaluation and experiment.eval_policy_network_factory:
+		return experiment.eval_policy_network_factory(networks)
+   
+	return experiment.builder.make_policy(
+		networks=networks,
+		environment_spec=environment_spec,
+		evaluation=evaluation
+    )
