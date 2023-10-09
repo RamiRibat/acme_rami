@@ -6,7 +6,8 @@ conda activate acme
 
 SUITES=(
     # 'gym'
-    'control'
+    # 'control'
+    'dmc'
     # 'atari'
 )
 
