@@ -43,6 +43,7 @@ hyperparams_1 = {
 	'samples_per_insert': 256,
 	'num_sgd_steps_per_step': 1,
 	'reset_interval': 0, #2560000,
+	'replay_ratio': 1
 }
 
 sac_hp_list = [
@@ -84,9 +85,9 @@ def build_experiment_config():
 
 	sac_hyperparams = sac_hp_list[FLAGS.hp - 1]
 
-	# replay_ratio = eval(FLAGS.replay_ratio)
-	# sac_hyperparams['samples_per_insert'] = int(replay_ratio * sac_hyperparams['batch_size'])
-	# sac_hyperparams['num_sgd_steps_per_step'] = int(replay_ratio * (sac_hyperparams['batch_size']/sac_hyperparams['samples_per_insert']))
+	replay_ratio = sac_hyperparams['replay_ratio'] # eval(FLAGS.replay_ratio)
+	sac_hyperparams['samples_per_insert'] = int(replay_ratio * sac_hyperparams['batch_size'])
+	sac_hyperparams['num_sgd_steps_per_step'] = int(replay_ratio * (sac_hyperparams['batch_size']/sac_hyperparams['samples_per_insert']))
 
 	def network_factory(spec) -> sac.SACNetworks:
 		return sac.make_networks(
