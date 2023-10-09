@@ -21,7 +21,6 @@ DATETIME=$(date +'%Y%m%d:%H%M%S')
 # ID="v_"$DATETIME"_256x256"
 # ID="v_mfrl_dmc_256x256"
 # ID="v_mfrl_dmc_og"
-# ID="v_mfrl_dmc_sr_d4pg"
 ID="v_mfrl_mpo"
 
 # AGENTS=(
@@ -35,16 +34,16 @@ SEEDS=(1 2 3)
 
 # GPU=$1
 AGENT=$1
-RR=$2
+HP=$2
 
 
 
 # for AGENT in ${AGENTS[*]}; do
 for SEED in ${SEEDS[*]}; do
     srun --exclusive -n 1 -c 32 --mem=32GB --gres=gpu:1 --qos=normal \
-    --output=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${RR}-v2-${SEED}.out \
-    --error=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${RR}-v2-${SEED}.err \
-    bash script_vector.sh ${ID} ${AGENT} ${RR} ${SEED} &
+    --output=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${HP}-${SEED}.out \
+    --error=/h/rahmed/logdir/slurm/${ID}-${AGENT}-${HP}-${SEED}.err \
+    bash script_vector_ppo.sh ${ID} ${AGENT} ${HP} ${SEED} &
 done
 # done
 
