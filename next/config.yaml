@@ -1,3 +1,14 @@
+gym:
+  run: {steps: 2_000_000}
+  tasks: [
+    Ant-v4
+    HalfCheetah-v4
+    Hopper-v4
+    Humanoid-v4
+    Swimmer-v4
+    Walker2d-v4
+  ]
+
 
 control: 
     trivial:
@@ -49,7 +60,7 @@ control:
       ]
     
 
-dmc_45: # 9x5
+dmc: # 9x5
     trivial:
       run: {steps: 500_000}
       tasks: [
@@ -86,36 +97,36 @@ dmc_45: # 9x5
         finger:spin,
         finger:turn_hard,
         fish:swim,
-        humanoid:stand, # ?medium
+        quadruped:walk, # ?medium
         stacker:stack_2, # (medium)
-        swimmer:swimmer15,
+        swimmer:swimmer15, # ?hard
         walker:run
       ]
     
     hard:
-      run: {steps: 5_000_000}
+      run: {steps: 4_000_000}
       tasks: [
         acrobot:swingup,
         acrobot:swingup_sparse,
         dog:walk, # hard
         dog:trot, # hard
         hopper:hop,
+        humanoid:stand, # ?medium
         humanoid:walk,
-        manipulator:bring_ball
-        quadruped:walk, # hard
+        quadruped:run, # hard+
         stacker:stack_4, # hard
       ]
 
     extra:
-      run: {steps: 10_000_000}
+      run: {steps: 8_000_000}
       tasks: [
         dog:run, # hard+
         dog:fetch, # hard+
         humanoid:run, # hard+
+        manipulator:bring_ball,
         manipulator:bring_peg, # hard+
         manipulator:insert_ball, # hard+
         manipulator:insert_peg, # hard+
-        quadruped:run, # hard+
         quadruped:escape, # hard+
         quadruped:fetch, # hard+
       ]
