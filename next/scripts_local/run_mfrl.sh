@@ -17,7 +17,7 @@ DMC_LEVELS=(
 DATETIME=$(date +'%Y%m%d:%H%M%S')
 
 # ID="local_"$DATETIME
-ID="local_mfrl_mpo"
+ID="local_mfrl_dmc"
 
 SEEDS=(1)
 
