@@ -82,8 +82,8 @@ dmc: # 9x5=45
         cartpole:swingup_sparse,
         cartpole:two_poles, # (easy)-medium
         cheetah:run, # easy
-        fish:upright, # easy
         finger:turn_easy,
+        fish:upright, # easy
         pendulum:swingup,
         point_mass:hard, # (easy)-medium
         reacher:hard,

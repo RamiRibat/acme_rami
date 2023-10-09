@@ -81,8 +81,8 @@ dmc: # 9x5
         cartpole:swingup_sparse,
         cartpole:two_poles, # (easy)-medium
         cheetah:run, # easy
-        fish:upright, # easy
         finger:turn_easy,
+        fish:upright, # easy
         pendulum:swingup,
         point_mass:hard, # (easy)-medium
         reacher:hard,
@@ -95,8 +95,8 @@ dmc: # 9x5
         cartpole:three_poles, # (medium)-hard
         dog:stand, # (medium)
         finger:spin,
-        finger:turn_hard,
         fish:swim,
+        finger:turn_hard,
         quadruped:walk, # ?medium
         stacker:stack_2, # (medium)
         swimmer:swimmer15, # ?hard
@@ -108,8 +108,8 @@ dmc: # 9x5
       tasks: [
         acrobot:swingup,
         acrobot:swingup_sparse,
-        dog:walk, # hard
         dog:trot, # hard
+        dog:walk, # hard
         hopper:hop,
         humanoid:stand, # ?medium
         humanoid:walk,
