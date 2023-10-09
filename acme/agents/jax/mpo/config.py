@@ -35,7 +35,7 @@ class MPOConfig:
 	value_tx_pair: rlax.TxPair = rlax.IDENTITY_PAIR
 
 	""" Learner (Loss) hyper-parameters """
-	jit_learner: bool = False
+	jit_learner: bool = True
 	batch_size: int = 256  # Total batch size across all learner devices.
 	discount: float = 0.99
 	# Policy training configuration.
