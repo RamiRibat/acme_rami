@@ -32,7 +32,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-sac_hyperparams = {
+hyperparams_1 = {
 	'hidden_layer_sizes': (256, 256),
 	'discount': 0.99,
 	'tau': 0.005,
@@ -42,22 +42,35 @@ sac_hyperparams = {
 	'prefetch_size': 4,
 	'samples_per_insert': 256,
 	'num_sgd_steps_per_step': 1,
-	'reset_interval': 2560000,
+	'reset_interval': 0, #2560000,
 }
+
+sac_hp_list = [
+	hyperparams_1,
+	# hyperparams_2
+]
 
 FLAGS = flags.FLAGS
 
+flags.DEFINE_string('config', 'config', 'Suite')
 flags.DEFINE_string('acme_id', None, 'Experiment identifier to use for Acme.')
 flags.DEFINE_string('agent_id', 'sac', 'What agent in use.')
 flags.DEFINE_string('suite', 'control', 'Suite')
 flags.DEFINE_string('level', 'trivial', "Task level")
 flags.DEFINE_string('task', 'walker:walk', 'What environment to run')
-flags.DEFINE_string('replay_ratio', '1', 'What environment to run')
 flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
 flags.DEFINE_integer('eval_every', 25_000, 'How often to run evaluation.')
 flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
 flags.DEFINE_integer('seed', 0, 'Random seed.')
 flags.DEFINE_integer('gpu', None, 'Random seed.')
+flags.DEFINE_integer('hp', 1, 'Hyper-parameters.')
+
+flags.DEFINE_bool(
+    'run_distributed', False, 'Should an agent be executed in a distributed '
+    'way. If False, will run single-threaded.')
+flags.DEFINE_integer('num_distributed_actors', 4,
+                     'Number of actors to use in the distributed setting.')
+
 
 
 def build_experiment_config():
@@ -69,9 +82,11 @@ def build_experiment_config():
 	suite, task = FLAGS.suite, FLAGS.task
 	environment_factory = lambda seed: helpers.make_environment(suite, task)
 
-	replay_ratio = eval(FLAGS.replay_ratio)
-	sac_hyperparams['samples_per_insert'] = int(replay_ratio * sac_hyperparams['batch_size'])
-	sac_hyperparams['num_sgd_steps_per_step'] = int(replay_ratio * (sac_hyperparams['batch_size']/sac_hyperparams['samples_per_insert']))
+	sac_hyperparams = sac_hp_list[FLAGS.hp - 1]
+
+	# replay_ratio = eval(FLAGS.replay_ratio)
+	# sac_hyperparams['samples_per_insert'] = int(replay_ratio * sac_hyperparams['batch_size'])
+	# sac_hyperparams['num_sgd_steps_per_step'] = int(replay_ratio * (sac_hyperparams['batch_size']/sac_hyperparams['samples_per_insert']))
 
 	def network_factory(spec) -> sac.SACNetworks:
 		return sac.make_networks(
@@ -96,20 +111,47 @@ def build_experiment_config():
 
 
 def main(_):
-	path = os.path.join(os.path.dirname(os.getcwd())+'/config.yaml')
+	path = os.path.join(os.path.dirname(os.getcwd())+f'/{FLAGS.config}.yaml')
 	config = yaml.safe_load(open(path))
 
-	if FLAGS.level in config[FLAGS.suite].keys():
-		level_info = config[FLAGS.suite][FLAGS.level]
-		FLAGS.num_steps = level_info['run']['steps']
+	if FLAGS.suite == 'gym':
+		FLAGS.num_steps = config[FLAGS.suite]['run']['steps']
 		FLAGS.eval_every = FLAGS.num_steps//20
-		for task in level_info['tasks']:
+		for task in config[FLAGS.suite]['tasks']:
 			FLAGS.task = task
 			experiment_cfg = build_experiment_config()
-			experiments.run_experiment(
-				experiment=experiment_cfg,
-				eval_every=FLAGS.eval_every,
-				num_eval_episodes=FLAGS.evaluation_episodes)
+			if FLAGS.run_distributed:
+				program = experiments.make_distributed_experiment(
+					experiment=experiment_cfg,
+					num_actors=FLAGS.num_distributed_actors
+				)
+				lp.launch(program, xm_resources=lp_utils.make_xm_docker_resources(program))
+			else:
+				experiments.run_experiment(
+					experiment=experiment_cfg,
+					eval_every=FLAGS.eval_every,
+					num_eval_episodes=FLAGS.evaluation_episodes)
+	elif FLAGS.suite in ('control', 'dmc'):
+		if FLAGS.level in config[FLAGS.suite].keys():
+			level_info = config[FLAGS.suite][FLAGS.level]
+			FLAGS.num_steps = level_info['run']['steps']
+			FLAGS.eval_every = FLAGS.num_steps//20
+			for task in level_info['tasks']:
+				FLAGS.task = task
+				experiment_cfg = build_experiment_config()
+				if FLAGS.run_distributed:
+					program = experiments.make_distributed_experiment(
+						experiment=experiment_cfg,
+						num_actors=FLAGS.num_distributed_actors
+					)
+					lp.launch(program, xm_resources=lp_utils.make_xm_docker_resources(program))
+				else:
+					experiments.run_experiment(
+						experiment=experiment_cfg,
+						eval_every=FLAGS.eval_every,
+						num_eval_episodes=FLAGS.evaluation_episodes)
+		else:
+			return
 	else:
 		return
 
