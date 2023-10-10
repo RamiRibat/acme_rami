@@ -26,45 +26,52 @@ from acme.utils.loggers import terminal
 
 
 def make_default_logger(
-    label: str,
-    save_data: bool = True,
-    time_delta: float = 1.0,
-    asynchronous: bool = False,
-    print_fn: Optional[Callable[[str], None]] = None,
-    serialize_fn: Optional[Callable[[Mapping[str, Any]], str]] = base.to_numpy,
-    steps_key: str = 'steps',
+	label: str,
+	save_data: bool = True,
+	time_delta: float = 1.0,
+	asynchronous: bool = False,
+	print_fn: Optional[Callable[[str], None]] = None,
+	serialize_fn: Optional[Callable[[Mapping[str, Any]], str]] = base.to_numpy,
+	steps_key: str = 'steps',
 ) -> base.Logger:
-  """Makes a default Acme logger.
+	"""Makes a default Acme logger.
 
-  Args:
-    label: Name to give to the logger.
-    save_data: Whether to persist data.
-    time_delta: Time (in seconds) between logging events.
-    asynchronous: Whether the write function should block or not.
-    print_fn: How to print to terminal (defaults to print).
-    serialize_fn: An optional function to apply to the write inputs before
-      passing them to the various loggers.
-    steps_key: Ignored.
+	Args:
+	label: Name to give to the logger.
+	save_data: Whether to persist data.
+	time_delta: Time (in seconds) between logging events.
+	asynchronous: Whether the write function should block or not.
+	print_fn: How to print to terminal (defaults to print).
+	serialize_fn: An optional function to apply to the write inputs before
+		passing them to the various loggers.
+	steps_key: Ignored.
 
-  Returns:
-    A logger object that responds to logger.write(some_dict).
-  """
-  del steps_key
-  if not print_fn:
-    print_fn = logging.info
-  terminal_logger = terminal.TerminalLogger(label=label, print_fn=print_fn)
+	Returns:
+	A logger object that responds to logger.write(some_dict).
+	"""
+   
+	del steps_key
+    
+	if not print_fn:
+		print_fn = logging.info
+    
+	terminal_logger = terminal.TerminalLogger(label=label, print_fn=print_fn)
 
-  loggers = [terminal_logger]
-  # loggers = []
+	loggers = [terminal_logger]
+	# loggers = []
 
-  if save_data:
-    loggers.append(csv.CSVLogger(label=label))
+	if save_data:
+		loggers.append(csv.CSVLogger(label=label))
 
-  # Dispatch to all writers and filter Nones and by time.
-  logger = aggregators.Dispatcher(loggers, serialize_fn)
-  logger = filters.NoneFilter(logger)
-  if asynchronous:
-    logger = async_logger.AsyncLogger(logger)
-  logger = filters.TimeFilter(logger, time_delta)
+	# Dispatch to all writers and filter Nones and by time.
+	logger = aggregators.Dispatcher(loggers, serialize_fn)
 
-  return logger
+	logger = filters.NoneFilter(logger)
+
+	if asynchronous:
+		logger = async_logger.AsyncLogger(logger)
+
+	if label != 'evaluator':
+		logger = filters.TimeFilter(logger, time_delta)
+
+	return logger
