@@ -218,14 +218,15 @@ class MPOBuilder(builders.ActorLearnerBuilder):
 		return utils.multi_device_put(dataset.as_numpy_iterator(), jax.local_devices())
 
 
-	def make_learner(self,
-					random_key: jax_types.PRNGKey,
-					networks: mpo_networks.MPONetworks,
-					dataset: Iterator[reverb.ReplaySample],
-					logger_fn: loggers.LoggerFactory,
-					environment_spec: specs.EnvironmentSpec,
-					replay_client: Optional[reverb.Client] = None,
-					counter: Optional[counting.Counter] = None
+	def make_learner(
+		self,
+		random_key: jax_types.PRNGKey,
+		networks: mpo_networks.MPONetworks,
+		dataset: Iterator[reverb.ReplaySample],
+		logger_fn: loggers.LoggerFactory,
+		environment_spec: specs.EnvironmentSpec,
+		replay_client: Optional[reverb.Client] = None,
+		counter: Optional[counting.Counter] = None
 	) -> core.Learner:
 		# Set defaults.
 		del replay_client  # Unused as we do not update priorities.

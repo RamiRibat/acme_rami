@@ -16,11 +16,16 @@
 
 from acme.agents.jax.mpo.acting import ActorState
 from acme.agents.jax.mpo.acting import make_actor_core
+
 from acme.agents.jax.mpo.builder import MPOBuilder
+
 from acme.agents.jax.mpo.config import MPOConfig
+
 from acme.agents.jax.mpo.learning import MPOLearner
+
 from acme.agents.jax.mpo.networks import make_control_networks
 from acme.agents.jax.mpo.networks import MPONetworks
+
 from acme.agents.jax.mpo.types import CategoricalPolicyLossConfig
 from acme.agents.jax.mpo.types import CriticType
 from acme.agents.jax.mpo.types import GaussianPolicyLossConfig
