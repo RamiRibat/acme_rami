@@ -37,7 +37,7 @@ for SUITE in ${SUITES[*]}; do
 			--suite $SUITE --level $LEVEL \
 			--seed $SEED
 	fi
-	
+
 	if [ $SUITE == 'control' ] || [ $SUITE == 'dmc' ]; then
 		echo $SUITE
 		for LEVEL in ${DMC_LEVELS[*]}; do
@@ -47,6 +47,7 @@ for SUITE in ${SUITES[*]}; do
 			--acme_id $ID --agent_id $AGENT --hp $HP \
 			--suite $SUITE --level $LEVEL \
 			--seed $SEED
+		done
 	fi
 
 done
