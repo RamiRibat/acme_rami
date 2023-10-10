@@ -52,4 +52,5 @@ class D4PGConfig:
 	# How many gradient updates to perform per step.
 	num_sgd_steps_per_step: int = 1
 
-	reset_interval: int = 0
+	replay_ratio: int = 0.125
+	reset_interval: Optional[int] = None

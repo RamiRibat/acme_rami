@@ -69,7 +69,7 @@ class D4PGLearner(acme.Learner):
 		counter: Optional[counting.Counter] = None,
 		logger: Optional[loggers.Logger] = None,
 		num_sgd_steps_per_step: int = 1,
-		reset_interval: int = 0,
+		reset_interval: Optional[int] = None,
 		jit: bool = True,
 	):
 
