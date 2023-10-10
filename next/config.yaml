@@ -95,8 +95,8 @@ dmc: # 9x5
         cartpole:three_poles, # (medium)-hard
         dog:stand, # (medium)
         finger:spin,
-        fish:swim,
         finger:turn_hard,
+        fish:swim,
         quadruped:walk, # ?medium
         stacker:stack_2, # (medium)
         swimmer:swimmer15, # ?hard
