@@ -145,8 +145,9 @@ def run_experiment(
 	)
 
 	train_loop = acme.EnvironmentLoop(
-		environment,
-		actor,
+		environment=environment,
+		actor=actor,
+		label='train_loop',
 		counter=train_counter,
 		logger=train_logger,
 		observers=experiment.observers)
@@ -176,8 +177,9 @@ def run_experiment(
 		environment_spec=environment_spec,
 		variable_source=learner)
 	eval_loop = acme.EnvironmentLoop(
-		environment,
-		eval_actor,
+		environment=environment,
+		actor=eval_actor,
+		label='eval_loop',
 		counter=eval_counter,
 		logger=eval_logger,
 		observers=experiment.observers)
