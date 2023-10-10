@@ -229,7 +229,6 @@ class EnvironmentLoop(core.Worker):
 		else:
 			with signals.runtime_terminator():
 				while not should_terminate(episode_count, step_count):
-					print(f'label: {self._label} | episode_count: {episode_count}')
 					episode_start = time.time()
 					result = self.run_episode()
 					result = {**result, **{'episode_duration': time.time() - episode_start}}
