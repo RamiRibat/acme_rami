@@ -29,15 +29,185 @@ from dm_env import specs
 from dm_control.rl import control
 from dm_control.suite.wrappers import pixels  # type: ignore
 
+
+
+class MujocoPixelWrapper(base.EnvironmentWrapper):
+	"""Produces pixel observations from Mujoco environment observations."""
+
+	def __init__(self,
+				environment: control.Environment,
+				*,
+				height: int = 84,
+				width: int = 84,
+				camera_id: int = 0
+	):
+		render_kwargs = {'height': height, 'width': width, 'camera_id': camera_id}
+		pixel_environment = pixels.Wrapper(
+			environment, pixels_only=True, render_kwargs=render_kwargs)
+		super().__init__(pixel_environment)
+
+	def step(self, action) -> dm_env.TimeStep:
+		return self._convert_timestep(self._environment.step(action))
+
+	def reset(self) -> dm_env.TimeStep:
+		return self._convert_timestep(self._environment.reset())
+
+	def observation_spec(self):
+		return self._environment.observation_spec()['pixels']
+
+	def _convert_timestep(self, timestep: dm_env.TimeStep) -> dm_env.TimeStep:
+		"""Removes the pixel observation's OrderedDict wrapper."""
+		observation: collections.OrderedDict = timestep.observation
+		return timestep._replace(observation=observation['pixels'])
+
+
+
+
+
 RGB_INDEX = 0  # Observation index holding the RGB data.
 LIVES_INDEX = 1  # Observation index holding the lives count.
 NUM_COLOR_CHANNELS = 3  # Number of color channels in RGB data.
 
 
+class MujocoPixelWrapperV2(base.EnvironmentWrapper):
+	"""Produces pixel observations from Mujoco environment observations."""
+
+	def __init__(
+		self,
+		environment: control.Environment,
+		*,
+		# height: int = 84,
+		# width: int = 84,
+		camera_id: int = 0,
+		scale_dims: Tuple[int, int] = (84, 84),
+		# pooled_frames: int = 1,
+		# num_stacked_frames: int = 4,
+		# flatten_frame_stack: bool = False,
+		to_float: bool = False,
+		grayscaling: bool = False,
+	):
+		print('MujocoPixelWrapperV2')
+
+		if scale_dims:
+			self._height, self._width = scale_dims
+		else:
+			spec = environment.observation_spec()
+			self._height, self._width = spec[RGB_INDEX].shape[:2]
+
+		# render_kwargs = {'camera_id': camera_id}
+		render_kwargs = {'height': self._height, 'width': self._width, 'camera_id': camera_id}
+
+		pixel_environment = pixels.Wrapper(environment, pixels_only=True, render_kwargs=render_kwargs)
+		super().__init__(pixel_environment)
+
+		self._scale_dims = scale_dims
+		self._to_float = to_float
+
+		self._grayscaling = grayscaling
+
+		self._observation_spec = self._init_observation_spec()
+
+
+	def _init_observation_spec(self):
+		"""Computes the observation spec for the pixel observations.
+
+		Returns:
+		An `Array` specification for the pixel observations.
+		"""
+        
+		if self._to_float:
+			pixels_dtype = float
+		else:
+			pixels_dtype = np.uint8
+
+		if self._grayscaling:
+			pixels_spec_shape = (self._height, self._width, 1)
+			pixels_spec_name = "grayscale"
+		else:
+			pixels_spec_shape = (self._height, self._width, NUM_COLOR_CHANNELS)
+			pixels_spec_name = "RGB"
+
+		pixel_spec = specs.Array(
+			shape=pixels_spec_shape,
+			dtype=pixels_dtype,
+			name=pixels_spec_name
+		)
+		# pixel_spec = self._frame_stacker.update_spec(pixel_spec)
+
+		return pixel_spec
+
+
+	def step(self, action) -> dm_env.TimeStep:
+		return self._convert_timestep(self._environment.step(action))
+
+
+	def reset(self) -> dm_env.TimeStep:
+		return self._convert_timestep(self._environment.reset())
+
+
+	def observation_spec(self):
+		# return self._environment.observation_spec()['pixels']
+		return self._observation_spec
+
+
+	def _convert_timestep(self, timestep: dm_env.TimeStep) -> dm_env.TimeStep:
+		"""Removes the pixel observation's OrderedDict wrapper."""
+		observation: collections.OrderedDict = timestep.observation
+		# return timestep._replace(observation=observation['pixels'])
+		observation = self._preprocess_pixels(observation['pixels'])
+		return timestep._replace(observation=observation)
+	
+
+	def _preprocess_pixels(
+		self,
+		pixels
+	):
+		"""Preprocess DMC frames."""
+
+		# # Max pooling (frameskip > 1)
+		# processed_pixels = np.max(
+		# 	np.stack([
+		# 		s.observation[RGB_INDEX]
+		# 		for s in timestep_stack[-self._pooled_frames:]
+		# 	]),
+		# 	axis=0
+		# )
+		
+		processed_pixels = pixels
+
+		# print('\n\na.processed_pixels: ', processed_pixels.shape)
+
+		# RGB to grayscale
+		if self._grayscaling:
+			# processed_pixels = np.dot(
+			# 	processed_pixels,
+			# 	[0.299, 0.587, 1 - (0.299 + 0.587)]
+			# )
+			processed_pixels = np.tensordot(
+				processed_pixels, # (H, W, C)
+				[0.299, 0.587, 1 - (0.299 + 0.587)],
+				(-1, 0)
+			)
+
+			processed_pixels = processed_pixels[:, :, None]
+
+
+		# print('z.processed_pixels: ', processed_pixels.shape)
+
+		processed_pixels = processed_pixels.astype(np.uint8, copy=False)
+
+		# # Resize
+		# if self._scale_dims != processed_pixels.shape[:2]:
+		# 	processed_pixels = Image.fromarray(processed_pixels).resize(
+		# 		(self._width, self._height), Image.Resampling.BILINEAR)
+		# 	processed_pixels = np.array(processed_pixels, dtype=np.uint8)
+
+		return processed_pixels
+
 
 
 # TODO(rami): Make it like AtariWrapper
-class MujocoPixelWrapper(base.EnvironmentWrapper):
+class MujocoPixelWrapperV3(base.EnvironmentWrapper):
 	"""Produces pixel observations from Mujoco environment observations."""
 
 	def __init__(
@@ -54,9 +224,17 @@ class MujocoPixelWrapper(base.EnvironmentWrapper):
 		to_float: bool = False,
 		grayscaling: bool = True,
 	):
-		print('MujocoPixelWrapper')
-		render_kwargs = {'camera_id': camera_id}
-		# render_kwargs = {'height': height, 'width': width, 'camera_id': camera_id}
+		print('MujocoPixelWrapperV3')
+
+		if scale_dims:
+			self._height, self._width = scale_dims
+		# else:
+		# 	spec = environment.observation_spec()
+		# 	self._height, self._width = spec[RGB_INDEX].shape[:2]
+
+		# render_kwargs = {'camera_id': camera_id}
+		render_kwargs = {'height': self._height, 'width': self._width, 'camera_id': camera_id}
+
 		pixel_environment = pixels.Wrapper(environment, pixels_only=True, render_kwargs=render_kwargs)
 		super().__init__(pixel_environment)
 
@@ -64,15 +242,9 @@ class MujocoPixelWrapper(base.EnvironmentWrapper):
 			num_frames=num_stacked_frames,
 			flatten=flatten_frame_stack
 		)
-		self._pooled_frames = pooled_frames
+		# self._pooled_frames = pooled_frames
 		self._scale_dims = scale_dims
 		self._to_float = to_float
-
-		if scale_dims:
-			self._height, self._width = scale_dims
-		else:
-			spec = environment.observation_spec()
-			self._height, self._width = spec[RGB_INDEX].shape[:2]
 
 		self._grayscaling = grayscaling
 
@@ -119,59 +291,19 @@ class MujocoPixelWrapper(base.EnvironmentWrapper):
 
 		observation = self._observation_from_timestep_stack(timestep)
 
-		return self._postprocess_observation(timestep._replace(observation=observation))
+		timestep = timestep._replace(observation=observation)
+
+		return self._postprocess_observation(timestep)
 	
 
 	def step(self, action) -> dm_env.TimeStep:
 		# return self._convert_timestep(self._environment.step(action))
 		"""Steps up to action_repeat times and returns a post-processed step."""
-		# if self._reset_next_step:
-		# 	return self.reset()
-
-		timestep_stack = []
-
-		# # Step on environment multiple times for each selected action.
-		# for _ in range(self._action_repeats):
+		
 		timestep = self._environment.step([np.array([action])])
+		timestep = self._convert_timestep(timestep)
 
-		# self._episode_len += 1
-		# if self._episode_len == self._max_episode_len:
-		# 	timestep = timestep._replace(step_type=dm_env.StepType.LAST)
-
-		timestep_stack.append(self._convert_timestep(timestep))
-
-		# if timestep.last():
-		# 	# Action repeat frames should not span episode boundaries. Also, no need
-		# 	# to pad with zero-valued observations as all the reductions in
-		# 	# _postprocess_observation work gracefully for any non-zero size of
-		# 	# timestep_stack.
-		# 	self._reset_next_step = True
-		# 	break
-
-		# Determine a single step type. We let FIRST take priority over LAST, since
-		# we think it's more likely algorithm code will be set up to deal with that,
-		# due to environments supporting reset() (which emits a FIRST).
-		# Note we'll never have LAST then FIRST in timestep_stack here.
-		step_type = dm_env.StepType.MID
-		for timestep in timestep_stack:
-			if timestep.first():
-				step_type = dm_env.StepType.FIRST
-				break
-			elif timestep.last():
-				step_type = dm_env.StepType.LAST
-				break
-
-		if timestep_stack[0].first():
-			# Update first timestep to have identity effect on reward and discount.
-			timestep_stack[0] = timestep_stack[0]._replace(reward=0., discount=1.)
-
-		# Sum reward over stack.
-		reward = sum(timestep_t.reward for timestep_t in timestep_stack)
-
-		# Multiply discount over stack (will either be 0. or 1.).
-		discount = np.prod([timestep_t.discount for timestep_t in timestep_stack])
-
-		observation = self._observation_from_timestep_stack(timestep_stack)
+		observation = self._observation_from_timestep_stack(timestep)
 
 		timestep = timestep._replace(observation=observation)
 
@@ -202,22 +334,22 @@ class MujocoPixelWrapper(base.EnvironmentWrapper):
 		# )
 		
 		processed_pixels = timestep_stack.observation
-		print('processed_pixels: ', processed_pixels)
+		# print('processed_pixels: ', processed_pixels)
 
-		# RGB to grayscale
-		if self._grayscaling:
-			processed_pixels = np.tensordot(
-				processed_pixels,
-				[0.299, 0.587, 1 - (0.299 + 0.587)],
-				(-1, 0)
-			)
+		# # RGB to grayscale
+		# if self._grayscaling:
+		# 	processed_pixels = np.tensordot(
+		# 		processed_pixels,
+		# 		[0.299, 0.587, 1 - (0.299 + 0.587)],
+		# 		(-1, 0)
+		# 	)
 
-		# Resize
-		processed_pixels = processed_pixels.astype(np.uint8, copy=False)
-		if self._scale_dims != processed_pixels.shape[:2]:
-			processed_pixels = Image.fromarray(processed_pixels).resize(
-				(self._width, self._height), Image.Resampling.BILINEAR)
-			processed_pixels = np.array(processed_pixels, dtype=np.uint8)
+		# # Resize
+		# processed_pixels = processed_pixels.astype(np.uint8, copy=False)
+		# if self._scale_dims != processed_pixels.shape[:2]:
+		# 	processed_pixels = Image.fromarray(processed_pixels).resize(
+		# 		(self._width, self._height), Image.Resampling.BILINEAR)
+		# 	processed_pixels = np.array(processed_pixels, dtype=np.uint8)
 
 		return processed_pixels
 
