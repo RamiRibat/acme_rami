@@ -34,8 +34,8 @@ def make_environment(
 	num_action_repeat: int = 1,
     num_stacked_frames: int = 0,
     flatten_frame_stack: bool = False,
-    to_float: bool = True,
-    grayscaling: bool = True,
+    to_float: bool = False,
+    grayscaling: bool = False,
 ) -> dm_env.Environment:
 	"""Makes the requested continuous control environment.
 
@@ -69,21 +69,32 @@ def make_environment(
 		
 
 		if from_pixels:
-			env = mujoco.MujocoPixelWrapper(
+			# print('scale_dims: ', scale_dims)
+			# print('num_stacked_frames: ', num_stacked_frames)
+			# print('flatten_frame_stack: ', flatten_frame_stack)
+			# print('grayscaling: ', grayscaling)
+			env = mujoco.MujocoPixelWrapperV2(
 				environment=env,
 				camera_id=camera_id,
 				scale_dims=scale_dims,
-				num_stacked_frames=num_stacked_frames,
-				flatten_frame_stack=flatten_frame_stack,
+				# num_stacked_frames=num_stacked_frames,
+				# flatten_frame_stack=flatten_frame_stack,
 				to_float=to_float,
 				grayscaling=grayscaling,
 				)
-			# if num_stacked_frames > 0:
-			# 	# assert from_pixels, "stacking is only with pixel observations"
-			# 	env = wrappers.FrameStackingWrapper(env, num_frames=num_stacked_frames, flatten=flatten_frame_stack)
+			# print('after_pixel: env.obs: ', env.observation_spec())
+			if num_stacked_frames > 0:
+				# assert from_pixels, "stacking is only with pixel observations"
+				env = wrappers.FrameStackingWrapper(
+					environment=env,
+					num_frames=num_stacked_frames,
+					flatten=flatten_frame_stack
+				)
+				# print('after_stack: env.obs: ', env.observation_spec())
 
 		else: # state-features
 			env = wrappers.ConcatObservationWrapper(env)
+
 	elif suite == 'atari':
 		pass
 
@@ -91,4 +102,5 @@ def make_environment(
 	# Note: this is a no-op on 'control' tasks.
 	env = wrappers.CanonicalSpecWrapper(env, clip=True)
 	env = wrappers.SinglePrecisionWrapper(env)
+
 	return env
