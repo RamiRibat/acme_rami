@@ -223,6 +223,7 @@ class DrQV2Learner(core.Learner):
 
 		# Initialize training state
 		def make_initial_state(key: jax_types.PRNGKey):
+			print('make_initial_state')
 			key_encoder, key_critic, key_policy, key = jax.random.split(key, 4)
 			encoder_init_params = networks.encoder_network.init(key_encoder)
 			encoder_init_opt_state = encoder_optimizer.init(encoder_init_params)

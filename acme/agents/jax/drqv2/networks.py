@@ -4,7 +4,7 @@ Author: https://github.com/ethanluoyc
 
 """Network definitions for DrQ-v2."""
 import dataclasses
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Sequence, Union
 
 import jax
 import jax.numpy as jnp
@@ -44,6 +44,241 @@ class DrQV2Networks:
 		types.NestedArray]
   
 
+# from deepmind/haiku
+# class ConvND(hk.Module):
+#   """General N-dimensional convolutional."""
+
+#   def __init__(
+#       self,
+#       num_spatial_dims: int,
+#       output_channels: int,
+#       kernel_shape: Union[int, Sequence[int]],
+#       stride: Union[int, Sequence[int]] = 1,
+#       rate: Union[int, Sequence[int]] = 1,
+#       padding: Union[
+#           str, Sequence[tuple[int, int]], hk.pad.PadFn, Sequence[hk.pad.PadFn]
+#       ] = "SAME",
+#       with_bias: bool = True,
+#       w_init: Optional[hk.initializers.Initializer] = None,
+#       b_init: Optional[hk.initializers.Initializer] = None,
+#       data_format: str = "channels_last",
+#       mask: Optional[jax.Array] = None,
+#       feature_group_count: int = 1,
+#       name: Optional[str] = None,
+#   ):
+#     """Initializes the module.
+
+#     Args:
+#       num_spatial_dims: The number of spatial dimensions of the input.
+#       output_channels: Number of output channels.
+#       kernel_shape: The shape of the kernel. Either an integer or a sequence of
+#         length ``num_spatial_dims``.
+#       stride: Optional stride for the kernel. Either an integer or a sequence of
+#         length ``num_spatial_dims``. Defaults to 1.
+#       rate: Optional kernel dilation rate. Either an integer or a sequence of
+#         length ``num_spatial_dims``. 1 corresponds to standard ND convolution,
+#         ``rate > 1`` corresponds to dilated convolution. Defaults to 1.
+#       padding: Optional padding algorithm. Either ``VALID`` or ``SAME`` or a
+#         sequence of n ``(low, high)`` integer pairs that give the padding to
+#         apply before and after each spatial dimension. or a callable or sequence
+#         of callables of size ``num_spatial_dims``. Any callables must take a
+#         single integer argument equal to the effective kernel size and return a
+#         sequence of two integers representing the padding before and after. See
+#         ``haiku.pad.*`` for more details and example functions. Defaults to
+#         ``SAME``. See:
+#         https://www.tensorflow.org/xla/operation_semantics#conv_convolution.
+#       with_bias: Whether to add a bias. By default, true.
+#       w_init: Optional weight initialization. By default, truncated normal.
+#       b_init: Optional bias initialization. By default, zeros.
+#       data_format: The data format of the input.  Can be either
+#         ``channels_first``, ``channels_last``, ``N...C`` or ``NC...``. By
+#         default, ``channels_last``. See :func:`get_channel_index`.
+#       mask: Optional mask of the weights.
+#       feature_group_count: Optional number of groups in group convolution.
+#         Default value of 1 corresponds to normal dense convolution. If a higher
+#         value is used, convolutions are applied separately to that many groups,
+#         then stacked together. This reduces the number of parameters
+#         and possibly the compute for a given ``output_channels``. See:
+#         https://www.tensorflow.org/xla/operation_semantics#conv_convolution.
+#       name: The name of the module.
+#     """
+#     super().__init__(name=name)
+#     if num_spatial_dims <= 0:
+#       raise ValueError(
+#           "We only support convolution operations for `num_spatial_dims` "
+#           f"greater than 0, received num_spatial_dims={num_spatial_dims}.")
+
+#     self.num_spatial_dims = num_spatial_dims
+#     self.output_channels = output_channels
+#     self.kernel_shape = (
+#         utils.replicate(kernel_shape, num_spatial_dims, "kernel_shape"))
+#     self.with_bias = with_bias
+#     self.stride = utils.replicate(stride, num_spatial_dims, "strides")
+#     self.w_init = w_init
+#     self.b_init = b_init or jnp.zeros
+#     self.mask = mask
+#     self.feature_group_count = feature_group_count
+#     self.lhs_dilation = utils.replicate(1, num_spatial_dims, "lhs_dilation")
+#     self.kernel_dilation = (
+#         utils.replicate(rate, num_spatial_dims, "kernel_dilation"))
+#     self.data_format = data_format
+#     self.channel_index = hk.get_channel_index(data_format)
+#     self.dimension_numbers = to_dimension_numbers(
+#         num_spatial_dims, channels_last=(self.channel_index == -1),
+#         transpose=False)
+
+#     if isinstance(padding, str):
+#       self.padding = padding.upper()
+#     elif hk.pad.is_padfn(padding):
+#       self.padding = hk.pad.create_from_padfn(padding=padding,
+#                                               kernel=self.kernel_shape,
+#                                               rate=self.kernel_dilation,
+#                                               n=self.num_spatial_dims)
+#     else:
+#       self.padding = hk.pad.create_from_tuple(padding, self.num_spatial_dims)
+
+#   def __call__(
+#       self,
+#       inputs: jax.Array,
+#       *,
+#       precision: Optional[lax.Precision] = None,
+#   ) -> jax.Array:
+#     """Connects ``ConvND`` layer.
+
+#     Args:
+#       inputs: An array of shape ``[spatial_dims, C]`` and rank-N+1 if unbatched,
+#         or an array of shape ``[N, spatial_dims, C]`` and rank-N+2 if batched.
+#       precision: Optional :class:`jax.lax.Precision` to pass to
+#         :func:`jax.lax.conv_general_dilated`.
+
+#     Returns:
+#       An array of shape ``[spatial_dims, output_channels]`` and rank-N+1 if
+#         unbatched, or an array of shape ``[N, spatial_dims, output_channels]``
+#         and rank-N+2 if batched.
+#     """
+#     unbatched_rank = self.num_spatial_dims + 1
+#     allowed_ranks = [unbatched_rank, unbatched_rank + 1]
+#     if inputs.ndim not in allowed_ranks:
+#       raise ValueError(f"Input to ConvND needs to have rank in {allowed_ranks},"
+#                        f" but input has shape {inputs.shape}.")
+
+#     unbatched = inputs.ndim == unbatched_rank
+#     if unbatched:
+#       inputs = jnp.expand_dims(inputs, axis=0)
+
+#     if inputs.shape[self.channel_index] % self.feature_group_count != 0:
+#       raise ValueError(f"Inputs channels {inputs.shape[self.channel_index]} "
+#                        f"should be a multiple of feature_group_count "
+#                        f"{self.feature_group_count}")
+#     w_shape = self.kernel_shape + (
+#         inputs.shape[self.channel_index] // self.feature_group_count,
+#         self.output_channels)
+
+#     if self.mask is not None and self.mask.shape != w_shape:
+#       raise ValueError("Mask needs to have the same shape as weights. "
+#                        f"Shapes are: {self.mask.shape}, {w_shape}")
+
+#     w_init = self.w_init
+#     if w_init is None:
+#       fan_in_shape = np.prod(w_shape[:-1])
+#       stddev = 1. / np.sqrt(fan_in_shape)
+#       w_init = hk.initializers.TruncatedNormal(stddev=stddev)
+#     w = hk.get_parameter("w", w_shape, inputs.dtype, init=w_init)
+
+#     if self.mask is not None:
+#       w *= self.mask
+
+#     out = lax.conv_general_dilated(inputs,
+#                                    w,
+#                                    window_strides=self.stride,
+#                                    padding=self.padding,
+#                                    lhs_dilation=self.lhs_dilation,
+#                                    rhs_dilation=self.kernel_dilation,
+#                                    dimension_numbers=self.dimension_numbers,
+#                                    feature_group_count=self.feature_group_count,
+#                                    precision=precision)
+
+#     if self.with_bias:
+#       if self.channel_index == -1:
+#         bias_shape = (self.output_channels,)
+#       else:
+#         bias_shape = (self.output_channels,) + (1,) * self.num_spatial_dims
+#       b = hk.get_parameter("b", bias_shape, inputs.dtype, init=self.b_init)
+#       b = jnp.broadcast_to(b, out.shape)
+#       out = out + b
+
+#     if unbatched:
+#       out = jnp.squeeze(out, axis=0)
+#     return out
+
+
+# class Conv2D(ConvND):
+#   """Two dimensional convolution."""
+
+#   def __init__(
+#       self,
+#       output_channels: int,
+#       kernel_shape: Union[int, Sequence[int]],
+#       stride: Union[int, Sequence[int]] = 1,
+#       rate: Union[int, Sequence[int]] = 1,
+#       padding: Union[
+#           str, Sequence[tuple[int, int]], hk.pad.PadFn, Sequence[hk.pad.PadFn]
+#       ] = "SAME",
+#       with_bias: bool = True,
+#       w_init: Optional[hk.initializers.Initializer] = None,
+#       b_init: Optional[hk.initializers.Initializer] = None,
+#       data_format: str = "NHWC",
+#       mask: Optional[jax.Array] = None,
+#       feature_group_count: int = 1,
+#       name: Optional[str] = None,
+#   ):
+#     """Initializes the module.
+
+#     Args:
+#       output_channels: Number of output channels.
+#       kernel_shape: The shape of the kernel. Either an integer or a sequence of
+#         length 2.
+#       stride: Optional stride for the kernel. Either an integer or a sequence of
+#         length 2. Defaults to 1.
+#       rate: Optional kernel dilation rate. Either an integer or a sequence of
+#         length 2. 1 corresponds to standard ND convolution,
+#         ``rate > 1`` corresponds to dilated convolution. Defaults to 1.
+#       padding: Optional padding algorithm. Either ``VALID`` or ``SAME`` or
+#         a callable or sequence of callables of length 2. Any callables must
+#         take a single integer argument equal to the effective kernel size and
+#         return a list of two integers representing the padding before and after.
+#         See haiku.pad.* for more details and example functions.
+#         Defaults to ``SAME``. See:
+#         https://www.tensorflow.org/xla/operation_semantics#conv_convolution.
+#       with_bias: Whether to add a bias. By default, true.
+#       w_init: Optional weight initialization. By default, truncated normal.
+#       b_init: Optional bias initialization. By default, zeros.
+#       data_format: The data format of the input. Either ``NHWC`` or ``NCHW``. By
+#         default, ``NHWC``.
+#       mask: Optional mask of the weights.
+#       feature_group_count: Optional number of groups in group convolution.
+#         Default value of 1 corresponds to normal dense convolution. If a higher
+#         value is used, convolutions are applied separately to that many groups,
+#         then stacked together. This reduces the number of parameters
+#         and possibly the compute for a given ``output_channels``. See:
+#         https://www.tensorflow.org/xla/operation_semantics#conv_convolution.
+#       name: The name of the module.
+#     """
+#     super().__init__(
+#         num_spatial_dims=2,
+#         output_channels=output_channels,
+#         kernel_shape=kernel_shape,
+#         stride=stride,
+#         rate=rate,
+#         padding=padding,
+#         with_bias=with_bias,
+#         w_init=w_init,
+#         b_init=b_init,
+#         data_format=data_format,
+#         mask=mask,
+#         feature_group_count=feature_group_count,
+#         name=name)
+
 
 class Encoder(hk.Module):
 	"""Encoder used by DrQ-v2."""
@@ -52,8 +287,8 @@ class Encoder(hk.Module):
 		# Floatify the image.
 		x = x.astype(jnp.float32) / 255.0 - 0.5
 		conv_kwargs = dict(
-			kernel_shape=3,
 			output_channels=32,
+			kernel_shape=3,
 			padding="VALID",
 			# This follows from the reference implementation, the scale accounts for
 			# using the ReLU activation.
@@ -217,6 +452,7 @@ def make_networks(
 	hidden_size: int = 1024,
 ) -> DrQV2Networks:
 	"""Create networks for the DrQ-v2 agent."""
+	# print('env_spec: ', spec)
      
 	action_size = np.prod(spec.actions.shape, dtype=int)
 
@@ -259,6 +495,8 @@ def make_networks(
 	dummy_encoded = hk.testing.transform_and_run(
 		_encoder_fn, seed=0, jax_transform=jax.jit)(
 			dummy_obs)
+	# print(f'dummy: act: {dummy_action.shape} | obs: {dummy_obs.shape}')
+	# print('dummy_encoded: ', dummy_encoded.shape)
 
 	return DrQV2Networks(
 		encoder_network=networks_lib.FeedForwardNetwork(

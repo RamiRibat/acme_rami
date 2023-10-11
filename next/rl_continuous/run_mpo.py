@@ -103,15 +103,6 @@ def build_experiment_config():
 
 	mpo_hyperparams = mpo_hp_list[FLAGS.hp - 1]
 
-	# Bound of the distributional critic. The reward for control environments is
-	# normalized, not for gym locomotion environments hence the different scales.
-	# vmax_values = {
-	# 	'gym': 1000.,
-	# 	'control': 150.,
-	# 	'dmc': 150.,
-	# }
-	# vmax = vmax_values[suite]
-
 	def network_factory(spec: specs.EnvironmentSpec) -> mpo.MPONetworks:
 		# TODO(rami): replace w/ mpo.make_networks
 		return mpo.make_control_networks(
@@ -162,7 +153,8 @@ def main(_):
 					experiment=experiment_cfg,
 					eval_every=FLAGS.eval_every,
 					num_eval_episodes=FLAGS.evaluation_episodes)
-	elif FLAGS.suite in ('control', 'dmc'):
+				
+	elif FLAGS.suite in ('dmc', 'dmc_pixel'):
 		if FLAGS.level in config[FLAGS.suite].keys():
 			level_info = config[FLAGS.suite][FLAGS.level]
 			FLAGS.num_steps = level_info['run']['steps']
@@ -183,6 +175,7 @@ def main(_):
 						num_eval_episodes=FLAGS.evaluation_episodes)
 		else:
 			return
+		
 	else:
 		return
 
