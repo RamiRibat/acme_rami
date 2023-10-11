@@ -243,7 +243,7 @@ class D4PGLearner(acme.Learner):
 
 	def _make_initial_state(self) -> TrainingState:
 		"""Initialises the training state (parameters and optimizer state)."""
-		print('Learner._make_initial_state')
+		# print('Learner._make_initial_state')
 		# Create keys for policy & critic and renew key
 		key_policy, key_critic, self._key = jax.random.split(self._key, 3)
 

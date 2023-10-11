@@ -20,12 +20,14 @@ from typing import Sequence
 from acme import specs
 from acme import types
 from acme.agents.jax import actor_core as actor_core_lib
-from acme.agents.jax.d4pg import config as d4pg_config
 from acme.jax import networks as networks_lib
 from acme.jax import utils
-import haiku as hk
+
+from acme.agents.jax.d4pg import config as d4pg_config
+
 import jax.numpy as jnp
 import numpy as np
+import haiku as hk
 import rlax
 
 
@@ -42,8 +44,11 @@ def get_default_behavior_policy(
 ) -> actor_core_lib.FeedForwardPolicy:
 	"""Selects action according to the training policy."""
 
-	def behavior_policy(params: networks_lib.Params, key: networks_lib.PRNGKey,
-						observation: types.NestedArray):
+	def behavior_policy(
+		key: networks_lib.PRNGKey,
+		params: networks_lib.Params,
+		observation: types.NestedArray
+	):
 		action = networks.policy_network.apply(params, observation)
 		if config.sigma != 0:
 			action = rlax.add_gaussian_noise(key, action, config.sigma)
@@ -53,7 +58,8 @@ def get_default_behavior_policy(
 
 
 def get_default_eval_policy(
-    networks: D4PGNetworks) -> actor_core_lib.FeedForwardPolicy:
+    networks: D4PGNetworks
+) -> actor_core_lib.FeedForwardPolicy:
 	"""Selects action according to the training policy."""
 
 	def behavior_policy(params: networks_lib.Params, key: networks_lib.PRNGKey,

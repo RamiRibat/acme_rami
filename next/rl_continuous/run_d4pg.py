@@ -16,13 +16,16 @@
 
 import os, yaml, json
 from absl import flags
-from acme.agents.jax import d4pg
+
+import launchpad as lp
+
 import helpers
 from absl import app
 from acme.jax import experiments
 from acme.utils import lp_utils
-import launchpad as lp
 from acme.utils import observers as observers_lib
+
+from acme.agents.jax import d4pg
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -41,7 +44,8 @@ hyperparams_1 = {
 	'target_update_period': 100,
 	'samples_per_insert': 32.0, # Controls the relative rate of sampled vs inserted items. In this case, items are n-step transitions.
 	'num_sgd_steps_per_step': 1,
-	'reset_interval': 320000,
+	'reset_interval': 0,
+	# 'reset_interval': 320000,
 	# 'reset_interval': 2560000,
 	'replay_ratio': 0.125
 }
@@ -78,7 +82,10 @@ def build_experiment_config():
 
 	# Create an environment, grab the spec, and use it to create networks.
 	suite, task = FLAGS.suite, FLAGS.task
-	environment_factory = lambda seed: helpers.make_environment(suite, task)
+	environment_factory = lambda seed: helpers.make_environment(
+		suite=suite,
+		task=task
+	)
 
 	# Bound of the distributional critic. The reward for control environments is
 	# normalized, not for gym locomotion environments hence the different scales.

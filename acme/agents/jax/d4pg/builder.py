@@ -328,11 +328,17 @@ class D4PGBuilder(builders.ActorLearnerBuilder[d4pg_networks.D4PGNetworks,
 
 		# Inference happens on CPU, so it's better to move variables there too.
 		variable_client = variable_utils.VariableClient(
-			variable_source, 'policy', device='cpu'
+			client=variable_source,
+			key='policy',
+			device='cpu'
 		)
 
 		actor = actors.GenericActor(
-			policy, random_key, variable_client, adder, backend='cpu'
+			random_key=random_key,
+			actor=policy,
+			variable_client=variable_client,
+			adder=adder,
+			backend='cpu'
 		)
 		
 		# return actors.GenericActor(
