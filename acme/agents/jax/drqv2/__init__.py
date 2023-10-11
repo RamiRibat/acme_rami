@@ -14,10 +14,11 @@
 
 """Implementations of a DrQv2 agent."""
 
-from acme.agents.jax.drqv2 import DrQv2Builder
-from acme.agents.jax.drqv2 import DrQv2Config
-from acme.agents.jax.drqv2 import DrQv2Learner
-from acme.agents.jax.drqv2.networks import DrQv2Networks
+from acme.agents.jax.drqv2.config import DrQV2Config
+from acme.agents.jax.drqv2.builder import DrQV2Builder
+from acme.agents.jax.drqv2.learning import DrQV2Learner
+
+from acme.agents.jax.drqv2.networks import DrQV2Networks
 from acme.agents.jax.drqv2.networks import get_default_behavior_policy
 from acme.agents.jax.drqv2.networks import get_default_eval_policy
 from acme.agents.jax.drqv2.networks import make_networks

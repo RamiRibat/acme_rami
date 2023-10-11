@@ -6,24 +6,19 @@ Author: https://github.com/ethanluoyc
 import dataclasses
 from typing import Callable, Optional, Union
 
-from acme import specs
-from acme import types
-from acme.agents.jax import actor_core as actor_core_lib
-from acme.jax import networks as networks_lib
-from acme.jax import utils
-
-from acme.agents.jax.drqv2 import config as drqv2_config
-
-import haiku as hk
 import jax
-import jax.numpy as jnp
-import numpy as onp
-import optax
-
 import jax.numpy as jnp
 import numpy as np
 import haiku as hk
 import rlax
+
+from acme import specs
+from acme import types
+from acme.jax import networks as networks_lib
+from acme.jax import utils
+from acme.agents.jax import actor_core as actor_core_lib
+
+from acme.agents.jax.drqv2 import config as drqv2_config
 
 # Unlike standard FF-policy, in our DrQ-V2 implementation we use
 # scheduled stddev parameters, the pure function for the policy
@@ -223,7 +218,7 @@ def make_networks(
 ) -> DrQV2Networks:
 	"""Create networks for the DrQ-v2 agent."""
      
-	action_size = onp.prod(spec.actions.shape, dtype=int)
+	action_size = np.prod(spec.actions.shape, dtype=int)
 
 	def _encoder_fn(x):
 		return Encoder()(x)
