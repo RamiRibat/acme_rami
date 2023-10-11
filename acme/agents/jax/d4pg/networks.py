@@ -45,9 +45,9 @@ def get_default_behavior_policy(
 	"""Selects action according to the training policy."""
 
 	def behavior_policy(
-		key: networks_lib.PRNGKey,
 		params: networks_lib.Params,
-		observation: types.NestedArray
+		key: networks_lib.PRNGKey,
+		observation: types.NestedArray,
 	):
 		action = networks.policy_network.apply(params, observation)
 		if config.sigma != 0:
@@ -62,8 +62,11 @@ def get_default_eval_policy(
 ) -> actor_core_lib.FeedForwardPolicy:
 	"""Selects action according to the training policy."""
 
-	def behavior_policy(params: networks_lib.Params, key: networks_lib.PRNGKey,
-						observation: types.NestedArray):
+	def behavior_policy(
+		params: networks_lib.Params,
+		key: networks_lib.PRNGKey,
+		observation: types.NestedArray,
+	):
 		del key
 		action = networks.policy_network.apply(params, observation)
 		return action
