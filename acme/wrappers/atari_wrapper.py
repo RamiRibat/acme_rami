@@ -350,16 +350,23 @@ class AtariWrapper(BaseAtariWrapper):
 			]),
 		axis=0)
 		
-		print('processed_pixels: ', processed_pixels)
+		
+		# print('\n\na.processed_pixels: ', processed_pixels.shape)
 
 		# 2. RGB to grayscale
 		if self._grayscaling:
-			processed_pixels = np.tensordot(processed_pixels,
-											[0.299, 0.587, 1 - (0.299 + 0.587)],
-											(-1, 0))
+			processed_pixels = np.tensordot(
+				processed_pixels,
+				[0.299, 0.587, 1 - (0.299 + 0.587)],
+				(-1, 0)
+			)
+			
+		
+		# print('z.processed_pixels: ', processed_pixels.shape)
+
+		processed_pixels = processed_pixels.astype(np.uint8, copy=False)
 
 		# 3. Resize
-		processed_pixels = processed_pixels.astype(np.uint8, copy=False)
 		if self._scale_dims != processed_pixels.shape[:2]:
 			processed_pixels = Image.fromarray(processed_pixels).resize(
 				(self._width, self._height), Image.Resampling.BILINEAR)
