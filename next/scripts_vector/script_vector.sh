@@ -12,11 +12,11 @@ SUITES=(
 )
 
 DMC_LEVELS=(
-	'trivial'
-	'easy'
-	'medium'
-	'hard'
-	# 'extra'
+	# 'trivial'
+	# 'easy'
+	# 'medium'
+	# 'hard'
+	'extra'
 )
 
 ID=$1
