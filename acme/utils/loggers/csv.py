@@ -68,12 +68,8 @@ class CSVLogger(base.Logger):
 		self._last_log_time = time.time() - time_delta
 
 		self._label = label
-		if label == 'evaluator':
-			self._time_delta = 0.
-			self._flush_every = 1
-		else:
-			self._time_delta = time_delta
-			self._flush_every = flush_every
+		self._time_delta = time_delta
+		self._flush_every = flush_every
 
 		self._add_uid = add_uid
 		self._writer = None
@@ -118,16 +114,13 @@ class CSVLogger(base.Logger):
 
 		# TODO(b/192227744): Remove this in favour of filters.TimeFilter.
 		elapsed = now - self._last_log_time
+
+		if elapsed < self._time_delta:
+			logging.debug('Not due to log for another %.2f seconds, dropping data.',
+				self._time_delta - elapsed)
+			return
 		
-		if self._label == 'evaluator':
-			pass
-		else:
-			if elapsed < self._time_delta:
-				logging.debug('Not due to log for another %.2f seconds, dropping data.',
-								self._time_delta - elapsed)
-				return
-		
-		self._last_log_time = now
+		# self._last_log_time = now
 
 		# Append row to CSV.
 		data = base.to_numpy(data)
@@ -142,7 +135,8 @@ class CSVLogger(base.Logger):
 		self._writer.writerow(data)
 
 		# Flush every `flush_every` writes.
-		if self._writes % self._flush_every == 0: self.flush()
+		if self._label != 'evaluator':
+			if self._writes % self._flush_every == 0: self.flush()
 
 		self._writes += 1
 

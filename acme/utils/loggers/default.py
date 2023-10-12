@@ -28,7 +28,7 @@ from acme.utils.loggers import terminal
 def make_default_logger(
 	label: str,
 	save_data: bool = True,
-	time_delta: float = 1.0,
+	time_delta: float = 1.0, # sec
 	asynchronous: bool = False,
 	print_fn: Optional[Callable[[str], None]] = None,
 	serialize_fn: Optional[Callable[[Mapping[str, Any]], str]] = base.to_numpy,
@@ -55,7 +55,9 @@ def make_default_logger(
 	if not print_fn:
 		print_fn = logging.info
     
-	terminal_logger = terminal.TerminalLogger(label=label, print_fn=print_fn)
+	terminal_logger = terminal.TerminalLogger(
+		label=label,
+		print_fn=print_fn)
 
 	loggers = [terminal_logger]
 	# loggers = []
@@ -71,7 +73,9 @@ def make_default_logger(
 	if asynchronous:
 		logger = async_logger.AsyncLogger(logger)
 
-	if label != 'evaluator':
-		logger = filters.TimeFilter(logger, time_delta)
+	if label == 'actor':
+		logger = filters.TimeFilter(logger, 60)
+	elif label == 'learner':
+		logger = filters.TimeFilter(logger, 120)
 
 	return logger
