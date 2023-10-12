@@ -15,7 +15,7 @@ DMC_LEVELS=(
 	# 'trivial'
 	# 'easy'
 	# 'medium'
-	# 'hard'
+	'hard'
 	'extra'
 )
 
