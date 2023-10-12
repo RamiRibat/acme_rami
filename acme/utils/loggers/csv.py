@@ -115,10 +115,11 @@ class CSVLogger(base.Logger):
 		# TODO(b/192227744): Remove this in favour of filters.TimeFilter.
 		elapsed = now - self._last_log_time
 
-		if elapsed < self._time_delta:
-			logging.debug('Not due to log for another %.2f seconds, dropping data.',
-				self._time_delta - elapsed)
-			return
+		if self._label != 'evaluator':
+			if elapsed < self._time_delta:
+				logging.debug('Not due to log for another %.2f seconds, dropping data.',
+					self._time_delta - elapsed)
+				return
 		
 		# self._last_log_time = now
 
@@ -137,6 +138,8 @@ class CSVLogger(base.Logger):
 		# Flush every `flush_every` writes.
 		if self._label != 'evaluator':
 			if self._writes % self._flush_every == 0: self.flush()
+		else:
+			self.flush()
 
 		self._writes += 1
 
