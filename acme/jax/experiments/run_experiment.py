@@ -196,8 +196,13 @@ def run_experiment(
 
 		eval_loop.run(num_episodes=num_eval_episodes)
 
-	if steps == max_num_actor_steps:
+		# save chechpoint and flush eval_logger after each eval
 		checkpointer.save() # save only at the end of learning
+		# eval_logger.flush()
+
+	if steps == max_num_actor_steps:
+		# checkpointer.save() # save only at the end of learning
+		eval_logger.close()
 
 	environment.close()
 
@@ -278,6 +283,8 @@ class _LearningActor(core.Actor):
 		if self._maybe_train():
 			# Update the actor weights only when learner was updated.
 			self._actor.update()
+		
+		# Cancel checkpointing here
 		# if self._checkpointer:
 		#   self._checkpointer.save()
 

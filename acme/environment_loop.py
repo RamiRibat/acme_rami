@@ -236,6 +236,10 @@ class EnvironmentLoop(core.Worker):
 					step_count += int(result['episode_length'])
 					# Log the given episode results.
 					self._logger.write(result)
+
+			# if self._label == 'eval_loop':
+			# 	print('\n\nevaluator.logger')
+			# 	self._logger.flush()
 			
 
 

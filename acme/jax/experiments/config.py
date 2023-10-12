@@ -112,7 +112,7 @@ class CheckpointingConfig:
   # directory: str = '~/acme'
   directory: str = '~/logdir/acme'
   add_uid: bool = True
-  time_delta_minutes: int = 5
+  time_delta_minutes: int = 0. # checkpoint only when called
   keep_checkpoint_every_n_hours: Optional[int] = None
   replay_checkpointing_time_delta_minutes: Optional[int] = None
   checkpoint_ttl_seconds: Optional[int] = int(
