@@ -118,6 +118,79 @@ dmc: # 9x5
       ]
 
     extra:
+      run: {steps: 4_000_000}
+      tasks: [
+        dog:run, # hard+
+        dog:fetch, # hard+
+        humanoid:run, # hard+
+        manipulator:bring_ball,
+        manipulator:bring_peg, # hard+
+        manipulator:insert_ball, # hard+
+        manipulator:insert_peg, # hard+
+        quadruped:escape, # hard+
+        quadruped:fetch, # hard+
+      ]
+
+
+dmc_pixel: # 9x5
+    env: {from_pixels: True, a_repeat: 1, n_stacks: 4,}
+    trivial:
+      run: {steps: 500_000}
+      tasks: [
+        ball_in_cup:catch,
+        cartpole:balance,
+        cartpole:balance_sparse,
+        cartpole:swingup,
+        hopper:stand, # ?trivial
+        point_mass:easy, # trivial
+        reacher:easy,
+        walker:stand,
+        walker:walk
+      ]
+
+    easy:
+      run: {steps: 1_000_000}
+      tasks: [
+        cartpole:swingup_sparse,
+        cartpole:two_poles, # (easy)-medium
+        cheetah:run, # easy
+        finger:turn_easy,
+        fish:upright, # easy
+        pendulum:swingup,
+        point_mass:hard, # (easy)-medium
+        reacher:hard,
+        swimmer:swimmer6
+      ]
+    
+    medium:
+      run: {steps: 2_000_000}
+      tasks: [
+        cartpole:three_poles, # (medium)-hard
+        dog:stand, # (medium)
+        finger:spin,
+        finger:turn_hard,
+        fish:swim,
+        quadruped:walk, # ?medium
+        stacker:stack_2, # (medium)
+        swimmer:swimmer15, # ?hard
+        walker:run
+      ]
+    
+    hard:
+      run: {steps: 4_000_000}
+      tasks: [
+        acrobot:swingup,
+        acrobot:swingup_sparse,
+        dog:trot, # hard
+        dog:walk, # hard
+        hopper:hop,
+        humanoid:stand, # ?medium
+        humanoid:walk,
+        quadruped:run, # hard+
+        stacker:stack_4, # hard
+      ]
+
+    extra:
       run: {steps: 8_000_000}
       tasks: [
         dog:run, # hard+
