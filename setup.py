@@ -140,7 +140,8 @@ cmdclass = {
 }
 
 setup(
-    name='dm-acme',
+    # name='dm-acme',
+    name='acme',
     version=version,
     cmdclass=cmdclass,
     description='A Python library for Reinforcement Learning.',
