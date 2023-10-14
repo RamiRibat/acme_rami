@@ -79,7 +79,7 @@ def get_unique_id() -> Tuple[str, ...]:
     acme_id = FLAGS.acme_id
     agent_id = FLAGS.agent_id
     suite = FLAGS.suite.replace(':', '/')
-    task = FLAGS.task.replace(':', '/')
+    task = FLAGS.task#.replace(':', '/')
     if acme_id:
       full_id = f"{acme_id}/{agent_id}/{suite}/{task}"
     else:
