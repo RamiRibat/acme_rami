@@ -126,7 +126,7 @@ def make_networks(
 def make_networks_v2(
 	spec: specs.EnvironmentSpec,
 	config: d4pg_config.D4PGConfig,
-) -> Networks:
+) -> D4PGNetworks:
 	"""Creates networks used by the agent."""
 
 	action_spec = spec.actions
