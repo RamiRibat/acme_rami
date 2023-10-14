@@ -78,14 +78,12 @@ def get_unique_id() -> Tuple[str, ...]:
     # identifier = ACME_ID.value or identifier
     acme_id = FLAGS.acme_id
     agent_id = FLAGS.agent_id
-    suite = FLAGS.suite
-    level = FLAGS.level
-    task = FLAGS.task#.replace(':', '_')
+    suite = FLAGS.suite.replace(':', '/')
+    task = FLAGS.task.replace(':', '/')
     if acme_id:
-      # base_id = f"{time_id}/{FLAGS.acme_id}"
-      full_id = f"{acme_id}/{agent_id}/{suite}/{level}/{task}"
+      full_id = f"{acme_id}/{agent_id}/{suite}/{task}"
     else:
-      full_id = f"{time_id}/{agent_id}/{suite}/{level}/{task}"
+      full_id = f"{time_id}/{agent_id}/{suite}/{task}"
       
     identifier = f"{full_id}/{FLAGS.seed}"
     
