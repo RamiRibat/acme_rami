@@ -273,12 +273,10 @@ class D4PGLearner(acme.Learner):
 
 
 	def step(self):
-		# print('Learner.step')
-		if 'learner_steps' in self._counter.get_counts().keys():
-			if self._reset_interval > 0:
-				reset_freq = self._reset_interval/self._num_sgd_steps_per_step
-				if self._counter.get_counts()['learner_steps'] % reset_freq == 0:
-					self._state = self._make_initial_state()
+		if self._reset_interval and 'learner_steps' in self._counter.get_counts().keys():
+			reset_freq = self._reset_interval/self._num_sgd_steps_per_step
+			if self._counter.get_counts()['learner_steps'] % reset_freq == 0:
+				self._state = self._make_initial_state()
 
 		# Sample from replay and pack the data in a Transition.
 		sample = next(self._iterator)
