@@ -15,7 +15,7 @@
 """Defines the available MPO configuration options."""
 
 import dataclasses
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Sequence, Union
 
 from acme import types
 from acme.agents.jax.mpo import types as mpo_types
@@ -31,8 +31,8 @@ class MPOConfig:
 
 	""" Network/Optz hyper-parameters """
 	discrete_policy: bool = False
-	critic_arch: (256, 256)
-	policy_arch: (256, 256)
+	critic_arch: Sequence[int] = (256, 256)
+	policy_arch: Sequence[int] = (256, 256)
 	critic_type: mpo_types.CriticType = mpo_types.CriticType.MIXTURE_OF_GAUSSIANS
 	value_tx_pair: rlax.TxPair = rlax.IDENTITY_PAIR
 
