@@ -76,6 +76,7 @@ def get_default_eval_policy(
 
 def make_networks(
 	spec: specs.EnvironmentSpec,
+	config: d4pg_config.D4PGConfig,
 	policy_layer_sizes: Sequence[int] = (300, 200),
 	critic_layer_sizes: Sequence[int] = (400, 300),
 	vmin: float = -150.,
@@ -120,3 +121,56 @@ def make_networks(
 			lambda rng: policy.init(rng, dummy_obs), policy.apply),
 		critic_network=networks_lib.FeedForwardNetwork(
 			lambda rng: critic.init(rng, dummy_obs, dummy_action), critic.apply))
+
+
+def make_networks_v2(
+	spec: specs.EnvironmentSpec,
+	config: d4pg_config.D4PGConfig,
+) -> Networks:
+	"""Creates networks used by the agent."""
+
+	action_spec = spec.actions
+
+	critic_layer_sizes = config.critic_arch
+	policy_layer_sizes = config.policy_Arch
+	n_atoms = config.n_atoms
+	vmax, vmin = config.vmax, config.vmin
+
+	num_dimensions = np.prod(action_spec.shape, dtype=int)
+	critic_atoms = jnp.linspace(vmin, vmax, n_atoms)
+
+	def _critic_fn(obs, action):
+		network = hk.Sequential([
+			utils.batch_concat,
+			networks_lib.LayerNormMLP(layer_sizes=[*critic_layer_sizes, n_atoms]),
+		])
+		value = network([obs, action])
+		return value, critic_atoms
+
+	def _actor_fn(obs):
+		network = hk.Sequential([
+			utils.batch_concat,
+			networks_lib.LayerNormMLP(policy_layer_sizes, activate_final=True),
+			networks_lib.NearZeroInitializedLinear(num_dimensions),
+			networks_lib.TanhToSpec(action_spec),
+		])
+		return network(obs)
+
+	critic = hk.without_apply_rng(hk.transform(_critic_fn))
+	policy = hk.without_apply_rng(hk.transform(_actor_fn))
+
+	# Create dummy observations and actions to create network parameters.
+	dummy_obs = utils.zeros_like(spec.observations)
+	dummy_action = utils.zeros_like(spec.actions)
+
+	# Add batch dimension
+	dummy_obs = utils.add_batch_dim(dummy_obs)
+	dummy_action = utils.add_batch_dim(dummy_action)
+
+	return D4PGNetworks(
+		critic_network=networks_lib.FeedForwardNetwork(
+			lambda rng: critic.init(rng, dummy_obs, dummy_action), critic.apply),
+		policy_network=networks_lib.FeedForwardNetwork(
+			lambda rng: policy.init(rng, dummy_obs), policy.apply),
+	)
+
