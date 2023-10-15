@@ -31,6 +31,7 @@ class D4PGConfig:
 	policy_arch: Sequence[int] = (300, 200)
 	critic_arch: Sequence[int] = (400, 300)
 	n_atoms: int = 51
+	vmax: float = 150
 
 	""" Learner (Loss) hyper-parameters """
 	batch_size: int = 256

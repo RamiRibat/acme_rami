@@ -136,7 +136,7 @@ def make_networks_v2(
 	critic_layer_sizes = config.critic_arch
 	policy_layer_sizes = config.policy_arch
 	n_atoms = config.n_atoms
-	vmax, vmin = config.vmax, config.vmin
+	vmax, vmin = config.vmax, -config.vmax
 
 	num_dimensions = np.prod(action_spec.shape, dtype=int)
 	critic_atoms = jnp.linspace(vmin, vmax, n_atoms)
