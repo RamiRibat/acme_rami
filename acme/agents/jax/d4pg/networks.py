@@ -102,7 +102,9 @@ def make_networks(
 	def _critic_fn(obs, action):
 		network = hk.Sequential([
 			utils.batch_concat,
-			networks_lib.LayerNormMLP(layer_sizes=[*critic_layer_sizes, num_atoms]),
+			networks_lib.LayerNormMLP(
+				layer_sizes=[*critic_layer_sizes, num_atoms]
+			),
 		])
 		value = network([obs, action])
 		return value, critic_atoms
