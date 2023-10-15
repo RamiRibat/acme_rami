@@ -76,7 +76,7 @@ def get_default_eval_policy(
 
 def make_networks(
 	spec: specs.EnvironmentSpec,
-	config: d4pg_config.D4PGConfig,
+	# config: d4pg_config.D4PGConfig,
 	policy_layer_sizes: Sequence[int] = (300, 200),
 	critic_layer_sizes: Sequence[int] = (400, 300),
 	vmin: float = -150.,
@@ -134,7 +134,7 @@ def make_networks_v2(
 	action_spec = spec.actions
 
 	critic_layer_sizes = config.critic_arch
-	policy_layer_sizes = config.policy_Arch
+	policy_layer_sizes = config.policy_arch
 	n_atoms = config.n_atoms
 	vmax, vmin = config.vmax, config.vmin
 
