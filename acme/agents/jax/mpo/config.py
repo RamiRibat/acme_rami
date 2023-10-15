@@ -34,7 +34,7 @@ class MPOConfig:
 	critic_arch: Sequence[int] = (256, 256)
 	policy_arch: Sequence[int] = (256, 256)
 	critic_type: mpo_types.CriticType = mpo_types.CriticType.MIXTURE_OF_GAUSSIANS
-	value_tx_pair: rlax.TxPair = rlax.IDENTITY_PAIR
+	value_tx_pair: rlax.TxPair = rlax.IDENTITY_PAIR # ?
 
 	""" Learner (Loss) hyper-parameters """
 	jit_learner: bool = True

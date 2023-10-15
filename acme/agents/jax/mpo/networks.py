@@ -238,7 +238,7 @@ class MPONetworks:
 	def policy_head_apply(
 		self, params: MPONetworkParams, obs_embedding: types.ObservationEmbedding
     ):
-		# tfp.distributions have a big with vmapping
+		# tfp.distributions have a bug with vmapping
 		dist_params = self.policy_head.apply(params.policy_head, obs_embedding)
 		return tfd.MultivariateNormalDiag(loc=dist_params.loc, scale_diag=dist_params.scale_diag)
 
@@ -430,7 +430,7 @@ def make_control_networks(
 		clipped_action = networks_lib.ClipToSpec(environment_spec.actions)(action)
 		inputs = jnp.concatenate([observation, clipped_action], axis=-1)
 		embedding = networks_lib.LayerNormMLP(
-			critic_layer_sizes,
+			layer_sizes=critic_layer_sizes,
 			activate_final=True
 			)(inputs)
 
@@ -441,17 +441,16 @@ def make_control_networks(
 				multivariate=False,
 				init_scale=mog_init_scale,
 				append_singleton_event_dim=False,
-				reinterpreted_batch_ndims=0)(
-					embedding)
-		elif critic_type in (types.CriticType.CATEGORICAL,
-								types.CriticType.CATEGORICAL_2HOT):
+				reinterpreted_batch_ndims=0
+				)(embedding)
+		elif critic_type in (types.CriticType.CATEGORICAL, types.CriticType.CATEGORICAL_2HOT):
 			return networks_lib.CategoricalCriticHead(
-				num_bins=categorical_num_bins, vmin=vmin, vmax=vmax)(
-					embedding)
+				num_bins=categorical_num_bins, vmin=vmin, vmax=vmax
+				)(embedding)
 		else:
 			return hk.Linear(
-				output_size=1, w_init=hk_init.TruncatedNormal(0.01))(
-					embedding)
+				output_size=1, w_init=hk_init.TruncatedNormal(0.01)
+				)(embedding)
 
 	# Transform functions into pure functions.
 	policy = hk.without_apply_rng(hk.transform(policy_fn))

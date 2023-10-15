@@ -260,7 +260,8 @@ class MPOLearner(acme.Learner):
 
 
 	def _distributional_loss(
-		self, prediction: mpo_types.DistributionLike,
+		self,
+		prediction: mpo_types.DistributionLike,
 		target: chex.Array
     ):
 		"""Compute the critic loss given the prediction and target."""
@@ -302,12 +303,10 @@ class MPOLearner(acme.Learner):
 
 		# Initialize the core states, possibly to the recorded stale state.
 		if self._use_stale_state:
-			initial_state = utils.maybe_recover_lstm_type(
-				sequence.extras['core_state'])
+			initial_state = utils.maybe_recover_lstm_type(sequence.extras['core_state'])
 			initial_state = tree.map_structure(lambda x: x[0], initial_state)
 		else:
-			initial_state = self._networks.torso.initial_state_fn(
-				params.torso_initial_state, None)
+			initial_state = self._networks.torso.initial_state_fn(params.torso_initial_state, None)
 
 		# Unroll the online core network. Note that this may pass the embeddings
 		# unchanged if, say, the core is an hk.IdentityCore.
@@ -323,7 +322,8 @@ class MPOLearner(acme.Learner):
 			policy=policy,  # [T, ...]
 			q_value=q_value,  # [T-1, ...]
 			reward=None,
-			embedding=state_embedding)  # [T, ...]
+			embedding=state_embedding  # [T, ...]
+		)
 
 
 	def _compute_targets(
@@ -560,16 +560,16 @@ class MPOLearner(acme.Learner):
 		loss_logging_dict.update(
 			{f'policy/root/{k}': v for k, v in policy_stats._asdict().items()})
 
-		# Compute rollout losses.
-		if self._model_rollout_length > 0:
-			model_rollout_loss, rollout_logs = self._model_rollout_loss_fn(
-				params, dual_params, sequence, predictions.embedding, targets, key)
-			loss += model_rollout_loss
-			loss_logging_dict.update(rollout_logs)
-			loss_logging_dict.update({
-				'policy_loss': policy_loss + rollout_logs['rollout_policy_loss'],
-				'critic_loss': critic_loss + rollout_logs['rollout_critic_loss'],
-				'loss': loss})
+		# # Compute rollout losses.
+		# if self._model_rollout_length > 0:
+		# 	model_rollout_loss, rollout_logs = self._model_rollout_loss_fn(
+		# 		params, dual_params, sequence, predictions.embedding, targets, key)
+		# 	loss += model_rollout_loss
+		# 	loss_logging_dict.update(rollout_logs)
+		# 	loss_logging_dict.update({
+		# 		'policy_loss': policy_loss + rollout_logs['rollout_policy_loss'],
+		# 		'critic_loss': critic_loss + rollout_logs['rollout_critic_loss'],
+		# 		'loss': loss})
 
 		return loss, loss_logging_dict
 
