@@ -71,6 +71,7 @@ class BaseAtariWrapper(abc.ABC, base.EnvironmentWrapper):
 				zero_discount_on_life_loss: bool = False,
 				expose_lives_observation: bool = False,
 				num_stacked_frames: int = 4,
+				blank_reset: bool = True,
 				flatten_frame_stack: bool = False,
 				max_episode_len: Optional[int] = None,
 				to_float: bool = False,
@@ -124,7 +125,10 @@ class BaseAtariWrapper(abc.ABC, base.EnvironmentWrapper):
 			max_episode_len = np.inf
 
 		self._frame_stacker = frame_stacking.FrameStacker(
-			num_frames=num_stacked_frames, flatten=flatten_frame_stack)
+			num_frames=num_stacked_frames,
+			blank_reset=blank_reset,
+			flatten=flatten_frame_stack
+		)
 		self._action_repeats = action_repeats
 		self._pooled_frames = pooled_frames
 		self._scale_dims = scale_dims

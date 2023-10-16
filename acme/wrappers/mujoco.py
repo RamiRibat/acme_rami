@@ -391,3 +391,162 @@ class MujocoPixelWrapperV3(base.EnvironmentWrapper):
 	def observation_spec(self):
 		# return self._environment.observation_spec()['pixels']
 		return self._observation_spec
+
+
+
+
+
+class MujocoPOMDPWrapper(base.EnvironmentWrapper):
+	"""Produces POMDP observations from Mujoco environment observations."""
+
+	def __init__(
+		self,
+		environment: control.Environment,
+		*,
+		observation: int = 'partial_pixel',
+		camera_id: int = 0,
+		scale_dims: Tuple[int, int] = (84, 84),
+		to_float: bool = False,
+		grayscaling: bool = False,
+	):
+		print('MujocoPOMPDWrapper')
+
+		self._observation = observation
+
+		if observation == 'partial_pixel':
+			if scale_dims:
+				self._height, self._width = scale_dims
+			else:
+				spec = environment.observation_spec()
+				self._height, self._width = spec[RGB_INDEX].shape[:2]
+
+			# render_kwargs = {'camera_id': camera_id}
+			render_kwargs = {'height': self._height, 'width': self._width, 'camera_id': camera_id}
+
+			pixel_environment = pixels.Wrapper(environment, pixels_only=True, render_kwargs=render_kwargs)
+			super().__init__(pixel_environment)
+
+			self._scale_dims = scale_dims
+			self._to_float = to_float
+			self._grayscaling = grayscaling
+
+		elif observation == 'partial_state':
+			super().__init__(environment)
+
+		self._observation_spec = self._init_observation_spec()
+
+
+	def _init_observation_spec(self):
+		"""Computes the observation spec for the pixel observations.
+
+		Returns:
+		An `Array` specification for the pixel observations.
+		"""
+
+		if self._observation == 'partial_pixel':
+        
+			if self._to_float:
+				pixels_dtype = float
+			else:
+				pixels_dtype = np.uint8
+
+			if self._grayscaling:
+				pixels_spec_shape = (self._height, self._width, 1)
+				pixels_spec_name = "grayscale"
+			else:
+				pixels_spec_shape = (self._height, self._width, NUM_COLOR_CHANNELS)
+				pixels_spec_name = "RGB"
+
+			pixel_spec = specs.Array(
+				shape=pixels_spec_shape,
+				dtype=pixels_dtype,
+				name=pixels_spec_name
+			)
+			# pixel_spec = self._frame_stacker.update_spec(pixel_spec)
+
+			return pixel_spec
+		
+		elif self._observation == 'partial_state':
+			observation_spec = collections.OrderedDict()
+			for k, v in self._environment.observation_spec().items():
+				if 'vel' not in k:
+					state_spec = specs.Array(
+						shape=v.shape,
+						dtype=v.dtype,
+						name=v.name
+					)
+					observation_spec[k] = state_spec
+			return observation_spec
+
+
+	def step(self, action) -> dm_env.TimeStep:
+		return self._convert_timestep(self._environment.step(action))
+
+
+	def reset(self) -> dm_env.TimeStep:
+		return self._convert_timestep(self._environment.reset())
+
+
+	def observation_spec(self):
+		return self._observation_spec
+
+
+	def _convert_timestep(self, timestep: dm_env.TimeStep) -> dm_env.TimeStep:
+		"""Removes the pixel observation's OrderedDict wrapper."""
+		# observation: collections.OrderedDict = timestep.observation
+		if self._observation == 'partial_pixel':
+			observation = self._preprocess_pixels(timestep.observation['pixels'])
+		elif self._observation == 'partial_state':
+			observation = timestep.observation
+			# for k, v in timestep.observation.items():
+			# 	if 'vel' not in k:
+			# 		observation[k] = v
+		return timestep._replace(observation=observation)
+	
+
+	def _preprocess_pixels(
+		self,
+		pixels
+	):
+		"""Preprocess DMC frames."""
+
+		# # Max pooling (frameskip > 1)
+		# processed_pixels = np.max(
+		# 	np.stack([
+		# 		s.observation[RGB_INDEX]
+		# 		for s in timestep_stack[-self._pooled_frames:]
+		# 	]),
+		# 	axis=0
+		# )
+		
+		processed_pixels = pixels
+
+		# print('\n\na.processed_pixels: ', processed_pixels.shape)
+
+		# RGB to grayscale
+		if self._grayscaling:
+			# processed_pixels = np.dot(
+			# 	processed_pixels,
+			# 	[0.299, 0.587, 1 - (0.299 + 0.587)]
+			# )
+			processed_pixels = np.tensordot(
+				processed_pixels, # (H, W, C)
+				[0.299, 0.587, 1 - (0.299 + 0.587)],
+				(-1, 0)
+			)
+
+			processed_pixels = processed_pixels[:, :, None]
+
+
+		# print('z.processed_pixels: ', processed_pixels.shape)
+
+		processed_pixels = processed_pixels.astype(np.uint8, copy=False)
+
+		# # Resize
+		# if self._scale_dims != processed_pixels.shape[:2]:
+		# 	processed_pixels = Image.fromarray(processed_pixels).resize(
+		# 		(self._width, self._height), Image.Resampling.BILINEAR)
+		# 	processed_pixels = np.array(processed_pixels, dtype=np.uint8)
+
+		return processed_pixels
+
