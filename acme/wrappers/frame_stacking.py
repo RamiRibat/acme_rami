@@ -94,7 +94,7 @@ class FrameStacker:
 	def step(self, frame: np.ndarray) -> np.ndarray:
 		"""Append frame to stack and return the stack."""
 		if not self._stack:
-			print('empty stack')
+			# print('empty stack')
 			if self._blank_reset:
 				# Fill stack with blank frames if empty.
 				self._stack.extend([np.zeros_like(frame)] * (self._num_frames - 1))
