@@ -86,7 +86,7 @@ class DQNNetworks:
 
 def make_networks(
 	spec: specs.EnvironmentSpec,
-	config: dqn_config.D4PGConfig,
+	config: dqn_config.DQNConfig,
 ) -> DQNNetworks:
 	"""Creates networks for training DQN on Atari."""
 
