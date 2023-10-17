@@ -63,7 +63,7 @@ EpsilonLogProbFn = Callable[
 
 def default_sample_fn(
     action_values: networks_lib.NetworkOutput,
-    key: types.PRNGKey,
+    key: networks_lib.PRNGKey, # og: types.PRNGKey
     epsilon: Epsilon
 ) -> networks_lib.Action:
 	return rlax.epsilon_greedy(epsilon).sample(key, action_values)
