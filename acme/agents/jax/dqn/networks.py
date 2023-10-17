@@ -48,7 +48,7 @@ EpsilonPolicy = Callable[
 
 EpsilonSampleFn = Callable[
 	[networks_lib.NetworkOutput,
-	types.PRNGKey,
+	networks_lib.PRNGKey, # og: types.PRNGKey
 	Epsilon],
     networks_lib.Action
 ]
