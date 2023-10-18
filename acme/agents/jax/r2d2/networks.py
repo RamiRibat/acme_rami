@@ -16,15 +16,28 @@
 
 from acme import specs
 from acme.jax import networks as networks_lib
+from acme.agents.jax.r2d2 import config as r2d2_config
 
 
 R2D2Networks = networks_lib.UnrollableNetwork
 
 
 def make_atari_networks(env_spec: specs.EnvironmentSpec) -> R2D2Networks:
-  """Builds default R2D2 networks for Atari games."""
+	"""Builds default R2D2 networks for Atari games."""
 
-  def make_core_module() -> networks_lib.R2D2AtariNetwork:
-    return networks_lib.R2D2AtariNetwork(env_spec.actions.num_values)
+	def make_core_module() -> networks_lib.R2D2AtariNetwork:
+		return networks_lib.R2D2AtariNetwork(env_spec.actions.num_values)
 
-  return networks_lib.make_unrollable_network(env_spec, make_core_module)
+	return networks_lib.make_unrollable_network(env_spec, make_core_module)
+
+
+def make_networks(
+	spec: specs.EnvironmentSpec,
+	config: r2d2_config.IMPALAConfig,
+) -> R2D2Networks:
+	"""Builds default R2D2 networks for Atari games."""
+
+	def make_core_module() -> networks_lib.R2D2AtariNetwork:
+		return networks_lib.R2D2AtariNetwork(spec.actions.num_values)
+
+	return networks_lib.make_unrollable_network(spec, make_core_module)
