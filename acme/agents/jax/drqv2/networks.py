@@ -288,7 +288,7 @@ class Encoder(hk.Module):
 		x = x.astype(jnp.float32) / 255.0 - 0.5
 		conv_kwargs = dict(
 			output_channels=32,
-			kernel_shape=3,
+			kernel_shape=3, # 3x3
 			padding="VALID",
 			# This follows from the reference implementation, the scale accounts for
 			# using the ReLU activation.

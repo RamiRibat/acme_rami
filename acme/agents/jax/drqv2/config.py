@@ -2,7 +2,7 @@
 
 """Config classes for DrQv2."""
 import dataclasses
-from typing import Callable, Optional, Sequence
+from typing import Callable, Dict, Optional, Sequence
 
 import jax
 import jax.numpy as jnp
@@ -65,6 +65,8 @@ class DrQV2Config:
 	# replay_ratio: int = 0.125
 	# reset_interval: Optional[int] = None
 
+	""" Domain Hyper-parameters """
 	augmentation: DataAugmentation = batched_random_crop
+	env: Optional[Dict] = None
 
 
