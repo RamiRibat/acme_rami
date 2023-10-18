@@ -33,7 +33,7 @@ def make_atari_networks(env_spec: specs.EnvironmentSpec) -> R2D2Networks:
 
 def make_networks(
 	spec: specs.EnvironmentSpec,
-	config: r2d2_config.IMPALAConfig,
+	config: r2d2_config.R2D2Config,
 ) -> R2D2Networks:
 	"""Builds default R2D2 networks for Atari games."""
 
