@@ -179,7 +179,7 @@ class BaseAtariWrapper(abc.ABC, base.EnvironmentWrapper):
 			pixels_spec_shape = (self._height, self._width, NUM_COLOR_CHANNELS)
 			# pixels_spec_name = "RGB"
 		
-		pixels_spec_name = "pixel"
+		pixels_spec_name = "partial_pixel"
 
 		pixel_spec = specs.Array(
 			shape=pixels_spec_shape, dtype=pixels_dtype, name=pixels_spec_name)
