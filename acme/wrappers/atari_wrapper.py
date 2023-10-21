@@ -174,10 +174,12 @@ class BaseAtariWrapper(abc.ABC, base.EnvironmentWrapper):
 
 		if self._grayscaling:
 			pixels_spec_shape = (self._height, self._width)
-			pixels_spec_name = "grayscale"
+			# pixels_spec_name = "GS"
 		else:
 			pixels_spec_shape = (self._height, self._width, NUM_COLOR_CHANNELS)
-			pixels_spec_name = "RGB"
+			# pixels_spec_name = "RGB"
+		
+		pixels_spec_name = "pixel"
 
 		pixel_spec = specs.Array(
 			shape=pixels_spec_shape, dtype=pixels_dtype, name=pixels_spec_name)
