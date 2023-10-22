@@ -409,7 +409,7 @@ class MujocoPOMDPWrapper(base.EnvironmentWrapper):
 		to_float: bool = False,
 		grayscaling: bool = False,
 	):
-		print('MujocoPOMPDWrapper')
+		# print('MujocoPOMPDWrapper')
 
 		self._observation = observation
 
@@ -452,10 +452,11 @@ class MujocoPOMDPWrapper(base.EnvironmentWrapper):
 
 			if self._grayscaling:
 				pixels_spec_shape = (self._height, self._width, 1)
-				pixels_spec_name = "grayscale"
+				# pixels_spec_name = "grayscale"
 			else:
 				pixels_spec_shape = (self._height, self._width, NUM_COLOR_CHANNELS)
-				pixels_spec_name = "RGB"
+				# pixels_spec_name = "RGB"
+			pixels_spec_name = 'partial_pixel'
 
 			pixel_spec = specs.Array(
 				shape=pixels_spec_shape,
@@ -473,7 +474,8 @@ class MujocoPOMDPWrapper(base.EnvironmentWrapper):
 					state_spec = specs.Array(
 						shape=v.shape,
 						dtype=v.dtype,
-						name=v.name
+						# name=v.name
+						name='partial_state'
 					)
 					observation_spec[k] = state_spec
 			return observation_spec
