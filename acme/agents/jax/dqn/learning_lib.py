@@ -183,7 +183,7 @@ class SGDLearner(acme.Learner):
     """Takes one SGD step on the learner."""
     with jax.profiler.StepTraceAnnotation('step', step_num=self._current_step):
       print(colored(f'Learner.step', 'red'))
-      print(colored(f'Learner._data_iterator: {self._data_iterator.table.info.current_size}', 'red'))
+      # print(colored(f'Learner._data_iterator: {self._data_iterator.table.info.current_size}', 'red'))
       prefetching_split = next(self._data_iterator)
       # In this case the host property of the prefetching split contains only
       # replay keys and the device property is the prefetched full original
