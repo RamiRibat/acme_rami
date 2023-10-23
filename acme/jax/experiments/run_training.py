@@ -110,7 +110,7 @@ def run_training(
           add_uid=True
       	)
 		checkpointer = reverb.platform.checkpointers_lib.DefaultCheckpointer(
-			path=checkpointing.directory+'/checkpoints/raplay',
+			path=ckpt_path,
 			group='' # non-empty is not supported :)
 		)
 		replay_server = reverb.Server(
