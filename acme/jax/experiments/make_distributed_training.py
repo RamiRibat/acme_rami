@@ -20,6 +20,7 @@ from typing import Any, List, Optional
 
 # ML/DL
 import jax
+import tensorflow as tf
 
 # ACME/DeepMind
 from acme import core
@@ -374,17 +375,26 @@ def make_distributed_training(
 
 
 	"""Replay."""
+	# Create checkpointer.
 	replay_ckpt_path = paths.process_path(
 		experiment.checkpointing.directory,
-		'checkpoints',
+		# 'checkpoints',
 		'replay',
+		ttl_seconds=experiment.checkpointing.checkpoint_ttl_seconds,
+		add_uid=experiment.checkpointing.add_uid,
 		backups=False,
-		add_uid=True
-    )
+	)
 	replay_ckpt = reverb.platform.checkpointers_lib.DefaultCheckpointer(
 		path=replay_ckpt_path,
 		group='' # non-empty is not supported :)
 	) if experiment.checkpointing else None
+	# Create a manager to maintain different checkpoints.
+	replay_ckpt_manager = tf.train.CheckpointManager(
+		replay_ckpt,
+		directory=replay_ckpt_path,
+		max_to_keep=experiment.checkpointing.max_to_keep,
+		keep_checkpoint_every_n_hours=experiment.checkpointing.keep_checkpoint_every_n_hours,
+	)
 	# checkpoint_time_delta_minutes: Optional[int] = (
 	# 	experiment.checkpointing.replay_checkpointing_time_delta_minutes
 	# 	if experiment.checkpointing else None)

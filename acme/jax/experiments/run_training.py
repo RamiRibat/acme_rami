@@ -89,7 +89,7 @@ def run_training(
 		checkpointing = experiment.checkpointing
 		ckpt_path = paths.process_path(
 			checkpointing.directory,
-			'checkpoints',
+			# 'checkpoints',
 			'replay',
 			ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 			add_uid=checkpointing.add_uid,
