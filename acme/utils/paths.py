@@ -29,71 +29,73 @@ FLAGS.mark_as_parsed()
 # ACME_ID = flags.DEFINE_string('acme_id', None,
 #                               'Experiment identifier to use for Acme.')
 
-
-def process_path(path: str,
-                 *subpaths: str,
-                 ttl_seconds: Optional[int] = None,
-                 backups: Optional[bool] = None,
-                 add_uid: bool = True) -> str:
-  """Process the path string.
-
-  This will process the path string by running `os.path.expanduser` to replace
-  any initial "~". It will also append a unique string on the end of the path
-  and create the directories leading to this path if necessary.
-
-  Args:
-    path: string defining the path to process and create.
-    *subpaths: potential subpaths to include after uniqification.
-    ttl_seconds: ignored.
-    backups: ignored.
-    add_uid: Whether to add a unique directory identifier between `path` and
-      `subpaths`. If the `--acme_id` flag is set, will use that as the
-      identifier.
-
-  Returns:
-    the processed, expanded path string.
-  """
-  del backups, ttl_seconds
-
-  path = os.path.expanduser(path)
-  if add_uid:
-    path = os.path.join(path, *get_unique_id())
-  path = os.path.join(path, *subpaths)
-  os.makedirs(path, exist_ok=True)
-  return path
-
-
 _DATETIME = time.strftime('%Y%m%d-%H%M%S')
 
 
+def process_path(
+	path: str,
+	*subpaths: str,
+	ttl_seconds: Optional[int] = None,
+	backups: Optional[bool] = None,
+	add_uid: bool = True
+) -> str:
+	"""Process the path string.
+
+	This will process the path string by running `os.path.expanduser` to replace
+	any initial "~". It will also append a unique string on the end of the path
+	and create the directories leading to this path if necessary.
+
+	Args:
+		path: string defining the path to process and create.
+		*subpaths: potential subpaths to include after uniqification.
+		ttl_seconds: ignored.
+		backups: ignored.
+		add_uid: Whether to add a unique directory identifier between `path` and
+		`subpaths`. If the `--acme_id` flag is set, will use that as the
+		identifier.
+
+	Returns:
+		the processed, expanded path string.
+	"""
+	del backups, ttl_seconds
+
+	path = os.path.expanduser(path)
+	if add_uid:
+		path = os.path.join(path, *get_unique_id())
+	path = os.path.join(path, *subpaths)
+	os.makedirs(path, exist_ok=True)
+	return path
+
+
+
 def get_unique_id() -> Tuple[str, ...]:
-  """Makes a unique identifier for this process; override with --acme_id."""
-  # By default we'll use the global id.
-  # identifier = _DATETIME
-  time_id = _DATETIME
+	"""Makes a unique identifier for this process; override with --acme_id."""
+	# By default we'll use the global id.
+	# identifier = _DATETIME
+	time_id = _DATETIME
 
-  # If the --acme_id flag is given prefer that; ignore if flag processing has
-  # been skipped (this happens in colab or in tests).
-  try:
-    # identifier = ACME_ID.value or identifier
-    acme_id = FLAGS.acme_id
-    agent_id = FLAGS.agent_id
-    suite = FLAGS.suite.replace(':', '/')
-    task = FLAGS.task#.replace(':', '/')
-    if acme_id:
-      full_id = f"{acme_id}/{agent_id}/{suite}/{task}"
-    else:
-      full_id = f"{time_id}/{agent_id}/{suite}/{task}"
-      
-    identifier = f"{full_id}/{FLAGS.seed}"
-    
-  except flags.UnparsedFlagAccessError:
-    pass
+	# If the --acme_id flag is given prefer that; ignore if flag processing has
+	# been skipped (this happens in colab or in tests).
+	try:
+		# identifier = ACME_ID.value or identifier
+		acme_id = FLAGS.acme_id
+		agent_id = FLAGS.agent_id
+		suite = FLAGS.suite.replace(':', '/')
+		task = FLAGS.task#.replace(':', '/')
+		if acme_id:
+			full_id = f"{acme_id}/{agent_id}/{suite}/{task}"
+		else:
+			full_id = f"{time_id}/{agent_id}/{suite}/{task}"
+		
+		identifier = f"{full_id}/{FLAGS.seed}"
+		
+	except flags.UnparsedFlagAccessError:
+		pass
 
-  # Return as a tuple (for future proofing).
-  return (identifier,)
+	# Return as a tuple (for future proofing).
+	return (identifier,)
 
 
 def rmdir(path: str):
-  """Remove directory recursively."""
-  shutil.rmtree(path)
+	"""Remove directory recursively."""
+	shutil.rmtree(path)
