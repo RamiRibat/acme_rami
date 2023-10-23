@@ -103,7 +103,7 @@ def run_training(
 
 	if experiment.checkpointing is not None:
 		checkpointer = reverb.platform.checkpointers_lib.DefaultCheckpointer(
-			path=f'{checkpointing.directory}',
+			path=checkpointing.directory+'/checkpoints/raplay',
 			group='' # non-empty is not supported :)
 		)
 		replay_server = reverb.Server(
@@ -145,7 +145,6 @@ def run_training(
 	)
 	
 	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
 		learner_ckpt = savers.Checkpointer(
 			objects_to_save={'learner': learner},
 			subdirectory='learner',
@@ -327,7 +326,6 @@ def _disable_insert_blocking(
 	sample_sizes = []
 
 	for table in tables:
-		print('table.info: ', table.info)
 		rate_limiter_info = table.info.rate_limiter_info
 		rate_limiter = reverb.rate_limiters.RateLimiter(
 			samples_per_insert=rate_limiter_info.samples_per_insert,
