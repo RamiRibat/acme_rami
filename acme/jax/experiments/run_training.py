@@ -106,8 +106,18 @@ def run_training(
 	checkpointer = None
 	if experiment.checkpointing is not None:
 		checkpointing = experiment.checkpointing
-		# checkpointer = savers.Checkpointer(
-		# 	objects_to_save={'learner': learner, 'counter': counter},
+		checkpointer = savers.Checkpointer(
+			objects_to_save={'counter': counter, 'learner': learner},
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
+		# counter_ckpt = savers.Checkpointer(
+		# 	objects_to_save={'counter': counter},
+		# 	subdirectory='counter',
 		# 	time_delta_minutes=checkpointing.time_delta_minutes,
 		# 	directory=checkpointing.directory,
 		# 	add_uid=checkpointing.add_uid,
@@ -115,26 +125,16 @@ def run_training(
 		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
 		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 		# )
-		counter_ckpt = savers.Checkpointer(
-			objects_to_save={'counter': counter},
-			subdirectory='counter',
-			time_delta_minutes=checkpointing.time_delta_minutes,
-			directory=checkpointing.directory,
-			add_uid=checkpointing.add_uid,
-			max_to_keep=checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		)
-		learner_ckpt = savers.Checkpointer(
-			objects_to_save={'learner': learner},
-			subdirectory='learner',
-			time_delta_minutes=checkpointing.time_delta_minutes,
-			directory=checkpointing.directory,
-			add_uid=checkpointing.add_uid,
-			max_to_keep=checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		)
+		# learner_ckpt = savers.Checkpointer(
+		# 	objects_to_save={'learner': learner},
+		# 	subdirectory='learner',
+		# 	time_delta_minutes=checkpointing.time_delta_minutes,
+		# 	directory=checkpointing.directory,
+		# 	add_uid=checkpointing.add_uid,
+		# 	max_to_keep=checkpointing.max_to_keep,
+		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		# )
 
 
 	"""Build Adder/Actor."""
@@ -179,7 +179,8 @@ def run_training(
 		label='train_loop',
 		counter=train_counter,
 		logger=train_logger,
-		observers=experiment.observers)
+		observers=experiment.observers
+	)
 
 	max_num_actor_steps = (
 		experiment.max_num_actor_steps -
@@ -189,9 +190,9 @@ def run_training(
 	train_loop.run(num_steps=max_num_actor_steps)
 
 	# save chechpoint
-	# checkpointer.save()
-	counter_ckpt.save()
-	learner_ckpt.save()
+	checkpointer.save()
+	# counter_ckpt.save()
+	# learner_ckpt.save()
 
 	# close environment
 	environment.close()
