@@ -205,9 +205,9 @@ def run_training(
 	train_loop.run(num_steps=max_num_actor_steps)
 
 	# save chechpoint
-	checkpointer.save()
-	# counter_ckpt.save()
-	# learner_ckpt.save()
+	# checkpointer.save()
+	counter_ckpt.save()
+	learner_ckpt.save()
 
 	# close environment
 	environment.close()
