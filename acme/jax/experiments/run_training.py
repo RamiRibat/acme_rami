@@ -228,8 +228,8 @@ def run_training(
 	# save chechpoint
 	# checkpointer.save()
 	counter_ckpt.save()
-	replay_ckpt.save()
 	learner_ckpt.save()
+	replay_client.checkpoint()
 
 	# close environment
 	environment.close()
