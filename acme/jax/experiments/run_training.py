@@ -48,6 +48,9 @@ def run_training(
 		evaluation step.
 	"""
 
+	# TODO(rami): should I add ckpt'er for replay (on/off-policy)
+	# and/or actor(latent_h)?
+
 	key = jax.random.PRNGKey(experiment.seed)
 
 	"""Parent Counter"""
@@ -55,12 +58,38 @@ def run_training(
 	# the learner, so that it is possible to plot for example evaluator's return
 	# value as a function of the number of training episodes.
 	counter = counting.Counter(time_delta=0.)
+	
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
+		counter_ckpt = savers.Checkpointer(
+			objects_to_save={'counter': counter},
+			subdirectory='counter',
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
 
 
 	"""Environment."""
 	# Create the environment and get its spec.
 	environment = experiment.environment_factory(experiment.seed)
 	environment_spec = experiment.environment_spec or specs.make_environment_spec(environment)
+	
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
+		env_ckpt = savers.Checkpointer(
+			objects_to_save={'environment': environment},
+			subdirectory='environment',
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
 
 
 	"""Networks."""
@@ -94,6 +123,18 @@ def run_training(
 	# 'ready' method.
 	iterator = utils.prefetch(iterator, buffer_size=1) # isn't it defined b4?
 
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
+		replay_tables_ckpt = savers.Checkpointer(
+			objects_to_save={'replay_tables': replay_tables},
+			subdirectory='replay_tables',
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
 
 	# Create actor, adder, and learner for generating, storing, and consuming
 	# data respectively. (by Builder)
@@ -111,6 +152,19 @@ def run_training(
 		replay_client=replay_client, # *
 		counter=counting.Counter(counter, prefix='learner', time_delta=0.),
 	)
+	
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
+		learner_ckpt = savers.Checkpointer(
+			objects_to_save={'learner': learner},
+			subdirectory='learner',
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
 
 
 	"""Adder."""
@@ -145,42 +199,18 @@ def run_training(
 		# checkpointer=checkpointer
 	)
 
-
-	"""Checkpointers."""
-	# TODO(rami): should I add ckpt'er for replay (on/off-policy)
-	# and/or actor(latent_h)?
-	checkpointer = None
-	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
-		# checkpointer = savers.Checkpointer(
-		# 	objects_to_save={'counter': counter, 'learner': learner},
-		# 	time_delta_minutes=checkpointing.time_delta_minutes,
-		# 	directory=checkpointing.directory,
-		# 	add_uid=checkpointing.add_uid,
-		# 	max_to_keep=checkpointing.max_to_keep,
-		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		# )
-		counter_ckpt = savers.Checkpointer(
-			objects_to_save={'counter': counter},
-			subdirectory='counter',
-			time_delta_minutes=checkpointing.time_delta_minutes,
-			directory=checkpointing.directory,
-			add_uid=checkpointing.add_uid,
-			max_to_keep=checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		)
-		learner_ckpt = savers.Checkpointer(
-			objects_to_save={'learner': learner},
-			subdirectory='learner',
-			time_delta_minutes=checkpointing.time_delta_minutes,
-			directory=checkpointing.directory,
-			add_uid=checkpointing.add_uid,
-			max_to_keep=checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		)
+	# if experiment.checkpointing is not None:
+	# 	checkpointing = experiment.checkpointing
+	# 	actor_ckpt = savers.Checkpointer(
+	# 		objects_to_save={'actor': actor},
+	# 		subdirectory='actor',
+	# 		time_delta_minutes=checkpointing.time_delta_minutes,
+	# 		directory=checkpointing.directory,
+	# 		add_uid=checkpointing.add_uid,
+	# 		max_to_keep=checkpointing.max_to_keep,
+	# 		keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+	# 		checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+	# 	)
 
 
 	"""Training loop."""
@@ -207,6 +237,8 @@ def run_training(
 	# save chechpoint
 	# checkpointer.save()
 	counter_ckpt.save()
+	env_ckpt.save()
+	replay_tables_ckpt.save()
 	learner_ckpt.save()
 
 	# close environment
