@@ -94,6 +94,8 @@ def run_evaluation(
 		random_key=learner_key,
 		networks=networks,
 		iterator=None,
+		logger_fn=experiment.logger_factory,
+		environment_spec=environment_spec,
 	)
 	
 	if experiment.checkpointing is not None:
