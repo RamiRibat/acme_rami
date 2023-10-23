@@ -116,8 +116,7 @@ def run_training(
 		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 		# )
 		counter = savers.Checkpointer(
-			counter,
-			key='counter',
+			objects_to_save={'counter': counter},
 			subdirectory='counter',
 			time_delta_minutes=checkpointing.time_delta_minutes,
 			directory=checkpointing.directory,
@@ -127,8 +126,7 @@ def run_training(
 			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 		)
 		learner = savers.Checkpointer(
-			learner,
-			key='learner',
+			objects_to_save={'learner': learner},
 			subdirectory='learner',
 			time_delta_minutes=checkpointing.time_delta_minutes,
 			directory=checkpointing.directory,
