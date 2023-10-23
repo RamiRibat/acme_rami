@@ -101,6 +101,21 @@ def run_evaluation(
 		counter=counting.Counter(parent_counter, prefix='learner', time_delta=0.)
 	)
 
+	train_counter = counting.Counter( parent_counter, prefix='actor', time_delta=0.)
+
+	checkpointer = None
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
+		checkpointer = savers.Checkpointer(
+			objects_to_save={'learner': learner, 'counter': parent_counter},
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
+
 	# Create the evaluation actor and loop.
 	eval_actor_key, key = jax.random.split(key)#jax.random.PRNGKey(experiment.seed)
 	eval_counter = counting.Counter(parent_counter, prefix='evaluator', time_delta=0.)
@@ -126,6 +141,9 @@ def run_evaluation(
 		logger=eval_logger,
 		observers=experiment.observers
 	)
+
+	if 'actor_steps' not in parent_counter.get_counts().keys():
+		parent_counter.get_counts().get(train_counter.get_steps_key(), 0)
 
 	eval_loop.run(num_episodes=num_eval_episodes)
 

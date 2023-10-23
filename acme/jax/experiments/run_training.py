@@ -157,7 +157,7 @@ def run_training(
 
 	# if 'actor_steps' not in parent_counter.get_counts().keys():
 	# 	train_loop.run(num_steps=0) # init csv columns
-	# 	# eval_loop.run(num_episodes=num_eval_episodes) # eval at t=0
+	# 	eval_loop.run(num_episodes=num_eval_episodes) # eval at t=0
 		
 	train_loop.run(num_steps=max_num_actor_steps)
 
