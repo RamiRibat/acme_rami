@@ -113,6 +113,7 @@ def run_training(
 	# (inserting into the table) sequentially from the same thread
 	# which could result in blocked insert making the algorithm hang.
 	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(replay_tables)
+	print('rate_limiters_max_diff: ', rate_limiters_max_diff)
 
 	replay_server = reverb.Server(replay_tables, port=None)
 	# dfn replay_client: used by dataset(iterator), learner, and adder

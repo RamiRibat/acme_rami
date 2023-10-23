@@ -50,72 +50,21 @@ def run_evaluation(
 
 	key = jax.random.PRNGKey(experiment.seed)
 
+
+	"""Environment."""
 	# Create the environment and get its spec.
 	environment = experiment.environment_factory(experiment.seed)
 	environment_spec = experiment.environment_spec or specs.make_environment_spec(environment)
 
-	# Create the networks and policy.
-	networks = experiment.network_factory(environment_spec)
-	policy = config.make_policy(
-		experiment=experiment,
-		networks=networks,
-		environment_spec=environment_spec,
-		evaluation=False
-	)
 
-	# Create the (replay server) and grab its address.
-	replay_tables = experiment.builder.make_replay_tables(environment_spec, policy)
-
-	# Disable blocking of inserts by tables' rate limiters, as this function
-	# executes learning (sampling from the table) and data generation
-	# (inserting into the table) sequentially from the same thread
-	# which could result in blocked insert making the algorithm hang.
-	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(replay_tables)
-
-	replay_server = reverb.Server(replay_tables, port=None)
-	# dfn replay_client: used by dataset(iterator), learner, and adder
-	replay_client = reverb.Client(f'localhost:{replay_server.port}')
-
+	"""Parent Counter"""
 	# Parent counter allows to (share step counts) between train and eval loops and
 	# the learner, so that it is possible to plot for example evaluator's return
 	# value as a function of the number of training episodes.
-	counter = counting.Counter()
-
-	# dataset = experiment.builder.make_dataset_iterator(replay_client)
-	iterator = experiment.builder.make_dataset_iterator(replay_client)
-	# We always use prefetch as it provides an iterator with an additional
-	# 'ready' method.
-	iterator = utils.prefetch(iterator, buffer_size=1) # isn't defined b4?
-
-	# Create actor, adder, and learner for generating, storing, and consuming
-	# data respectively. (by Builder)
-	# NOTE: These are created in (reverse order) as the actor needs to be given the
-	# adder and the learner (as a source of variables).
-	learner_key, key = jax.random.split(key)
-	learner = experiment.builder.make_learner(
-		random_key=learner_key,
-		networks=networks,
-		iterator=iterator,
-		logger_fn=experiment.logger_factory,
-		environment_spec=environment_spec,
-		replay_client=replay_client, # *
-		counter=counting.Counter(counter, prefix='learner'),
-	)
-
-	train_counter = counting.Counter(counter, prefix='actor')
-
-	checkpointer = None
+	counter = counting.Counter(time_delta=0.)
+	
 	if experiment.checkpointing is not None:
 		checkpointing = experiment.checkpointing
-		# checkpointer = savers.Checkpointer(
-		# 	objects_to_save={'counter': counter, 'learner': learner},
-		# 	time_delta_minutes=checkpointing.time_delta_minutes,
-		# 	directory=checkpointing.directory,
-		# 	add_uid=checkpointing.add_uid,
-		# 	max_to_keep=checkpointing.max_to_keep,
-		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		# )
 		counter_ckpt = savers.Checkpointer(
 			objects_to_save={'counter': counter},
 			subdirectory='counter',
@@ -126,6 +75,29 @@ def run_evaluation(
 			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
 			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 		)
+
+
+	"""Networks."""
+	# Create the networks and policy.
+	networks = experiment.network_factory(environment_spec)
+	policy = config.make_policy(
+		experiment=experiment,
+		networks=networks,
+		environment_spec=environment_spec,
+		evaluation=False
+	)
+
+
+	"""Learner."""
+	learner_key, key = jax.random.split(key)
+	learner = experiment.builder.make_learner(
+		random_key=learner_key,
+		networks=networks,
+		iterator=None,
+	)
+	
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
 		learner_ckpt = savers.Checkpointer(
 			objects_to_save={'learner': learner},
 			subdirectory='learner',
@@ -137,8 +109,11 @@ def run_evaluation(
 			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 		)
 
+
+	"""Evaluation loop."""
 	if 'actor_steps' not in counter.get_counts().keys():
 		# init csv columns for eval_logger(eval_counter(parent_counter <- train_counter))
+		train_counter = counting.Counter(counter, prefix='actor')
 		counter.get_counts().get(train_counter.get_steps_key(), 0)
 
 	# Create the evaluation actor and loop.
