@@ -32,7 +32,7 @@ class IMPALAConfig:
 	variable_update_period: int = 1000
 
 	# Optimizer configuration.
-	batch_size: int = 32
+	batch_size: int = 32 # batch of sequences
 	learning_rate: Union[float, optax.Schedule] = 2e-4
 	adam_momentum_decay: float = 0.0
 	adam_variance_decay: float = 0.99
