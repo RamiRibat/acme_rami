@@ -110,7 +110,7 @@ def run_training(
 		replay_server = reverb.Server(
 			tables=replay_tables,
 			port=None,
-			checkpointer=checkpointer_manager
+			checkpointer=checkpointer
 		)
 
 	else:
