@@ -119,7 +119,7 @@ class Checkpointer:
       self._checkpoint = tf.train.Checkpoint(**objects_to_save)
       self._checkpoint_dir = paths.process_path(
           directory,
-          'checkpoints',
+          # 'checkpoints',
           subdirectory,
           ttl_seconds=checkpoint_ttl_seconds,
           backups=False,
