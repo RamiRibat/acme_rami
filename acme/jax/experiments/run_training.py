@@ -25,7 +25,7 @@ from acme import types
 from acme.jax import utils
 from acme.jax.experiments import config
 from acme.tf import savers
-from acme.utils import counting
+from acme.utils import counting, paths
 import dm_env
 import jax
 import reverb
@@ -102,6 +102,13 @@ def run_training(
 	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(replay_tables)
 
 	if experiment.checkpointing is not None:
+		ckpt_path = paths.process_path(
+          checkpointing.directory,
+          'checkpoints',
+          'replay',
+          backups=False,
+          add_uid=True
+      	)
 		checkpointer = reverb.platform.checkpointers_lib.DefaultCheckpointer(
 			path=checkpointing.directory+'/checkpoints/raplay',
 			group='' # non-empty is not supported :)
