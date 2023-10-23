@@ -31,7 +31,7 @@ import jax
 import reverb
 
 
-def run_experiment(
+def run_training(
     experiment: config.ExperimentConfig,
 	# eval_every: int = 100,
 	# num_eval_episodes: int = 1

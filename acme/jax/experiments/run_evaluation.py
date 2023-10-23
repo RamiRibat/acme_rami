@@ -31,9 +31,9 @@ import jax
 import reverb
 
 
-def run_experiment(
+def run_evaluation(
     experiment: config.ExperimentConfig,
-	eval_every: int = 100,
+	# eval_every: int = 100,
 	num_eval_episodes: int = 1
 ):
 	"""Runs a simple, single-threaded training loop using the default evaluators.
