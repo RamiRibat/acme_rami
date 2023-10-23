@@ -20,6 +20,7 @@ from typing import Optional, Sequence, Tuple
 
 # ML/DL
 import jax
+import tensorflow as tf
 
 # ACME/DeepMind
 import acme
@@ -87,16 +88,25 @@ def run_training(
 	if experiment.checkpointing is not None:
 		checkpointing = experiment.checkpointing
 		ckpt_path = paths.process_path(
-          checkpointing.directory,
-          'checkpoints',
-          'replay',
-          backups=False,
-          add_uid=True
+			checkpointing.directory,
+			'checkpoints',
+			'replay',
+			ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+			add_uid=checkpointing.add_uid,
+			backups=False,
       	)
 		checkpointer = reverb.platform.checkpointers_lib.DefaultCheckpointer(
 			path=ckpt_path,
 			group='' # non-empty is not supported :)
 		)
+		# Create a manager to maintain different checkpoints.
+		checkpointer_manager = tf.train.CheckpointManager(
+			checkpointer,
+			directory=ckpt_path,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		)
+		
 		replay_server = reverb.Server(
 			tables=replay_tables,
 			port=None,
