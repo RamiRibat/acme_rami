@@ -54,6 +54,7 @@ def run_training(
 	environment = experiment.environment_factory(experiment.seed)
 	environment_spec = experiment.environment_spec or specs.make_environment_spec(environment)
 
+	"""Build Learner."""
 	# Create the networks and policy.
 	networks = experiment.network_factory(environment_spec)
 	policy = config.make_policy(
@@ -79,12 +80,13 @@ def run_training(
 	# Parent counter allows to (share step counts) between train and eval loops and
 	# the learner, so that it is possible to plot for example evaluator's return
 	# value as a function of the number of training episodes.
-	parent_counter = counting.Counter(time_delta=0.)
+	counter = counting.Counter(time_delta=0.)
 
-	dataset = experiment.builder.make_dataset_iterator(replay_client)
+	# dataset = experiment.builder.make_dataset_iterator(replay_client)
+	iterator = experiment.builder.make_dataset_iterator(replay_client)
 	# We always use prefetch as it provides an iterator with an additional
 	# 'ready' method.
-	dataset = utils.prefetch(dataset, buffer_size=1) # isn't defined b4?
+	iterator = utils.prefetch(iterator, buffer_size=1) # isn't defined b4?
 
 	# Create actor, adder, and learner for generating, storing, and consuming
 	# data respectively. (by Builder)
@@ -94,14 +96,55 @@ def run_training(
 	learner = experiment.builder.make_learner(
 		random_key=learner_key,
 		networks=networks,
-		dataset=dataset,
+		iterator=iterator,
 		logger_fn=experiment.logger_factory,
 		environment_spec=environment_spec,
-		replay_client=replay_client,
-		counter=counting.Counter(parent_counter, prefix='learner', time_delta=0.)
+		replay_client=replay_client, # *
+		counter=counting.Counter(counter, prefix='learner', time_delta=0.),
 	)
 
-	adder = experiment.builder.make_adder(replay_client, environment_spec, policy)
+	checkpointer = None
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
+		# checkpointer = savers.Checkpointer(
+		# 	objects_to_save={'learner': learner, 'counter': counter},
+		# 	time_delta_minutes=checkpointing.time_delta_minutes,
+		# 	directory=checkpointing.directory,
+		# 	add_uid=checkpointing.add_uid,
+		# 	max_to_keep=checkpointing.max_to_keep,
+		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		# )
+		counter = savers.CheckpointingRunner(
+				counter,
+				key='counter',
+				subdirectory='counter',
+				time_delta_minutes=checkpointing.time_delta_minutes,
+				directory=checkpointing.directory,
+				add_uid=checkpointing.add_uid,
+				max_to_keep=checkpointing.max_to_keep,
+				keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+				checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
+		learner = savers.CheckpointingRunner(
+					learner,
+					key='learner',
+					subdirectory='learner',
+					time_delta_minutes=5,
+					directory=checkpointing.directory,
+					add_uid=checkpointing.add_uid,
+					max_to_keep=checkpointing.max_to_keep,
+					keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+					checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+				)
+
+
+	"""Build Adder/Actor."""
+	adder = experiment.builder.make_adder(
+		replay_client=replay_client,
+		environment_spec=environment_spec,
+		policy=policy
+	)
 
 	actor_key, key = jax.random.split(key)
 	actor = experiment.builder.make_actor(
@@ -113,21 +156,8 @@ def run_training(
 	)
 
 	# Create the environment loop used for training.
-	train_counter = counting.Counter( parent_counter, prefix='actor', time_delta=0.)
+	train_counter = counting.Counter(counter, prefix='actor', time_delta=0.)
 	train_logger = experiment.logger_factory('actor', train_counter.get_steps_key(), 0)
-
-	checkpointer = None
-	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
-		checkpointer = savers.Checkpointer(
-			objects_to_save={'learner': learner, 'counter': parent_counter},
-			time_delta_minutes=checkpointing.time_delta_minutes,
-			directory=checkpointing.directory,
-			add_uid=checkpointing.add_uid,
-			max_to_keep=checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		)
 
 	# Replace the actor with a LearningActor. This makes sure that every time
 	# that `update` is called on the actor it checks to see whether there is
@@ -137,12 +167,14 @@ def run_training(
 	actor = _LearningActor(
 		actor=actor,
 		learner=learner,
-		iterator=dataset,
+		iterator=iterator,
 		replay_tables=replay_tables,
 		sample_sizes=rate_limiters_max_diff,
 		checkpointer=checkpointer
 	)
 
+
+	"""Trining loop."""
 	train_loop = acme.EnvironmentLoop(
 		environment=environment,
 		actor=actor,
@@ -153,16 +185,15 @@ def run_training(
 
 	max_num_actor_steps = (
 		experiment.max_num_actor_steps -
-		parent_counter.get_counts().get(train_counter.get_steps_key(), 0))
-
-	# if 'actor_steps' not in parent_counter.get_counts().keys():
-	# 	train_loop.run(num_steps=0) # init csv columns
-	# 	eval_loop.run(num_episodes=num_eval_episodes) # eval at t=0
+		counter.get_counts().get(train_counter.get_steps_key(), 0)
+	)
 		
 	train_loop.run(num_steps=max_num_actor_steps)
 
 	# save chechpoint
-	checkpointer.save()
+	# checkpointer.save()
+	counter.save()
+	learner.save()
 
 	# close environment
 	environment.close()

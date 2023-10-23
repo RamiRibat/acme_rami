@@ -159,29 +159,40 @@ def make_distributed_training(
 
 	def build_learner(
 		random_key: networks_lib.PRNGKey,
-		replay: reverb.Client,
+		replay_client: reverb.Client,
 		counter: Optional[counting.Counter] = None,
 		primary_learner: Optional[core.Learner] = None,
 	):
 		"""The Learning part of the agent."""
 
 		dummy_seed = 1
-		spec = (
+		environment_spec = (
 			experiment.environment_spec or
 			specs.make_environment_spec(experiment.environment_factory(dummy_seed)))
 
 		# Creates the networks to optimize (online) and target networks.
-		networks = experiment.network_factory(spec)
+		networks = experiment.network_factory(environment_spec)
 
-		iterator = experiment.builder.make_dataset_iterator(replay)
+		iterator = experiment.builder.make_dataset_iterator(replay_client)
 		# make_dataset_iterator is responsible for putting data onto appropriate
 		# training devices, so here we apply prefetch, so that data is copied over
 		# in the background.
 		iterator = utils.prefetch(iterable=iterator, buffer_size=1)
+
 		counter = counting.Counter(counter, 'learner')
-		learner = experiment.builder.make_learner(random_key, networks, iterator,
-													experiment.logger_factory, spec,
-													replay, counter)
+		
+		# learner = experiment.builder.make_learner(random_key, networks, iterator,
+		# 											experiment.logger_factory, spec,
+		# 											replay, counter)
+		learner = experiment.builder.make_learner(
+			random_key=learner_key,
+			networks=networks,
+			iterator=iterator,
+			logger_fn=experiment.logger_factory,
+			environment_spec=environment_spec,
+			replay_client=replay_client,
+			counter=counter
+		)
 
 		if experiment.checkpointing:
 			if primary_learner is None:
@@ -246,7 +257,7 @@ def make_distributed_training(
 
 	def build_actor(
 		random_key: networks_lib.PRNGKey,
-		replay: reverb.Client,
+		replay_client: reverb.Client,
 		variable_source: core.VariableSource,
 		counter: counting.Counter,
 		actor_id: ActorId,
@@ -266,7 +277,8 @@ def make_distributed_training(
 			experiment=experiment,
 			networks=networks,
 			environment_spec=environment_spec,
-			evaluation=False)
+			evaluation=False
+		)
 
 		if inference_server is not None:
 			policy_network = actor_core.ActorCore(
@@ -276,16 +288,32 @@ def make_distributed_training(
 			)
 			variable_source = variable_utils.ReferenceVariableSource()
 
-		adder = experiment.builder.make_adder(replay, environment_spec,
-											policy_network)
-		actor = experiment.builder.make_actor(actor_key, policy_network,
-											environment_spec, variable_source,
-											adder)
+		# adder = experiment.builder.make_adder(replay, environment_spec,
+		# 									policy_network)
+		adder = experiment.builder.make_adder(
+			replay_client=replay_client,
+			environment_spec=environment_spec,
+			policy=policy_network
+		)
+		# actor = experiment.builder.make_actor(actor_key, policy_network,
+		# 									environment_spec, variable_source,
+		# 									adder)
+		actor = experiment.builder.make_actor(
+			random_key=actor_key,
+			policy=policy_network,
+			environment_spec=environment_spec,
+			variable_source=variable_source,
+			adder=adder
+		)
 
 		# Create logger and counter.
 		counter = counting.Counter(counter, 'actor')
-		logger = experiment.logger_factory('actor', counter.get_steps_key(),
-										actor_id)
+		logger = experiment.logger_factory(
+			'actor',
+			counter.get_steps_key(),
+			actor_id
+		
+		)
 		# Create the loop to connect environment and agent.
 		return environment_loop.EnvironmentLoop(
 			environment, actor, counter, logger, observers=experiment.observers)

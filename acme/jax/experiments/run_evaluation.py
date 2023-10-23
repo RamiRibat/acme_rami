@@ -79,12 +79,13 @@ def run_evaluation(
 	# Parent counter allows to (share step counts) between train and eval loops and
 	# the learner, so that it is possible to plot for example evaluator's return
 	# value as a function of the number of training episodes.
-	parent_counter = counting.Counter(time_delta=0.)
+	counter = counting.Counter(time_delta=0.)
 
-	dataset = experiment.builder.make_dataset_iterator(replay_client)
+	# dataset = experiment.builder.make_dataset_iterator(replay_client)
+	iterator = experiment.builder.make_dataset_iterator(replay_client)
 	# We always use prefetch as it provides an iterator with an additional
 	# 'ready' method.
-	dataset = utils.prefetch(dataset, buffer_size=1) # isn't defined b4?
+	iterator = utils.prefetch(iterator, buffer_size=1) # isn't defined b4?
 
 	# Create actor, adder, and learner for generating, storing, and consuming
 	# data respectively. (by Builder)
@@ -94,31 +95,57 @@ def run_evaluation(
 	learner = experiment.builder.make_learner(
 		random_key=learner_key,
 		networks=networks,
-		dataset=dataset,
+		iterator=iterator,
 		logger_fn=experiment.logger_factory,
 		environment_spec=environment_spec,
-		replay_client=replay_client,
-		counter=counting.Counter(parent_counter, prefix='learner', time_delta=0.)
+		replay_client=replay_client, # *
+		counter=counting.Counter(counter, prefix='learner', time_delta=0.),
 	)
 
-	train_counter = counting.Counter( parent_counter, prefix='actor', time_delta=0.)
+	train_counter = counting.Counter(counter, prefix='actor', time_delta=0.)
 
 	checkpointer = None
 	if experiment.checkpointing is not None:
 		checkpointing = experiment.checkpointing
-		checkpointer = savers.Checkpointer(
-			objects_to_save={'learner': learner, 'counter': parent_counter},
-			time_delta_minutes=checkpointing.time_delta_minutes,
-			directory=checkpointing.directory,
-			add_uid=checkpointing.add_uid,
-			max_to_keep=checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		# checkpointer = savers.Checkpointer(
+		# 	objects_to_save={'learner': learner, 'counter': parent_counter},
+		# 	time_delta_minutes=checkpointing.time_delta_minutes,
+		# 	directory=checkpointing.directory,
+		# 	add_uid=checkpointing.add_uid,
+		# 	max_to_keep=checkpointing.max_to_keep,
+		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		# )
+		counter = savers.CheckpointingRunner(
+				counter,
+				key='counter',
+				subdirectory='counter',
+				time_delta_minutes=checkpointing.time_delta_minutes,
+				directory=checkpointing.directory,
+				add_uid=checkpointing.add_uid,
+				max_to_keep=checkpointing.max_to_keep,
+				keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+				checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 		)
+		learner = savers.CheckpointingRunner(
+					learner,
+					key='learner',
+					subdirectory='learner',
+					time_delta_minutes=5,
+					directory=checkpointing.directory,
+					add_uid=checkpointing.add_uid,
+					max_to_keep=checkpointing.max_to_keep,
+					keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+					checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+				)
+
+	if 'actor_steps' not in counter.get_counts().keys():
+		# init csv columns for eval_logger(eval_counter(parent_counter <- train_counter))
+		counter.get_counts().get(train_counter.get_steps_key(), 0)
 
 	# Create the evaluation actor and loop.
 	eval_actor_key, key = jax.random.split(key)#jax.random.PRNGKey(experiment.seed)
-	eval_counter = counting.Counter(parent_counter, prefix='evaluator', time_delta=0.)
+	eval_counter = counting.Counter(counter, prefix='evaluator', time_delta=0.)
 	eval_logger = experiment.logger_factory('evaluator', eval_counter.get_steps_key(), 0)
 	eval_policy = config.make_policy(
 		experiment=experiment,
@@ -141,10 +168,6 @@ def run_evaluation(
 		logger=eval_logger,
 		observers=experiment.observers
 	)
-
-	if 'actor_steps' not in parent_counter.get_counts().keys():
-		# init csv columns for eval_logger(eval_counter(parent_counter <- train_counter))
-		parent_counter.get_counts().get(train_counter.get_steps_key(), 0)
 
 	eval_loop.run(num_episodes=num_eval_episodes)
 
