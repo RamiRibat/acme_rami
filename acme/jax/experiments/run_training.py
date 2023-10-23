@@ -85,6 +85,7 @@ def run_training(
 	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(replay_tables)
 
 	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
 		ckpt_path = paths.process_path(
           checkpointing.directory,
           'checkpoints',
@@ -131,7 +132,6 @@ def run_training(
 	counter = counting.Counter(time_delta=0.)
 	
 	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
 		counter_ckpt = savers.Checkpointer(
 			objects_to_save={'counter': counter},
 			subdirectory='counter',
