@@ -30,6 +30,7 @@ from acme.jax.experiments.make_distributed_offline_experiment import make_distri
 from acme.jax.experiments.run_experiment import run_experiment
 from acme.jax.experiments.run_offline_experiment import run_offline_experiment
 
-# TODO(rami): add run_training + run_evaluation
+# TODO(rami): add run_training + run_evaluation + make_distributed_training
 from acme.jax.experiments.run_training import run_training
 from acme.jax.experiments.run_evaluation import run_evaluation
+from acme.jax.experiments.make_distributed_training import make_distributed_training

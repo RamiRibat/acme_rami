@@ -143,6 +143,7 @@ def run_evaluation(
 	)
 
 	if 'actor_steps' not in parent_counter.get_counts().keys():
+		# init csv columns for eval_logger(eval_counter(parent_counter <- train_counter))
 		parent_counter.get_counts().get(train_counter.get_steps_key(), 0)
 
 	eval_loop.run(num_episodes=num_eval_episodes)
