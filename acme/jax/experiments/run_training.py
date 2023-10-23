@@ -142,7 +142,7 @@ def run_training(
 		iterator=iterator,
 		replay_tables=replay_tables,
 		sample_sizes=rate_limiters_max_diff,
-		checkpointer=checkpointer
+		# checkpointer=checkpointer
 	)
 
 
@@ -228,7 +228,7 @@ class _LearningActor(core.Actor):
 		iterator: core.PrefetchingIterator,
 		replay_tables: Sequence[reverb.Table],
 		sample_sizes: Sequence[int],
-		checkpointer: Optional[savers.Checkpointer]
+		# checkpointer: Optional[savers.Checkpointer]
 	):
 		"""Initializes _LearningActor.
 
@@ -250,7 +250,7 @@ class _LearningActor(core.Actor):
 		self._replay_tables = replay_tables
 		self._sample_sizes = sample_sizes
 		self._learner_steps = 0
-		self._checkpointer = checkpointer
+		# self._checkpointer = checkpointer
 
 	def select_action(self, observation: types.NestedArray) -> types.NestedArray:
 		return self._actor.select_action(observation)
