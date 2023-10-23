@@ -116,7 +116,7 @@ def run_evaluation(
 		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
 		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 		# )
-		counter = savers.CheckpointingRunner(
+		counter = savers.Checkpointer(
 				counter,
 				key='counter',
 				subdirectory='counter',
@@ -127,7 +127,7 @@ def run_evaluation(
 				keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
 				checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 		)
-		learner = savers.CheckpointingRunner(
+		learner = savers.Checkpointer(
 					learner,
 					key='learner',
 					subdirectory='learner',
