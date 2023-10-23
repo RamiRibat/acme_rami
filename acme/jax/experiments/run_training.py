@@ -104,7 +104,7 @@ def run_training(
 	if experiment.checkpointing is not None:
 		checkpointer = reverb.platform.checkpointers_lib.DefaultCheckpointer(
 			path=f'{checkpointing.directory}',
-			group='replay'
+			group='' # non-empty is not supported :)
 		)
 		replay_server = reverb.Server(
 			tables=replay_tables,
@@ -112,11 +112,11 @@ def run_training(
 			checkpointer=checkpointer
 		)
 
-	# else:
-	# 	replay_server = reverb.Server(
-	# 		tables=replay_tables,
-	# 		port=None,
-	# 	)
+	else:
+		replay_server = reverb.Server(
+			tables=replay_tables,
+			port=None,
+		)
 
 	# dfn replay_client: used by dataset(iterator), learner, and adder
 	replay_client = reverb.Client(f'localhost:{replay_server.port}')
@@ -230,8 +230,8 @@ def run_training(
 	counter_ckpt.save()
 	learner_ckpt.save()
 	replay_client.checkpoint()
-	checkpoint_path = replay_client.checkpoint()
-	print('replay_client.checkpoint_path: ', checkpoint_path)
+	# checkpoint_path = replay_client.checkpoint()
+	# print('replay_client.checkpoint_path: ', checkpoint_path)
 
 	# close environment
 	environment.close()
