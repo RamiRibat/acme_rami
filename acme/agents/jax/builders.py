@@ -44,12 +44,13 @@ class OfflineBuilder(abc.ABC, Generic[Networks, Policy, Sample]):
   def make_learner(
       self,
       random_key: networks_lib.PRNGKey,
-      networks: Networks,
-      dataset: Iterator[Sample],
-      logger_fn: loggers.LoggerFactory,
       environment_spec: specs.EnvironmentSpec,
+      networks: Networks,
+      iterator: Iterator[Sample],
+      logger_fn: loggers.LoggerFactory,
       *,
       counter: Optional[counting.Counter] = None,
+      logger: Optional[loggers.Logger] = None,
   ) -> core.Learner:
     """Creates an instance of the learner.
 
@@ -68,8 +69,8 @@ class OfflineBuilder(abc.ABC, Generic[Networks, Policy, Sample]):
   def make_actor(
       self,
       random_key: networks_lib.PRNGKey,
-      policy: Policy,
       environment_spec: specs.EnvironmentSpec,
+      policy: Policy,
       variable_source: Optional[core.VariableSource] = None,
   ) -> core.Actor:
     """Create an actor instance to be used for evaluation.
@@ -83,9 +84,12 @@ class OfflineBuilder(abc.ABC, Generic[Networks, Policy, Sample]):
     """
 
   @abc.abstractmethod
-  def make_policy(self, networks: Networks,
-                  environment_spec: specs.EnvironmentSpec,
-                  evaluation: bool) -> Policy:
+  def make_policy(
+    self,
+    networks: Networks,
+    environment_spec: specs.EnvironmentSpec,
+    evaluation: bool
+    ) -> Policy:
     """Creates the agent policy to be used for evaluation.
 
     Args:
@@ -177,7 +181,7 @@ class ActorLearnerBuilder(OfflineBuilder[Networks, Policy, Sample],
       self,
       random_key: networks_lib.PRNGKey,
       networks: Networks,
-      dataset: Iterator[Sample],
+      iterator: Iterator[Sample],
       logger_fn: loggers.LoggerFactory,
       environment_spec: specs.EnvironmentSpec,
       replay_client: Optional[reverb.Client] = None,
@@ -199,10 +203,12 @@ class ActorLearnerBuilder(OfflineBuilder[Networks, Policy, Sample],
         actor steps, etc.) distributed throughout the agent.
     """
 
-  def make_policy(self,
-                  networks: Networks,
-                  environment_spec: specs.EnvironmentSpec,
-                  evaluation: bool = False) -> Policy:
+  def make_policy(
+      self,
+      networks: Networks,
+      environment_spec: specs.EnvironmentSpec,
+      evaluation: bool = False
+    ) -> Policy:
     """Creates the agent policy.
 
        Creates the agent policy given the collection of network components and
