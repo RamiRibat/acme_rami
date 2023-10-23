@@ -226,7 +226,7 @@ def run_training(
 	# save chechpoint
 	# checkpointer.save()
 	counter_ckpt.save()
-	replay_tables_ckpt.save()
+	replay_ckpt.save()
 	learner_ckpt.save()
 
 	# close environment
