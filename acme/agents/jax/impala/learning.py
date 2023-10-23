@@ -145,7 +145,7 @@ class IMPALALearner(acme.Learner):
 
 	def _make_initial_state(self) -> TrainingState:
 		"""Initialises the training state (parameters and optimiser state)."""
-		print(colored('\nLearner._make_initial_state', 'red'))
+		# print(colored('Learner._make_initial_state', 'red'))
 
 		self._key, _ = jax.random.split(self._key)
 
@@ -188,5 +188,4 @@ class IMPALALearner(acme.Learner):
 
 
 	def restore(self, state: TrainingState):
-		print(colored('\nLearner.restore', 'red'))
 		self._state = utils.replicate_in_all_devices(state, self._local_devices)
