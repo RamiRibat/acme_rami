@@ -207,6 +207,7 @@ class EnvironmentLoop(core.Worker):
 		Raises:
 		ValueError: If both 'num_episodes' and 'num_steps' are not None.
 		"""
+		print('\nenv_loop.run\n')
 
 		if not (num_episodes is None or num_steps is None):
 			raise ValueError('Either "num_episodes" or "num_steps" should be None.')
