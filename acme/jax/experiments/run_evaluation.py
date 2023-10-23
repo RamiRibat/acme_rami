@@ -57,6 +57,18 @@ def run_evaluation(
 	environment_spec = experiment.environment_spec or specs.make_environment_spec(environment)
 
 
+	"""Network/Policy."""
+	# Create networks.
+	networks = experiment.network_factory(environment_spec)
+	# Create evaluation policy.
+	eval_policy = config.make_policy(
+		experiment=experiment,
+		networks=networks,
+		environment_spec=environment_spec,
+		evaluation=True
+	)
+
+
 	"""Parent Counter"""
 	# Parent counter allows to (share step counts) between train and eval loops and
 	# the learner, so that it is possible to plot for example evaluator's return
@@ -77,19 +89,8 @@ def run_evaluation(
 		)
 
 
-	"""Networks."""
-	# Create the networks and policy.
-	networks = experiment.network_factory(environment_spec)
-	policy = config.make_policy(
-		experiment=experiment,
-		networks=networks,
-		environment_spec=environment_spec,
-		evaluation=False
-	)
-
-
 	"""Learner."""
-	learner_key, key = jax.random.split(key)
+	key, learner_key = jax.random.split(key)
 	learner = experiment.builder.make_learner(
 		random_key=learner_key,
 		networks=networks,
@@ -99,7 +100,6 @@ def run_evaluation(
 	)
 	
 	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
 		learner_ckpt = savers.Checkpointer(
 			objects_to_save={'learner': learner},
 			subdirectory='learner',
@@ -112,29 +112,28 @@ def run_evaluation(
 		)
 
 
+	"""Actor (evaluation)."""
+	key, eval_actor_key = jax.random.split(key)
+	eval_actor = experiment.builder.make_actor(
+		random_key=eval_actor_key,
+		policy=eval_policy,
+		environment_spec=environment_spec,
+		variable_source=learner,
+		# no adder neede
+	)
+
+
 	"""Evaluation loop."""
 	if 'actor_steps' not in counter.get_counts().keys():
 		# init csv columns for eval_logger(eval_counter(parent_counter <- train_counter))
 		train_counter = counting.Counter(counter, prefix='actor')
 		counter.get_counts().get(train_counter.get_steps_key(), 0)
 
-	# Create the evaluation actor and loop.
-	eval_actor_key, key = jax.random.split(key)#jax.random.PRNGKey(experiment.seed)
+	# Create evaluation counter/logger (~evaluator(actor)).
 	eval_counter = counting.Counter(counter, prefix='evaluator', time_delta=0)
 	eval_logger = experiment.logger_factory('evaluator', eval_counter.get_steps_key(), 0)
-	eval_policy = config.make_policy(
-		experiment=experiment,
-		networks=networks,
-		environment_spec=environment_spec,
-		evaluation=True
-	)
-	eval_actor = experiment.builder.make_actor(
-		# random_key=jax.random.PRNGKey(experiment.seed),
-		random_key=eval_actor_key,
-		policy=eval_policy,
-		environment_spec=environment_spec,
-		variable_source=learner
-	)
+
+	# Create the environment loop used for evaluation.
 	eval_loop = acme.EnvironmentLoop(
 		environment=environment,
 		actor=eval_actor,
@@ -144,12 +143,13 @@ def run_evaluation(
 		observers=experiment.observers
 	)
 
+	# Run evaluation loop (full episodes).
 	eval_loop.run(num_episodes=num_eval_episodes)
 
-	# close eval_logger
+	# Close evaluation logger.
 	eval_logger.close()
 
-	# close environment
+	# Close environment.
 	environment.close()
 
 
