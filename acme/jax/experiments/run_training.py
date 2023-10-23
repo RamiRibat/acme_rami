@@ -53,6 +53,13 @@ def run_training(
 
 	key = jax.random.PRNGKey(experiment.seed)
 
+
+	"""Environment."""
+	# Create the environment and get its spec.
+	environment = experiment.environment_factory(experiment.seed)
+	environment_spec = experiment.environment_spec or specs.make_environment_spec(environment)
+
+
 	"""Parent Counter"""
 	# Parent counter allows to (share step counts) between train and eval loops and
 	# the learner, so that it is possible to plot for example evaluator's return
@@ -64,25 +71,6 @@ def run_training(
 		counter_ckpt = savers.Checkpointer(
 			objects_to_save={'counter': counter},
 			subdirectory='counter',
-			time_delta_minutes=checkpointing.time_delta_minutes,
-			directory=checkpointing.directory,
-			add_uid=checkpointing.add_uid,
-			max_to_keep=checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		)
-
-
-	"""Environment."""
-	# Create the environment and get its spec.
-	environment = experiment.environment_factory(experiment.seed)
-	environment_spec = experiment.environment_spec or specs.make_environment_spec(environment)
-	
-	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
-		env_ckpt = savers.Checkpointer(
-			objects_to_save={'environment': environment},
-			subdirectory='environment',
 			time_delta_minutes=checkpointing.time_delta_minutes,
 			directory=checkpointing.directory,
 			add_uid=checkpointing.add_uid,
