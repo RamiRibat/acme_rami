@@ -95,12 +95,6 @@ def run_training(
 	# Create the (replay server) and grab its address.
 	replay_tables = experiment.builder.make_replay_tables(environment_spec, policy)
 
-	# Disable blocking of inserts by tables' rate limiters, as this function
-	# executes learning (sampling from the table) and data generation
-	# (inserting into the table) sequentially from the same thread
-	# which could result in blocked insert making the algorithm hang.
-	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(replay_tables)
-
 	if experiment.checkpointing is not None:
 		checkpointing = experiment.checkpointing
 		replay_ckpt = savers.Checkpointer(
@@ -113,6 +107,12 @@ def run_training(
 			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
 			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 		)
+
+	# Disable blocking of inserts by tables' rate limiters, as this function
+	# executes learning (sampling from the table) and data generation
+	# (inserting into the table) sequentially from the same thread
+	# which could result in blocked insert making the algorithm hang.
+	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(replay_tables)
 
 	replay_server = reverb.Server(replay_tables, port=None)
 	# dfn replay_client: used by dataset(iterator), learner, and adder
