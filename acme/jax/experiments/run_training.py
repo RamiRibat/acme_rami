@@ -101,19 +101,21 @@ def run_training(
 	# which could result in blocked insert making the algorithm hang.
 	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(replay_tables)
 
-	replay_server = reverb.Server(replay_tables, port=None)
-
 	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
-		replay_ckpt = savers.Checkpointer(
-			objects_to_save={'replay': replay_server},
-			subdirectory='replay',
-			time_delta_minutes=checkpointing.time_delta_minutes,
-			directory=checkpointing.directory,
-			add_uid=checkpointing.add_uid,
-			max_to_keep=checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		checkpointer = reverb.platform.checkpointers_lib.DefaultCheckpointer(
+			path=f'{checkpointing.directory}',
+			group='replay'
+		)
+		replay_server = reverb.Server(
+			tables=replay_tables,
+			port=None,
+			checkpointer=checkpointer
+		)
+
+	else:
+		replay_server = reverb.Server(
+			tables=replay_tables,
+			port=None,
 		)
 
 	# dfn replay_client: used by dataset(iterator), learner, and adder
