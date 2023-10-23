@@ -123,7 +123,8 @@ class Checkpointer:
           subdirectory,
           ttl_seconds=checkpoint_ttl_seconds,
           backups=False,
-          add_uid=add_uid)
+          add_uid=add_uid
+      )
 
       # Create a manager to maintain different checkpoints.
       self._checkpoint_manager = tf.train.CheckpointManager(
