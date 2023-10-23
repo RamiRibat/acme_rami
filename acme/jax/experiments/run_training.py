@@ -121,9 +121,6 @@ def run_training(
 
 	# dataset = experiment.builder.make_dataset_iterator(replay_client)
 	iterator = experiment.builder.make_dataset_iterator(replay_client)
-	# We always use prefetch as it provides an iterator with an additional
-	# 'ready' method.
-	iterator = utils.prefetch(iterator, buffer_size=1) # isn't it defined b4?
 
 	if experiment.checkpointing is not None:
 		checkpointing = experiment.checkpointing
@@ -137,6 +134,10 @@ def run_training(
 			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
 			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 		)
+		
+	# We always use prefetch as it provides an iterator with an additional
+	# 'ready' method.
+	iterator = utils.prefetch(iterator, buffer_size=1) # isn't it defined b4?
 
 	# Create actor, adder, and learner for generating, storing, and consuming
 	# data respectively. (by Builder)
