@@ -95,18 +95,18 @@ def run_training(
 	# Create the (replay server) and grab its address.
 	replay_tables = experiment.builder.make_replay_tables(environment_spec, policy)
 
-	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
-		replay_ckpt = savers.Checkpointer(
-			objects_to_save={'replay': replay_tables},
-			subdirectory='replay',
-			time_delta_minutes=checkpointing.time_delta_minutes,
-			directory=checkpointing.directory,
-			add_uid=checkpointing.add_uid,
-			max_to_keep=checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		)
+	# if experiment.checkpointing is not None:
+	# 	checkpointing = experiment.checkpointing
+	# 	replay_ckpt = savers.Checkpointer(
+	# 		objects_to_save={'replay': replay_tables},
+	# 		subdirectory='replay',
+	# 		time_delta_minutes=checkpointing.time_delta_minutes,
+	# 		directory=checkpointing.directory,
+	# 		add_uid=checkpointing.add_uid,
+	# 		max_to_keep=checkpointing.max_to_keep,
+	# 		keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+	# 		checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+	# 	)
 
 	# Disable blocking of inserts by tables' rate limiters, as this function
 	# executes learning (sampling from the table) and data generation
@@ -125,6 +125,18 @@ def run_training(
 	# 'ready' method.
 	iterator = utils.prefetch(iterator, buffer_size=1) # isn't it defined b4?
 
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
+		iterator_ckpt = savers.Checkpointer(
+			objects_to_save={'iterator': iterator},
+			subdirectory='iterator',
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
 
 	# Create actor, adder, and learner for generating, storing, and consuming
 	# data respectively. (by Builder)
@@ -227,7 +239,8 @@ def run_training(
 	# save chechpoint
 	# checkpointer.save()
 	counter_ckpt.save()
-	replay_ckpt.save()
+	# replay_ckpt.save()
+	iterator_ckpt.save()
 	learner_ckpt.save()
 
 	# close environment
