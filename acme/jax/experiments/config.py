@@ -110,9 +110,9 @@ class CheckpointingConfig:
   """
   max_to_keep: int = 1
   # directory: str = '~/acme'
-  directory: str = '~/logdir/acme'
+  directory: str = '~/logdir/acme/checkpoints'
   add_uid: bool = True
-  time_delta_minutes: int = 0. # checkpoint only when called
+  time_delta_minutes: int = 10 # checkpoint only when called
   keep_checkpoint_every_n_hours: Optional[int] = None
   replay_checkpointing_time_delta_minutes: Optional[int] = None
   checkpoint_ttl_seconds: Optional[int] = int(
@@ -149,7 +149,7 @@ class ExperimentConfig(Generic[builders.Networks,
 	checkpointing: Configuration options for checkpointing. If None,
 		checkpointing and snapshotting is disabled.
 	"""
-	# Below fields must be explicitly specified for any Agent.
+	# Below fields must be (explicitly specified) for any Agent.
 	builder: builders.ActorLearnerBuilder[builders.Networks, builders.Policy,
 										builders.Sample]
 	network_factory: NetworkFactory[builders.Networks]
@@ -278,42 +278,49 @@ class OfflineExperimentConfig(Generic[builders.Networks, builders.Policy,
 
 
 def default_evaluator_factory(
-    environment_factory: types.EnvironmentFactory,
-    network_factory: NetworkFactory[builders.Networks],
-    policy_factory: PolicyFactory[builders.Networks, builders.Policy],
-    logger_factory: loggers.LoggerFactory,
-    observers: Sequence[observers_lib.EnvLoopObserver] = (),
+	environment_factory: types.EnvironmentFactory,
+	network_factory: NetworkFactory[builders.Networks],
+	policy_factory: PolicyFactory[builders.Networks, builders.Policy],
+	logger_factory: loggers.LoggerFactory,
+	observers: Sequence[observers_lib.EnvLoopObserver] = (),
 ) -> EvaluatorFactory[builders.Policy]:
-  """Returns a default evaluator process."""
+	"""Returns a default evaluator process."""
 
-  def evaluator(
-      random_key: types.PRNGKey,
-      variable_source: core.VariableSource,
-      counter: counting.Counter,
-      make_actor: MakeActorFn[builders.Policy],
-  ):
-    """The evaluation process."""
+	def evaluator(
+		random_key: types.PRNGKey,
+		variable_source: core.VariableSource,
+		counter: counting.Counter,
+		make_actor: MakeActorFn[builders.Policy],
+	):
+		"""The evaluation process."""
 
-    # Create environment and evaluator networks
-    environment_key, actor_key = jax.random.split(random_key)
-    # Environments normally require uint32 as a seed.
-    environment = environment_factory(utils.sample_uint32(environment_key))
-    environment_spec = specs.make_environment_spec(environment)
-    networks = network_factory(environment_spec)
-    policy = policy_factory(networks, environment_spec, True)
-    actor = make_actor(actor_key, policy, environment_spec, variable_source)
+		# Create environment and evaluator networks
+		environment_key, actor_key = jax.random.split(random_key)
+		# Environments normally require uint32 as a seed.
+		environment = environment_factory(utils.sample_uint32(environment_key))
+		environment_spec = specs.make_environment_spec(environment)
+		networks = network_factory(environment_spec)
+		policy = policy_factory(networks, environment_spec, True)
+		actor = make_actor(actor_key, policy, environment_spec, variable_source)
 
-    # Create logger and counter.
-    counter = counting.Counter(counter, 'evaluator')
-    logger = logger_factory('evaluator', 'actor_steps', 0)
+		# Create logger and counter.
+		counter = counting.Counter(counter, 'evaluator')
+		logger = logger_factory('evaluator', 'actor_steps', 0)
 
-    # Create the run loop and return it.
-    return environment_loop.EnvironmentLoop(
-        environment, actor, counter, logger, observers=observers)
+		# Create the run loop and return it.
+		env_loop = environment_loop.EnvironmentLoop(
+			environment=environment,
+			actor=actor,
+			counter=counter,
+			logger=logger,
+			observers=observers
+		)
+		return env_loop
 
-  return evaluator
+	return evaluator
 
 
+# Used by acme.jax.experiments.run_experiment.py
 def make_policy(
 	experiment: ExperimentConfig[
     	builders.Networks,
