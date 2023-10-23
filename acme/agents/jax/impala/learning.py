@@ -188,4 +188,5 @@ class IMPALALearner(acme.Learner):
 
 
 	def restore(self, state: TrainingState):
+		print(colored('\nLearner.restore', 'red'))
 		self._state = utils.replicate_in_all_devices(state, self._local_devices)
