@@ -50,11 +50,20 @@ def run_training(
 
 	key = jax.random.PRNGKey(experiment.seed)
 
+	"""Parent Counter"""
+	# Parent counter allows to (share step counts) between train and eval loops and
+	# the learner, so that it is possible to plot for example evaluator's return
+	# value as a function of the number of training episodes.
+	counter = counting.Counter(time_delta=0.)
+
+
+	"""Environment."""
 	# Create the environment and get its spec.
 	environment = experiment.environment_factory(experiment.seed)
 	environment_spec = experiment.environment_spec or specs.make_environment_spec(environment)
 
-	"""Build Learner."""
+
+	"""Networks."""
 	# Create the networks and policy.
 	networks = experiment.network_factory(environment_spec)
 	policy = config.make_policy(
@@ -64,6 +73,8 @@ def run_training(
 		evaluation=False
 	)
 
+
+	"""Replay/Iterator."""
 	# Create the (replay server) and grab its address.
 	replay_tables = experiment.builder.make_replay_tables(environment_spec, policy)
 
@@ -77,21 +88,19 @@ def run_training(
 	# dfn replay_client: used by dataset(iterator), learner, and adder
 	replay_client = reverb.Client(f'localhost:{replay_server.port}')
 
-	# Parent counter allows to (share step counts) between train and eval loops and
-	# the learner, so that it is possible to plot for example evaluator's return
-	# value as a function of the number of training episodes.
-	counter = counting.Counter(time_delta=0.)
-
 	# dataset = experiment.builder.make_dataset_iterator(replay_client)
 	iterator = experiment.builder.make_dataset_iterator(replay_client)
 	# We always use prefetch as it provides an iterator with an additional
 	# 'ready' method.
-	iterator = utils.prefetch(iterator, buffer_size=1) # isn't defined b4?
+	iterator = utils.prefetch(iterator, buffer_size=1) # isn't it defined b4?
+
 
 	# Create actor, adder, and learner for generating, storing, and consuming
 	# data respectively. (by Builder)
 	# NOTE: These are created in (reverse order) as the actor needs to be given the
 	# adder and the learner (as a source of variables).
+
+	"""Learner."""
 	learner_key, key = jax.random.split(key)
 	learner = experiment.builder.make_learner(
 		random_key=learner_key,
@@ -103,47 +112,16 @@ def run_training(
 		counter=counting.Counter(counter, prefix='learner', time_delta=0.),
 	)
 
-	checkpointer = None
-	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
-		checkpointer = savers.Checkpointer(
-			objects_to_save={'counter': counter, 'learner': learner},
-			time_delta_minutes=checkpointing.time_delta_minutes,
-			directory=checkpointing.directory,
-			add_uid=checkpointing.add_uid,
-			max_to_keep=checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		)
-		# counter_ckpt = savers.Checkpointer(
-		# 	objects_to_save={'counter': counter},
-		# 	subdirectory='counter',
-		# 	time_delta_minutes=checkpointing.time_delta_minutes,
-		# 	directory=checkpointing.directory,
-		# 	add_uid=checkpointing.add_uid,
-		# 	max_to_keep=checkpointing.max_to_keep,
-		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		# )
-		# learner_ckpt = savers.Checkpointer(
-		# 	objects_to_save={'learner': learner},
-		# 	subdirectory='learner',
-		# 	time_delta_minutes=checkpointing.time_delta_minutes,
-		# 	directory=checkpointing.directory,
-		# 	add_uid=checkpointing.add_uid,
-		# 	max_to_keep=checkpointing.max_to_keep,
-		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		# )
 
-
-	"""Build Adder/Actor."""
+	"""Adder."""
 	adder = experiment.builder.make_adder(
 		replay_client=replay_client,
 		environment_spec=environment_spec,
 		policy=policy
 	)
 
+
+	"""Actor."""
 	actor_key, key = jax.random.split(key)
 	actor = experiment.builder.make_actor(
 		random_key=actor_key,
@@ -152,10 +130,6 @@ def run_training(
 		variable_source=learner,
 		adder=adder
 	)
-
-	# Create the environment loop used for training.
-	train_counter = counting.Counter(counter, prefix='actor', time_delta=0.)
-	train_logger = experiment.logger_factory('actor', train_counter.get_steps_key(), 0)
 
 	# Replace the actor with a LearningActor. This makes sure that every time
 	# that `update` is called on the actor it checks to see whether there is
@@ -172,7 +146,48 @@ def run_training(
 	)
 
 
-	"""Trining loop."""
+	"""Checkpointers."""
+	# TODO(rami): should I add ckpt'er for replay (on/off-policy)
+	# and/or actor(latent_h)?
+	checkpointer = None
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
+		# checkpointer = savers.Checkpointer(
+		# 	objects_to_save={'counter': counter, 'learner': learner},
+		# 	time_delta_minutes=checkpointing.time_delta_minutes,
+		# 	directory=checkpointing.directory,
+		# 	add_uid=checkpointing.add_uid,
+		# 	max_to_keep=checkpointing.max_to_keep,
+		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		# )
+		counter_ckpt = savers.Checkpointer(
+			objects_to_save={'counter': counter},
+			subdirectory='counter',
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
+		learner_ckpt = savers.Checkpointer(
+			objects_to_save={'learner': learner},
+			subdirectory='learner',
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
+
+
+	"""Training loop."""
+	# Create the environment loop used for training.
+	train_counter = counting.Counter(counter, prefix='actor', time_delta=0.)
+	train_logger = experiment.logger_factory('actor', train_counter.get_steps_key(), 0)
+
 	train_loop = acme.EnvironmentLoop(
 		environment=environment,
 		actor=actor,

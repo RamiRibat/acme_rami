@@ -107,8 +107,18 @@ def run_evaluation(
 	checkpointer = None
 	if experiment.checkpointing is not None:
 		checkpointing = experiment.checkpointing
-		checkpointer = savers.Checkpointer(
-			objects_to_save={'counter': counter, 'learner': learner},
+		# checkpointer = savers.Checkpointer(
+		# 	objects_to_save={'counter': counter, 'learner': learner},
+		# 	time_delta_minutes=checkpointing.time_delta_minutes,
+		# 	directory=checkpointing.directory,
+		# 	add_uid=checkpointing.add_uid,
+		# 	max_to_keep=checkpointing.max_to_keep,
+		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		# )
+		counter_ckpt = savers.Checkpointer(
+			objects_to_save={'counter': counter},
+			subdirectory='counter',
 			time_delta_minutes=checkpointing.time_delta_minutes,
 			directory=checkpointing.directory,
 			add_uid=checkpointing.add_uid,
@@ -116,26 +126,16 @@ def run_evaluation(
 			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
 			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 		)
-		# counter_ckpt = savers.Checkpointer(
-		# 	objects_to_save={'counter': counter},
-		# 	subdirectory='counter',
-		# 	time_delta_minutes=checkpointing.time_delta_minutes,
-		# 	directory=checkpointing.directory,
-		# 	add_uid=checkpointing.add_uid,
-		# 	max_to_keep=checkpointing.max_to_keep,
-		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		# )
-		# learner_ckpt = savers.Checkpointer(
-		# 	objects_to_save={'learner': learner},
-		# 	subdirectory='learner',
-		# 	time_delta_minutes=checkpointing.time_delta_minutes,
-		# 	directory=checkpointing.directory,
-		# 	add_uid=checkpointing.add_uid,
-		# 	max_to_keep=checkpointing.max_to_keep,
-		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		# )
+		learner_ckpt = savers.Checkpointer(
+			objects_to_save={'learner': learner},
+			subdirectory='learner',
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
 
 	if 'actor_steps' not in counter.get_counts().keys():
 		# init csv columns for eval_logger(eval_counter(parent_counter <- train_counter))
