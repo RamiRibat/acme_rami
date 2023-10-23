@@ -117,8 +117,10 @@ class CSVLogger(base.Logger):
 
 		if self._label != 'evaluator':
 			if elapsed < self._time_delta:
-				logging.debug('Not due to log for another %.2f seconds, dropping data.',
-					self._time_delta - elapsed)
+				logging.debug(
+					'Not due to log for another %.2f seconds, dropping data.',
+					self._time_delta - elapsed
+				)
 				return
 		
 		# self._last_log_time = now

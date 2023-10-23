@@ -57,7 +57,8 @@ def make_default_logger(
     
 	terminal_logger = terminal.TerminalLogger(
 		label=label,
-		print_fn=print_fn)
+		print_fn=print_fn
+	)
 
 	loggers = [terminal_logger]
 	# loggers = []
@@ -74,8 +75,8 @@ def make_default_logger(
 		logger = async_logger.AsyncLogger(logger)
 
 	if label == 'actor':
-		logger = filters.TimeFilter(logger, 60)
+		logger = filters.TimeFilter(logger, 30)
 	elif label == 'learner':
-		logger = filters.TimeFilter(logger, 120)
+		logger = filters.TimeFilter(logger, 60)
 
 	return logger
