@@ -101,6 +101,19 @@ def run_training(
 	# which could result in blocked insert making the algorithm hang.
 	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(replay_tables)
 
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
+		replay_ckpt = savers.Checkpointer(
+			objects_to_save={'replay': replay_tables},
+			subdirectory='replay',
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
+
 	replay_server = reverb.Server(replay_tables, port=None)
 	# dfn replay_client: used by dataset(iterator), learner, and adder
 	replay_client = reverb.Client(f'localhost:{replay_server.port}')
@@ -111,18 +124,6 @@ def run_training(
 	# 'ready' method.
 	iterator = utils.prefetch(iterator, buffer_size=1) # isn't it defined b4?
 
-	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
-		replay_tables_ckpt = savers.Checkpointer(
-			objects_to_save={'replay_tables': replay_tables},
-			subdirectory='replay_tables',
-			time_delta_minutes=checkpointing.time_delta_minutes,
-			directory=checkpointing.directory,
-			add_uid=checkpointing.add_uid,
-			max_to_keep=checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		)
 
 	# Create actor, adder, and learner for generating, storing, and consuming
 	# data respectively. (by Builder)
