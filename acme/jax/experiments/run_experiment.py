@@ -14,24 +14,28 @@
 
 """Runners used for executing local agents."""
 
-import sys
-import time
+# Python
+import sys, time
+from termcolor import colored
 from typing import Optional, Sequence, Tuple
 
+# ML/DL
+import jax
+import tensorflow as tf
+
+# ACME/DeepMind
 import acme
-from acme import core
-from acme import specs
-from acme import types
+from acme import core, specs, types
 from acme.jax import utils
 from acme.jax.experiments import config
 from acme.tf import savers
-from acme.utils import counting
+from acme.utils import counting, paths
+
 import dm_env
-import jax
 import reverb
 
 
-def run_experiment(
+def run_experiment_v0(
     experiment: config.ExperimentConfig,
 	eval_every: int = 100,
 	num_eval_episodes: int = 1
@@ -205,6 +209,297 @@ def run_experiment(
 		eval_logger.close()
 
 	environment.close()
+
+
+
+def run_experiment(
+    experiment: config.ExperimentConfig,
+	eval_episodes: Optional[int] = None,
+	# eval_freq: Optional[int] = None,
+	eval_points: Optional[Sequence[int]] = None
+):
+	"""Runs a simple, single-threaded training loop using the default evaluators.
+
+	It targets simplicity of the code and so only the basic features of the
+	ExperimentConfig are supported.
+
+	Arguments:
+		experiment: Definition and configuration of the agent to run.
+		eval_every: After how many actor steps to perform evaluation.
+		num_eval_episodes: How many evaluation episodes to execute at each
+		evaluation step.
+	"""
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
+
+	# TODO(rami): should I add ckpt'er for replay (on/off-policy)
+	# and/or actor(latent_h)?
+
+	key = jax.random.PRNGKey(experiment.seed)
+
+
+	"""Environment."""
+	# Create the environment and get its spec.
+	environment = experiment.environment_factory(experiment.seed)
+	environment_spec = experiment.environment_spec or specs.make_environment_spec(environment)
+
+
+	"""Network/Policy."""
+	# Create networks -> [ policy, learner ]
+	networks = experiment.network_factory(environment_spec)
+	# Create training policy -> [ replay_tables, adder, actor(training) ]
+	policy = config.make_policy(
+		experiment=experiment,
+		networks=networks,
+		environment_spec=environment_spec,
+		evaluation=False
+	)
+	if eval_episodes:
+		# Create evaluation policy -> [ actor(evaluation) ]
+		eval_policy = config.make_policy(
+			experiment=experiment,
+			networks=networks,
+			environment_spec=environment_spec,
+			evaluation=True
+		)
+
+
+	"""Replay/Iterator."""
+	# Create the (replay server) and grab its address -> [ repaly_server, actor' ]
+	replay_tables = experiment.builder.make_replay_tables(environment_spec, policy)
+
+	# Disable blocking of inserts by tables' rate limiters, as this function
+	# executes learning (sampling from the table) and data generation
+	# (inserting into the table) sequentially from the same thread
+	# which could result in blocked insert making the algorithm hang.
+	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(replay_tables)
+
+	# Create replay_server -> [ replay_client ]
+	if experiment.checkpointing is not None:
+		ckpt_path = paths.process_path(
+			checkpointing.directory,
+			# 'checkpoints',
+			'replay',
+			ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+			add_uid=checkpointing.add_uid,
+			backups=False,
+      	)
+		checkpointer = reverb.platform.checkpointers_lib.DefaultCheckpointer(
+			path=ckpt_path,
+			group='' # non-empty is not supported :)
+		)
+		# Create a manager to maintain different checkpoints.
+		checkpointer_manager = tf.train.CheckpointManager(
+			checkpointer,
+			directory=ckpt_path,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		)
+		
+		replay_server = reverb.Server(
+			tables=replay_tables,
+			port=None,
+			checkpointer=checkpointer
+		)
+
+	else:
+		replay_server = reverb.Server(
+			tables=replay_tables,
+			port=None,
+		)
+
+	# Create replay_client -> [ dataset(iterator), learner, and adder ]
+	replay_client = reverb.Client(f'localhost:{replay_server.port}')
+
+	# dataset = experiment.builder.make_dataset_iterator(replay_client)
+	iterator = experiment.builder.make_dataset_iterator(replay_client)
+	# We always use prefetch as it provides an iterator with an additional
+	# 'ready' method.
+	iterator = utils.prefetch(iterator, buffer_size=1) # isn't it defined b4?
+
+
+	# Create actor, adder, and learner for generating, storing, and consuming
+	# data respectively. (by Builder)
+	# NOTE: These are created in (reverse order) as the actor needs to be given the
+	# adder and the learner (as a source of variables).
+
+	"""Parent Counter"""
+	# Parent counter allows to (share step counts) between train and eval loops and
+	# the learner, so that it is possible to plot for example evaluator's return
+	# value as a function of the number of training episodes.
+	counter = counting.Counter(time_delta=0.)
+	
+	if experiment.checkpointing is not None:
+		counter_ckpt = savers.Checkpointer(
+			objects_to_save={'counter': counter},
+			subdirectory='counter',
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
+
+	"""Learner."""
+	# Create learner -> [ actor, actor' ]
+	key, learner_key = jax.random.split(key)
+	learner_counter = counting.Counter(counter, prefix='learner', time_delta=0.)
+	learner = experiment.builder.make_learner(
+		random_key=learner_key,
+		networks=networks,
+		iterator=iterator,
+		logger_fn=experiment.logger_factory,
+		environment_spec=environment_spec,
+		replay_client=replay_client, # *
+		counter=learner_counter,
+	)
+	
+	if experiment.checkpointing is not None:
+		learner_ckpt = savers.Checkpointer(
+			objects_to_save={'learner': learner},
+			subdirectory='learner',
+			time_delta_minutes=checkpointing.time_delta_minutes,
+			directory=checkpointing.directory,
+			add_uid=checkpointing.add_uid,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		)
+
+
+	"""Adder."""
+	# Create adder -> [ actor ]
+	adder = experiment.builder.make_adder(
+		replay_client=replay_client,
+		environment_spec=environment_spec,
+		policy=policy
+	)
+
+
+	"""Actor (training)."""
+	# Create actor -> [ actor', train_loop ]
+	key, actor_key = jax.random.split(key)
+	actor = experiment.builder.make_actor(
+		random_key=actor_key,
+		policy=policy,
+		environment_spec=environment_spec,
+		variable_source=learner,
+		adder=adder
+	)
+	# Replace the actor with a LearningActor. This makes sure that every time
+	# that `update` is called on the actor it checks to see whether there is
+	# any new data to learn from and if so it runs a learner step. The rate
+	# at which new data is released is controlled by the replay table's
+	# rate_limiter which is created by the builder.make_replay_tables call above.
+	actor = _LearningActor(
+		actor=actor,
+		learner=learner,
+		iterator=iterator,
+		replay_tables=replay_tables,
+		sample_sizes=rate_limiters_max_diff,
+		# checkpointer=checkpointer # remove internal checkpointing
+	)
+	
+
+	"""Actor (evaluation)."""
+	if eval_episodes:
+		key, eval_actor_key = jax.random.split(key)
+		eval_actor = experiment.builder.make_actor(
+			random_key=eval_actor_key,
+			policy=eval_policy,
+			environment_spec=environment_spec,
+			variable_source=learner,
+			# no adder neede
+			# adder=adder,
+		)
+
+
+	"""Training loop."""
+	# Create training counter/logger (~actor).
+	train_counter = counting.Counter(counter, prefix='actor', time_delta=0.)
+	train_logger = experiment.logger_factory(
+		'actor',
+		train_counter.get_steps_key(),
+		0
+	)
+
+	# Create the environment loop used for training.
+	train_loop = acme.EnvironmentLoop(
+		environment=environment,
+		actor=actor,
+		label='train_loop',
+		counter=train_counter,
+		logger=train_logger,
+		observers=experiment.observers
+	)
+
+
+	"""Evaluation loop."""
+	if eval_episodes:
+		# Create evaluation counter/logger (~evaluator(actor)).
+		eval_counter = counting.Counter(counter, prefix='evaluator', time_delta=0.)
+		eval_logger = experiment.logger_factory(
+			'evaluator',
+			eval_counter.get_steps_key(),
+			0
+		)
+
+		# Create the environment loop used for evaluation.
+		eval_loop = acme.EnvironmentLoop(
+			environment=environment,
+			actor=eval_actor,
+			label='eval_loop',
+			counter=eval_counter,
+			logger=eval_logger,
+			observers=experiment.observers
+		)
+
+
+	"""Running loop(s)."""
+	if train_counter.get_steps_key() not in counter.get_counts().keys():
+		train_loop.run(num_steps=0) # init csv columns
+		eval_loop.run(num_episodes=eval_episodes) # eval at t=0
+
+	# Actor steps to go?
+	max_num_actor_steps = (
+		experiment.max_num_actor_steps -
+		counter.get_counts().get(train_counter.get_steps_key(), 0)
+	)
+
+	# eval_points = [10_000, 50_000, 100_000]
+
+	if eval_episodes:
+		prev_steps = max_num_actor_steps
+		for steps in eval_points:
+			steps_to_run = steps - prev_steps
+			if steps_to_run > 0:
+				prev_steps += train_loop.run(num_steps=steps_to_run)
+				eval_loop.run(num_episodes=eval_episodes)
+				# Save chechpoint.
+				if experiment.checkpointing is not None:
+					# checkpointer.save()
+					counter_ckpt.save()
+					learner_ckpt.save()
+					replay_client.checkpoint()
+	else:
+		# Run training loop (full episodes ~ time steps).
+		train_loop.run(num_steps=max_num_actor_steps)
+		# Save chechpoint.
+		if experiment.checkpointing is not None:
+			# checkpointer.save()
+			counter_ckpt.save()
+			learner_ckpt.save()
+			replay_client.checkpoint()
+			
+	# # checkpointer.save() # save only at the end of learning
+	# eval_logger.close()
+
+	# Close environment.
+	environment.close()
+
+
+
 
 
 class _LearningActor(core.Actor):
