@@ -327,7 +327,13 @@ def run_experiment(
 	# Parent counter allows to (share step counts) between train and eval loops and
 	# the learner, so that it is possible to plot for example evaluator's return
 	# value as a function of the number of training episodes.
-	counter = counting.Counter(time_delta=0.)
+	# Create counter -> acme.utils.counting.py [class Counter]
+	counter = counting.Counter(
+		parent=None,
+		prefix='',
+		time_delta=0.,
+		return_only_prefixed=False
+	)
 	
 	if experiment.checkpointing is not None:
 		counter_ckpt = savers.Checkpointer(
@@ -342,17 +348,32 @@ def run_experiment(
 		)
 
 	"""Learner."""
-	# Create learner -> [ actor, actor' ]
+	# Create counter/logger for learner.
+	# Create counter -> acme.utils.counting.py [class Counter]
 	key, learner_key = jax.random.split(key)
-	learner_counter = counting.Counter(counter, prefix='learner', time_delta=0.)
+	learner_counter = counting.Counter(
+		parent=counter,
+		prefix='learner',
+		time_delta=0.,
+		return_only_prefixed=False
+	)
+	# Create logger -> acme.utils.loggers.base.py [class LoggerFactory]
+	# -> acme.utils.loggers.default.py
+	learner_logger = experiment.logger_factory(
+		label='learner',
+		# steps_key=learner_counter.get_steps_key(),
+		# actor_counter=0,
+	)
+	# Create learner -> [ actor, actor' ]
 	learner = experiment.builder.make_learner(
 		random_key=learner_key,
 		networks=networks,
 		iterator=iterator,
-		logger_fn=experiment.logger_factory,
+		# logger_fn=experiment.logger_factory,
 		environment_spec=environment_spec,
 		replay_client=replay_client, # *
 		counter=learner_counter,
+		logger=learner_logger
 	)
 	
 	if experiment.checkpointing is not None:
@@ -416,21 +437,29 @@ def run_experiment(
 
 
 	"""Training loop."""
-	# Create training counter/logger (~actor).
-	train_counter = counting.Counter(counter, prefix='actor', time_delta=0.)
-	train_logger = experiment.logger_factory(
-		'actor',
-		train_counter.get_steps_key(),
-		0
+	# Create counter/logger for actor (training) (~actor).
+	# Create counter -> acme.utils.counting.py [class Counter]
+	actor_counter = counting.Counter(
+		parent=counter,
+		prefix='actor',
+		time_delta=0.,
+		return_only_prefixed=False
+		)
+	# Create logger -> acme.utils.loggers.base.py [class LoggerFactory]
+	# -> acme.utils.loggers.default.py
+	actor_logger = experiment.logger_factory(
+		label='actor',
+		steps_key=actor_counter.get_steps_key(),
+		instance=0,
 	)
 
 	# Create the environment loop used for training.
-	train_loop = acme.EnvironmentLoop(
+	actor_loop = acme.EnvironmentLoop(
 		environment=environment,
 		actor=actor,
-		label='train_loop',
-		counter=train_counter,
-		logger=train_logger,
+		label='actor_loop',
+		counter=actor_counter,
+		logger=actor_logger,
 		observers=experiment.observers
 	)
 
@@ -457,19 +486,19 @@ def run_experiment(
 
 
 	"""Running loop(s)."""
-	if train_counter.get_steps_key() not in counter.get_counts().keys():
-		train_loop.run(num_steps=0) # init csv columns
+	if actor_counter.get_steps_key() not in counter.get_counts().keys():
+		actor_loop.run(num_steps=0) # init csv columns
 		eval_loop.run(num_episodes=eval_episodes) # eval at t=0
 
 	# eval_points = [10_000, 50_000, 100_000]
-	current_steps = counter.get_counts().get(train_counter.get_steps_key(), 0)
+	current_steps = counter.get_counts().get(actor_counter.get_steps_key(), 0)
 
 	if eval_episodes:
 		for steps in eval_points:
 			steps_to_run = steps - current_steps
 
 			if steps_to_run > 0:
-				current_steps += train_loop.run(num_steps=steps_to_run)
+				current_steps += actor_loop.run(num_steps=steps_to_run)
 				eval_loop.run(num_episodes=eval_episodes)
 				# Save chechpoint.
 				if experiment.checkpointing is not None:
@@ -483,7 +512,7 @@ def run_experiment(
 	else:
 		# Run training loop (full episodes ~ time steps).
 		steps_to_run = experiment.max_num_actor_steps - current_steps
-		train_loop.run(num_steps=steps_to_run)
+		actor_loop.run(num_steps=steps_to_run)
 		# Save chechpoint.
 		if experiment.checkpointing is not None:
 			# checkpointer.save()
