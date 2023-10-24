@@ -132,7 +132,9 @@ def make_distributed_experiment(
 			environment_spec=spec,
 			evaluation=False
 		)
-		return experiment.builder.make_replay_tables(spec, policy)
+		replay_table = experiment.builder.make_replay_tables(spec, policy)
+
+		return replay_table
 
 
 	def build_model_saver(variable_source: core.VariableSource):
@@ -151,19 +153,15 @@ def make_distributed_experiment(
 
 
 	def build_counter():
-		counter = counting.Counter(time_delta=0.)
+		# counter = counting.Counter(time_delta=0.)
+		counter = counting.Counter(
+			parent=None,
+			prefix='',
+			time_delta=0.,
+			return_only_prefixed=False
+		)
 		if experiment.checkpointing:
 			checkpointing = experiment.checkpointing
-			# counter_ckpt = savers.Checkpointer(
-			# 	object_to_save={'counter': counter},
-			# 	subdirectory='counter',
-			# 	time_delta_minutes=checkpointing.time_delta_minutes,
-			# 	directory=checkpointing.directory,
-			# 	add_uid=checkpointing.add_uid,
-			# 	max_to_keep=checkpointing.max_to_keep,
-			# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-			# )
 			counter = savers.CheckpointingRunner(
 				wrapped=counter, key='counter',
 				subdirectory='counter',
@@ -199,29 +197,35 @@ def make_distributed_experiment(
 		# in the background.
 		iterator = utils.prefetch(iterable=iterator, buffer_size=1)
 
+		# Create counter/logger for learner.
+		# Create counter -> acme.utils.counting.py [class Counter]
+		counter = counting.Counter(
+			parent=counter,
+			prefix='learner',
+			time_delta=0.,
+			return_only_prefixed=False
+		)
+		# Create logger -> acme.utils.experiment_utils.py
+		logger = experiment.logger_factory(
+			label='learner',
+			# steps_key=learner_counter.get_steps_key(),
+			# task_instance=0,
+		)
+
 		learner = experiment.builder.make_learner(
 			random_key=random_key,
 			networks=networks,
 			iterator=iterator,
-			logger_fn=experiment.logger_factory,
+			# logger_fn=experiment.logger_factory,
 			environment_spec=environment_spec,
 			replay_client=replay_client,
-			counter=counting.Counter(counter, prefix='learner', time_delta=0.)
+			counter=counter,
+			logger=logger
 		)
 
 		if experiment.checkpointing:
 			if primary_learner is None:
 				checkpointing = experiment.checkpointing
-				# learner_ckpt = savers.Checkpointer(
-				# 	object_to_save={'learner': learner},
-				# 	subdirectory='learner',
-				# 	time_delta_minutes=checkpointing.time_delta_minutes,
-				# 	directory=checkpointing.directory,
-				# 	add_uid=checkpointing.add_uid,
-				# 	max_to_keep=checkpointing.max_to_keep,
-				# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-				# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-				# )
 				learner = savers.CheckpointingRunner(
 					wrapped=learner, key='learner',
 					subdirectory='learner',
@@ -331,12 +335,19 @@ def make_distributed_experiment(
 			adder=adder
 		)
 
-		# Create logger and counter.
-		counter = counting.Counter(counter, prefix='actor', time_delta=0.)
+		# Create counter/logger for actor (training) (~actor).
+		# Create counter -> acme.utils.counting.py [class Counter]
+		counter = counting.Counter(
+			parent=counter,
+			prefix='actor',
+			time_delta=0.,
+			return_only_prefixed=False
+		)
+		# Create logger -> acme.utils.experiment_utils.py
 		logger = experiment.logger_factory(
-			'actor',
-			counter.get_steps_key(),
-			actor_id
+			label='actor',
+			steps_key=counter.get_steps_key(),
+			task_instance=actor_id,
 		)
 
 		# Create the loop to connect environment and agent.
@@ -362,27 +373,39 @@ def make_distributed_experiment(
 	"""Replay."""
 	# Create checkpointer.
 	def build_raplay_checkpointer():
+		checkpointing = experiment.checkpointing
 		replay_ckpt_path = paths.process_path(
-			experiment.checkpointing.directory,
+			checkpointing.directory,
 			# 'checkpoints',
 			'replay',
-			ttl_seconds=experiment.checkpointing.checkpoint_ttl_seconds,
-			add_uid=experiment.checkpointing.add_uid,
+			ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+			add_uid=checkpointing.add_uid,
 			backups=False,
 		)
 
 		replay_ckpt = reverb.platform.checkpointers_lib.DefaultCheckpointer(
 			path=replay_ckpt_path,
 			group='' # non-empty is not supported :)
-		) if experiment.checkpointing else None
+		) if checkpointing else None
 		
-		# Create a manager to maintain different checkpoints.
-		replay_ckpt_manager = tf.train.CheckpointManager(
-			replay_ckpt,
-			directory=replay_ckpt_path,
-			max_to_keep=experiment.checkpointing.max_to_keep,
-			keep_checkpoint_every_n_hours=experiment.checkpointing.keep_checkpoint_every_n_hours,
-		)
+		# # Create a manager to maintain different checkpoints.
+		# replay_ckpt_manager = tf.train.CheckpointManager(
+		# 	replay_ckpt,
+		# 	directory=replay_ckpt_path,
+		# 	max_to_keep=checkpointing.max_to_keep,
+		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		# )
+
+		# replay_ckpt = savers.CheckpointingRunner(
+		# 		wrapped=replay_ckpt, key='replay',
+		# 		subdirectory='replay',
+		# 		time_delta_minutes=checkpointing.time_delta_minutes,
+		# 		directory=checkpointing.directory,
+		# 		add_uid=checkpointing.add_uid,
+		# 		max_to_keep=checkpointing.max_to_keep,
+		# 		keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		# 		checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		# )
 
 		return replay_ckpt
 	
@@ -526,18 +549,18 @@ def make_distributed_experiment(
 
 
 
-	# for evaluator in experiment.get_evaluator_factories():
-	# 	evaluator_key, key = jax.random.split(key)
-	# 	program.add_node(
-	# 		lp.CourierNode(
-	# 			evaluator,
-	# 			evaluator_key, # random_key
-	# 			learner, # variable_source
-	# 			counter, # counter
-	# 			experiment.builder.make_actor, # make_actor
-	# 		),
-	# 		label='evaluator'
-	# 	)
+	for evaluator in experiment.get_evaluator_factories():
+		key, evaluator_key = jax.random.split(key)
+		program.add_node(
+			lp.CourierNode(
+				evaluator,
+				evaluator_key, # random_key
+				learner, # variable_source
+				counter, # counter
+				experiment.builder.make_actor, # make_actor
+			),
+			label='evaluator'
+		)
 
 
 	# if make_snapshot_models and experiment.checkpointing:
