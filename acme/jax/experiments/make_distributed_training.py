@@ -356,6 +356,7 @@ def make_distributed_training(
 			checkpointing = experiment.checkpointing
 			checkpointer = savers.Checkpointer(
 				object_to_save={f'{key}': checkpointee},
+				subdirectory=f'{key}',
 				time_delta_minutes=checkpointing.time_delta_minutes,
 				directory=checkpointing.directory,
 				add_uid=checkpointing.add_uid,
