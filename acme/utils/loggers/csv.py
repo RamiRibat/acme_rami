@@ -24,7 +24,7 @@ from typing import TextIO, Union
 
 from absl import logging
 
-from acme.utils import paths
+from acme.utils import paths, signals
 from acme.utils.loggers import base
 
 
@@ -138,10 +138,11 @@ class CSVLogger(base.Logger):
 		self._writer.writerow(data)
 
 		# Flush every `flush_every` writes.
-		if self._label != 'evaluator':
-			if self._writes % self._flush_every == 0: self.flush()
-		else:
-			self.flush()
+		with signals.runtime_terminator(self._signal_handler):
+			if self._label != 'evaluator':
+				if self._writes % self._flush_every == 0: self.flush()
+			else:
+				self.flush()
 
 		self._writes += 1
 
