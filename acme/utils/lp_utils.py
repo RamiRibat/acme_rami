@@ -97,7 +97,7 @@ class StepsLimiter:
 		"""
 
 		logging.info(
-            'StepsLimiter: Starting with max_steps = %d (%s)',
+            colored('StepsLimiter: Starting with max_steps = %d (%s)', 'green'),
             self._max_steps,
             self._steps_key
         )
@@ -106,14 +106,19 @@ class StepsLimiter:
 			while True:
 				# Update the counts.
 				counts = self._counter.get_counts()
-				print(colored(f'StepsLimiter.counts: {counts}', 'red'))
+				print(colored(f'StepsLimiter.counts: {counts}', 'green'))
 				num_steps = counts.get(self._steps_key, 0)
 
-				logging.info('StepsLimiter: Reached %d recorded steps', num_steps)
+				logging.info(
+					colored('StepsLimiter: Reached %d recorded steps', 'green'),
+			 		num_steps
+				)
 
 				if num_steps > self._max_steps:
-					logging.info('StepsLimiter: Max steps of %d was reached, terminating',
-								self._max_steps)
+					logging.info(
+						colored('StepsLimiter: Max steps of %d was reached, terminating', 'green'),
+						self._max_steps
+					)
 					
 					# # TODO(rami): Checkpoint {counter, learner, replay}
 					# self._counter_ckpt.save()
