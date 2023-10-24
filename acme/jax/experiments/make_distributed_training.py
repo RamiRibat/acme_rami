@@ -418,14 +418,14 @@ def make_distributed_training(
 
 
 	"""Parent Counter"""
-	# counter = program.add_node(lp.CourierNode(build_counter), label='counter')
-	counter_node = lp.CourierNode(build_counter)
-	counter = counter_node.create_handle()
+	counter = program.add_node(lp.CourierNode(build_counter), label='counter')
+	# counter_node = lp.CourierNode(build_counter)
+	# counter = counter_node.create_handle()
 	# counter, counter_ckpt = build_checkpointer(
 	# 	key='counter',
 	# 	checkpointee=counter
 	# )
-	program.add_node(counter_node, label='counter')
+	# program.add_node(counter_node, label='counter')
 
 	# if experiment.max_num_actor_steps is not None:
 	# 	program.add_node(
@@ -451,6 +451,20 @@ def make_distributed_training(
 		key='learner',
 		checkpointee=learner
 	)
+
+
+	"""StepsLimiter."""
+	if experiment.max_num_actor_steps is not None:
+		program.add_node(
+			lp.CourierNode(
+				lp_utils.StepsLimiter,
+				counter, None,
+				replay, learner_ckpt,
+				experiment.max_num_actor_steps
+			),
+			label='counter'
+		)
+	
 	
 	variable_sources = [learner]
 
@@ -551,18 +565,6 @@ def make_distributed_training(
 				program.add_node(lp.MultiThreadingColocation(colocation_nodes))
 
 
-
-	"""StepsLimiter."""
-	if experiment.max_num_actor_steps is not None:
-		program.add_node(
-			lp.CourierNode(
-				lp_utils.StepsLimiter,
-				counter, None,
-				replay, learner_ckpt,
-				experiment.max_num_actor_steps
-			),
-			label='counter'
-		)
 
 	# for evaluator in experiment.get_evaluator_factories():
 	# 	evaluator_key, key = jax.random.split(key)
