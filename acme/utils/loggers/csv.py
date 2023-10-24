@@ -146,6 +146,12 @@ class CSVLogger(base.Logger):
 		self._writes += 1
 
 
+	# Handle preemption signal.
+	def _signal_handler(self):
+		logging.info('CSVLogger.Caught SIGTERM: forcing a CSVLogger close.')
+		self.close()
+
+
 	def close(self):
 		self.flush()
 		if self._file_owner:
