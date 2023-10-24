@@ -184,10 +184,11 @@ class IMPALABuilder(
 		random_key: networks_lib.PRNGKey,
 		networks: impala_networks.IMPALANetworks,
 		iterator: Iterator[reverb.ReplaySample],
-		logger_fn: loggers.LoggerFactory,
+		# logger_fn: loggers.LoggerFactory,
 		environment_spec: specs.EnvironmentSpec,
 		replay_client: Optional[reverb.Client] = None,
 		counter: Optional[counting.Counter] = None,
+		logger: Optional[loggers.Logger] = None
 	) -> core.Learner:
 		del environment_spec, replay_client
 
@@ -212,7 +213,8 @@ class IMPALABuilder(
 			baseline_cost=self._config.baseline_cost,
 			max_abs_reward=self._config.max_abs_reward,
 			counter=counter,
-			logger=logger_fn('learner'),
+			# logger=logger_fn('learner'),
+			logger=logger,
 		)
 
 
