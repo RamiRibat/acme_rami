@@ -219,7 +219,7 @@ class EnvironmentLoop(core.Worker):
 		episode_count: int = 0
 		step_count: int = 0
 
-		print(colored(f'a.env_loop({self._label}): counter: {self._counter.get_counts()}', 'red'))
+		print(colored(f'a.env_loop({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 
 		if num_steps == 0:
 			episode_start = time.time()
@@ -244,7 +244,7 @@ class EnvironmentLoop(core.Worker):
 			# 	print('\n\nevaluator.logger')
 			# 	self._logger.flush()
 		
-		print(colored(f'b.env_loop({self._label}): counter: {self._counter.get_counts()}', 'red'))
+		print(colored(f'b.env_loop({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 
 		# time.sleep(15)
 
