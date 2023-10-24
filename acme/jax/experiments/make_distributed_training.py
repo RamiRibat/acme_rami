@@ -151,7 +151,7 @@ def make_distributed_training(
 
 
 	def build_counter():
-		counter = counting.Counter(time_delta=-1.)
+		counter = counting.Counter(time_delta=0.)
 		# if experiment.checkpointing:
 		# 	checkpointing = experiment.checkpointing
 		# 	counter = savers.CheckpointingRunner(
@@ -328,7 +328,7 @@ def make_distributed_training(
 		)
 
 		# Create logger and counter.
-		counter = counting.Counter(counter, prefix='actor', time_delta=-1.)
+		counter = counting.Counter(counter, prefix='actor', time_delta=0.)
 		logger = experiment.logger_factory(
 			'actor',
 			counter.get_steps_key(),
@@ -557,7 +557,7 @@ def make_distributed_training(
 			),
 			label='counter'
 		)
-		
+
 	# for evaluator in experiment.get_evaluator_factories():
 	# 	evaluator_key, key = jax.random.split(key)
 	# 	program.add_node(

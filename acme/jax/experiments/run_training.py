@@ -220,7 +220,11 @@ def run_training(
 	# Create training counter/logger (~actor).
 	print(colored(f'a.run_training: counter: {counter.get_counts()}', 'red'))
 	train_counter = counting.Counter(counter, prefix='actor', time_delta=0.)
-	train_logger = experiment.logger_factory('actor', train_counter.get_steps_key(), 0)
+	train_logger = experiment.logger_factory(
+		'actor',
+		train_counter.get_steps_key(),
+		0
+	)
 
 	# Create the environment loop used for training.
 	train_loop = acme.EnvironmentLoop(
