@@ -421,10 +421,10 @@ def make_distributed_training(
 	counter = program.add_node(lp.CourierNode(build_counter), label='counter')
 	# counter_node = lp.CourierNode(build_counter)
 	# counter = counter_node.create_handle()
-	# counter, counter_ckpt = build_checkpointer(
-	# 	key='counter',
-	# 	checkpointee=counter
-	# )
+	counter, counter_ckpt = build_checkpointer(
+		key='counter',
+		checkpointee=counter
+	)
 	# program.add_node(counter_node, label='counter')
 
 	# if experiment.max_num_actor_steps is not None:
@@ -458,7 +458,7 @@ def make_distributed_training(
 		program.add_node(
 			lp.CourierNode(
 				lp_utils.StepsLimiter,
-				counter, None,
+				counter, counter_ckpt,
 				replay, learner_ckpt,
 				experiment.max_num_actor_steps
 			),
