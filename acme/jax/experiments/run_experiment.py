@@ -473,6 +473,7 @@ def run_experiment(
 		prev_steps = max_num_actor_steps
 		for steps in eval_points:
 			steps_to_run = steps - prev_steps
+			print('steps_to_run: ', steps_to_run)
 			if steps_to_run > 0:
 				prev_steps += train_loop.run(num_steps=steps_to_run)
 				eval_loop.run(num_episodes=eval_episodes)
