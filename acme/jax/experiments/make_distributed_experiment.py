@@ -14,15 +14,22 @@
 
 """Program definition for a distributed layout based on a builder."""
 
-import itertools
-import math
+# Python
+import itertools, math
 from typing import Any, List, Optional
 
+# ML/DL
+import jax
+import tensorflow as tf
+
+# ACME/DeepMind
 from acme import core
 from acme import environment_loop
 from acme import specs
+
 from acme.agents.jax import actor_core
 from acme.agents.jax import builders
+
 from acme.jax import inference_server as inference_server_lib
 from acme.jax import networks as networks_lib
 from acme.jax import savers
@@ -30,11 +37,14 @@ from acme.jax import utils
 from acme.jax import variable_utils
 from acme.jax.experiments import config
 from acme.jax import snapshotter
-from acme.utils import counting
-from acme.utils import lp_utils
-import jax
+# from acme.tf import savers as tf_savers
+
+from acme.utils import counting, lp_utils, paths
+
 import launchpad as lp
 import reverb
+
+
 
 ActorId = int
 InferenceServer = inference_server_lib.InferenceServer[
@@ -120,7 +130,8 @@ def make_distributed_experiment(
 			experiment=experiment,
 			networks=network,
 			environment_spec=spec,
-			evaluation=False)
+			evaluation=False
+		)
 		return experiment.builder.make_replay_tables(spec, policy)
 
 
@@ -140,12 +151,21 @@ def make_distributed_experiment(
 
 
 	def build_counter():
-		counter = counting.Counter()
+		counter = counting.Counter(time_delta=0.)
 		if experiment.checkpointing:
 			checkpointing = experiment.checkpointing
+			# counter_ckpt = savers.Checkpointer(
+			# 	object_to_save={'counter': counter},
+			# 	subdirectory='counter',
+			# 	time_delta_minutes=checkpointing.time_delta_minutes,
+			# 	directory=checkpointing.directory,
+			# 	add_uid=checkpointing.add_uid,
+			# 	max_to_keep=checkpointing.max_to_keep,
+			# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+			# )
 			counter = savers.CheckpointingRunner(
-				counter,
-				key='counter',
+				object_to_save=counter, key='counter',
 				subdirectory='counter',
 				time_delta_minutes=checkpointing.time_delta_minutes,
 				directory=checkpointing.directory,
@@ -159,38 +179,53 @@ def make_distributed_experiment(
 
 	def build_learner(
 		random_key: networks_lib.PRNGKey,
-		replay: reverb.Client,
+		replay_client: reverb.Client,
 		counter: Optional[counting.Counter] = None,
 		primary_learner: Optional[core.Learner] = None,
 	):
 		"""The Learning part of the agent."""
 
 		dummy_seed = 1
-		spec = (
+		environment_spec = (
 			experiment.environment_spec or
 			specs.make_environment_spec(experiment.environment_factory(dummy_seed)))
 
 		# Creates the networks to optimize (online) and target networks.
-		networks = experiment.network_factory(spec)
+		networks = experiment.network_factory(environment_spec)
 
-		iterator = experiment.builder.make_dataset_iterator(replay)
+		iterator = experiment.builder.make_dataset_iterator(replay_client)
 		# make_dataset_iterator is responsible for putting data onto appropriate
 		# training devices, so here we apply prefetch, so that data is copied over
 		# in the background.
 		iterator = utils.prefetch(iterable=iterator, buffer_size=1)
-		counter = counting.Counter(counter, 'learner')
-		learner = experiment.builder.make_learner(random_key, networks, iterator,
-													experiment.logger_factory, spec,
-													replay, counter)
+
+		learner = experiment.builder.make_learner(
+			random_key=random_key,
+			networks=networks,
+			iterator=iterator,
+			logger_fn=experiment.logger_factory,
+			environment_spec=environment_spec,
+			replay_client=replay_client,
+			counter=counting.Counter(counter, prefix='learner', time_delta=0.)
+		)
 
 		if experiment.checkpointing:
 			if primary_learner is None:
 				checkpointing = experiment.checkpointing
+				# learner_ckpt = savers.Checkpointer(
+				# 	object_to_save={'learner': learner},
+				# 	subdirectory='learner',
+				# 	time_delta_minutes=checkpointing.time_delta_minutes,
+				# 	directory=checkpointing.directory,
+				# 	add_uid=checkpointing.add_uid,
+				# 	max_to_keep=checkpointing.max_to_keep,
+				# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+				# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+				# )
 				learner = savers.CheckpointingRunner(
-					learner,
-					key='learner',
+					object_to_save=learner, key='learner',
 					subdirectory='learner',
-					time_delta_minutes=5,
+					time_delta_minutes=checkpointing.time_delta_minutes,
 					directory=checkpointing.directory,
 					add_uid=checkpointing.add_uid,
 					max_to_keep=checkpointing.max_to_keep,
@@ -214,7 +249,8 @@ def make_distributed_experiment(
 		dummy_seed = 1
 		spec = (
 			experiment.environment_spec or
-			specs.make_environment_spec(experiment.environment_factory(dummy_seed)))
+			specs.make_environment_spec(experiment.environment_factory(dummy_seed))
+		)
 		networks = experiment.network_factory(spec)
 		policy = config.make_policy(
 			experiment=experiment,
@@ -246,7 +282,7 @@ def make_distributed_experiment(
 
 	def build_actor(
 		random_key: networks_lib.PRNGKey,
-		replay: reverb.Client,
+		replay_client: reverb.Client,
 		variable_source: core.VariableSource,
 		counter: counting.Counter,
 		actor_id: ActorId,
@@ -258,15 +294,18 @@ def make_distributed_experiment(
 
 		# Environments normally require uint32 as a seed.
 		environment = experiment.environment_factory(
-			utils.sample_uint32(environment_key))
+			utils.sample_uint32(environment_key)
+		)
 		environment_spec = specs.make_environment_spec(environment)
 
+		# Create network/policy.
 		networks = experiment.network_factory(environment_spec)
 		policy_network = config.make_policy(
 			experiment=experiment,
 			networks=networks,
 			environment_spec=environment_spec,
-			evaluation=False)
+			evaluation=False
+		)
 
 		if inference_server is not None:
 			policy_network = actor_core.ActorCore(
@@ -276,19 +315,42 @@ def make_distributed_experiment(
 			)
 			variable_source = variable_utils.ReferenceVariableSource()
 
-		adder = experiment.builder.make_adder(replay, environment_spec,
-											policy_network)
-		actor = experiment.builder.make_actor(actor_key, policy_network,
-											environment_spec, variable_source,
-											adder)
+		# Create adder.
+		adder = experiment.builder.make_adder(
+			replay_client=replay_client,
+			environment_spec=environment_spec,
+			policy=policy_network
+		)
+		
+		# Create actor.
+		actor = experiment.builder.make_actor(
+			random_key=actor_key,
+			policy=policy_network,
+			environment_spec=environment_spec,
+			variable_source=variable_source,
+			adder=adder
+		)
 
 		# Create logger and counter.
-		counter = counting.Counter(counter, 'actor')
-		logger = experiment.logger_factory('actor', counter.get_steps_key(),
-										actor_id)
+		counter = counting.Counter(counter, prefix='actor', time_delta=0.)
+		logger = experiment.logger_factory(
+			'actor',
+			counter.get_steps_key(),
+			actor_id
+		)
+
 		# Create the loop to connect environment and agent.
-		return environment_loop.EnvironmentLoop(
-			environment, actor, counter, logger, observers=experiment.observers)
+		env_loop = environment_loop.EnvironmentLoop(
+			environment=environment,
+			actor=actor,
+			label='train_loop',
+			counter=counter,
+			logger=logger,
+			observers=experiment.observers
+		)
+
+		return env_loop
+
 
 
 	if not program:
@@ -296,30 +358,81 @@ def make_distributed_experiment(
 
 	key = jax.random.PRNGKey(experiment.seed)
 
-	checkpoint_time_delta_minutes: Optional[int] = (
-		experiment.checkpointing.replay_checkpointing_time_delta_minutes
-		if experiment.checkpointing else None)
+
+	"""Replay."""
+	# Create checkpointer.
+	def build_raplay_checkpointer():
+		replay_ckpt_path = paths.process_path(
+			experiment.checkpointing.directory,
+			# 'checkpoints',
+			'replay',
+			ttl_seconds=experiment.checkpointing.checkpoint_ttl_seconds,
+			add_uid=experiment.checkpointing.add_uid,
+			backups=False,
+		)
+
+		replay_ckpt = reverb.platform.checkpointers_lib.DefaultCheckpointer(
+			path=replay_ckpt_path,
+			group='' # non-empty is not supported :)
+		) if experiment.checkpointing else None
+		
+		# Create a manager to maintain different checkpoints.
+		replay_ckpt_manager = tf.train.CheckpointManager(
+			replay_ckpt,
+			directory=replay_ckpt_path,
+			max_to_keep=experiment.checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=experiment.checkpointing.keep_checkpoint_every_n_hours,
+		)
+
+		return replay_ckpt
+	
+	# checkpoint_time_delta_minutes: Optional[int] = (
+	# 	experiment.checkpointing.replay_checkpointing_time_delta_minutes
+	# 	if experiment.checkpointing else None)
 	replay_node = lp.ReverbNode(
-		build_replay, checkpoint_time_delta_minutes=checkpoint_time_delta_minutes)
+		build_replay,
+		checkpoint_ctor=build_raplay_checkpointer,
+		# checkpoint_time_delta_minutes=checkpoint_time_delta_minutes
+	)
+	
+	# Create replay client
 	replay = replay_node.create_handle()
 
+
+	"""Parent Counter"""
 	counter = program.add_node(lp.CourierNode(build_counter), label='counter')
 
+
+	"""StepsLimiter."""
 	if experiment.max_num_actor_steps is not None:
 		program.add_node(
-			lp.CourierNode(lp_utils.StepsLimiter, counter,
-							experiment.max_num_actor_steps),
-			label='counter')
+			lp.CourierNode(
+				lp_utils.StepsLimiter,
+				counter,
+				experiment.max_num_actor_steps
+			),
+			label='counter'
+		)
+		
 
-	learner_key, key = jax.random.split(key)
-	learner_node = lp.CourierNode(build_learner, learner_key, replay, counter)
+	"""Learner."""
+	key, learner_key = jax.random.split(key)
+	learner_node = lp.CourierNode(
+		build_learner,
+		learner_key, # random_key
+		replay, # replay_client
+		counter # counter
+	)
+
 	learner = learner_node.create_handle()
+	
 	variable_sources = [learner]
 
 	if multithreading_colocate_learner_and_reverb:
 		program.add_node(
 			lp.MultiThreadingColocation([learner_node, replay_node]),
-			label='learner')
+			label='learner'
+		)
 	else:
 		program.add_node(replay_node, label='replay')
 
@@ -332,7 +445,7 @@ def make_distributed_experiment(
 		# does the appropriate pmap/pmean operations on the loss/gradients,
 		# respectively.
 		for _ in range(1, num_learner_nodes):
-			learner_key, key = jax.random.split(key)
+			key, learner_key = jax.random.split(key)
 			variable_sources.append(
 				program.add_node(
 					lp.CourierNode(
@@ -349,6 +462,8 @@ def make_distributed_experiment(
 			# NOTE: Do not pass the counter to the secondary learners to avoid
 			# double counting of learner steps.
 
+
+	"""Inference server."""
 	if inference_server_config is not None:
 		num_actors_per_server = math.ceil(num_actors / num_inference_servers)
 		with program.group('inference_server'):
@@ -368,13 +483,14 @@ def make_distributed_experiment(
 		num_inference_servers = 1
 		inference_nodes = [None]
 
+
+	"""Actor."""
 	num_actor_nodes, remainder = divmod(num_actors, num_actors_per_node)
 	num_actor_nodes += int(remainder > 0)
 
-
 	with program.group('actor'):
 		# Create all actor threads.
-		*actor_keys, key = jax.random.split(key, num_actors + 1)
+		key, *actor_keys = jax.random.split(key, num_actors + 1)
 
 		# Create (maybe colocated) actor nodes.
 		for node_id, variable_source, inference_node in zip(
@@ -387,16 +503,17 @@ def make_distributed_experiment(
 			first_actor_id = node_id * num_actors_per_node
 
 			for actor_id in range(
-				first_actor_id, min(first_actor_id + num_actors_per_node, num_actors)
+				first_actor_id,
+				min(first_actor_id + num_actors_per_node, num_actors)
 			):
 				actor = lp.CourierNode(
 					build_actor,
-					actor_keys[actor_id],
-					replay,
-					variable_source,
-					counter,
-					actor_id,
-					inference_node,
+					actor_keys[actor_id], # random_key
+					replay, # replay_client
+					variable_source, # variable_source
+					counter, # counter
+					actor_id, # actor_id
+					inference_node, # inference_server
 				)
 				colocation_nodes.append(actor)
 
@@ -407,15 +524,27 @@ def make_distributed_experiment(
 			else:
 				program.add_node(lp.MultiThreadingColocation(colocation_nodes))
 
-	for evaluator in experiment.get_evaluator_factories():
-		evaluator_key, key = jax.random.split(key)
-		program.add_node(
-			lp.CourierNode(evaluator, evaluator_key, learner, counter,
-							experiment.builder.make_actor),
-			label='evaluator')
 
-	if make_snapshot_models and experiment.checkpointing:
-		program.add_node(
-			lp.CourierNode(build_model_saver, learner), label='model_saver')
+
+	# for evaluator in experiment.get_evaluator_factories():
+	# 	evaluator_key, key = jax.random.split(key)
+	# 	program.add_node(
+	# 		lp.CourierNode(
+	# 			evaluator,
+	# 			evaluator_key, # random_key
+	# 			learner, # variable_source
+	# 			counter, # counter
+	# 			experiment.builder.make_actor, # make_actor
+	# 		),
+	# 		label='evaluator'
+	# 	)
+
+
+	# if make_snapshot_models and experiment.checkpointing:
+	# 	program.add_node(
+	# 		lp.CourierNode(build_model_saver, learner),
+	# 		label='model_saver'
+	# 	)
+
 
 	return program
