@@ -14,8 +14,8 @@
 
 """Utilities for logging to the terminal."""
 
-import logging
-import time
+import logging, time
+from termcolor import colored
 from typing import Any, Callable
 
 from acme.utils.loggers import base
@@ -28,68 +28,79 @@ def _format_key(key: str) -> str:
 
 
 def _format_value(value: Any) -> str:
-  """Internal function for formatting values."""
-  value = base.to_numpy(value)
-  if isinstance(value, (float, np.number)):
-    return f'{value:0.3f}'
-  return f'{value}'
+	"""Internal function for formatting values."""
+	value = base.to_numpy(value)
+	if isinstance(value, (float, np.number)):
+		return f'{value:0.3f}'
+	return f'{value}'
 
 
 def serialize(values: base.LoggingData) -> str:
-  """Converts `values` to a pretty-printed string.
+	"""Converts `values` to a pretty-printed string.
 
-  This takes a dictionary `values` whose keys are strings and returns
-  a formatted string such that each [key, value] pair is separated by ' = ' and
-  each entry is separated by ' | '. The keys are sorted alphabetically to ensure
-  a consistent order, and snake case is split into words.
+	This takes a dictionary `values` whose keys are strings and returns
+	a formatted string such that each [key, value] pair is separated by ' = ' and
+	each entry is separated by ' | '. The keys are sorted alphabetically to ensure
+	a consistent order, and snake case is split into words.
 
-  For example:
+	For example:
 
-      values = {'a': 1, 'b' = 2.33333333, 'c': 'hello', 'big_value': 10}
-      # Returns 'A = 1 | B = 2.333 | Big Value = 10 | C = hello'
-      values_string = serialize(values)
+		values = {'a': 1, 'b' = 2.33333333, 'c': 'hello', 'big_value': 10}
+		# Returns 'A = 1 | B = 2.333 | Big Value = 10 | C = hello'
+		values_string = serialize(values)
 
-  Args:
-    values: A dictionary with string keys.
+	Args:
+		values: A dictionary with string keys.
 
-  Returns:
-    A formatted string.
-  """
-  return ' | '.join(f'{_format_key(k)} = {_format_value(v)}'
-                    for k, v in sorted(values.items()))
+	Returns:
+		A formatted string.
+	"""
+	return ' | '.join(
+        f'{_format_key(k)} = {_format_value(v)}'
+		for k, v in sorted(values.items())
+    )
 
 
 class TerminalLogger(base.Logger):
-  """Logs to terminal."""
+	"""Logs to terminal."""
 
-  def __init__(
-      self,
-      label: str = '',
-      print_fn: Callable[[str], None] = logging.info,
-      serialize_fn: Callable[[base.LoggingData], str] = serialize,
-      time_delta: float = 0.0,
-  ):
-    """Initializes the logger.
+	def __init__(
+		self,
+		label: str = '',
+		print_fn: Callable[[str], None] = logging.info,
+		serialize_fn: Callable[[base.LoggingData], str] = serialize,
+		time_delta: float = 0.0,
+	):
+		"""Initializes the logger.
 
-    Args:
-      label: label string to use when logging.
-      print_fn: function to call which acts like print.
-      serialize_fn: function to call which transforms values into a str.
-      time_delta: How often (in seconds) to write values. This can be used to
-        minimize terminal spam, but is 0 by default---ie everything is written.
-    """
+		Args:
+		label: label string to use when logging.
+		print_fn: function to call which acts like print.
+		serialize_fn: function to call which transforms values into a str.
+		time_delta: How often (in seconds) to write values. This can be used to
+			minimize terminal spam, but is 0 by default---ie everything is written.
+		"""
 
-    self._print_fn = print_fn
-    self._serialize_fn = serialize_fn
-    self._label = label and f'[{_format_key(label)}] '
-    self._time = time.time()
-    self._time_delta = time_delta
+		self._print_fn = print_fn
+		self._serialize_fn = serialize_fn
+		self._label = label and f'[{_format_key(label)}] '
+		self._time = time.time()
+		self._time_delta = time_delta
+		if label == 'actor':
+			self._color = 'blue'
+		elif label == 'learner':
+			self._color = 'magenta'
+		elif label == 'evaluator':
+			self._color = 'red'
 
-  def write(self, values: base.LoggingData):
-    now = time.time()
-    if (now - self._time) > self._time_delta:
-      self._print_fn(f'{self._label}{self._serialize_fn(values)}')
-      self._time = now
+	def write(self, values: base.LoggingData):
+		now = time.time()
+		if (now - self._time) > self._time_delta:
+			# self._print_fn(f'{self._label}{self._serialize_fn(values)}')
+			self._print_fn(
+				colored(f'{self._label}{self._serialize_fn(values)}', self._color)
+			)
+			self._time = now
 
-  def close(self):
-    pass
+	def close(self):
+		pass
