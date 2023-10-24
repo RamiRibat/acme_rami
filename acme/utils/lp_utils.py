@@ -86,7 +86,7 @@ class StepsLimiter:
     ):
         # TODO(rami): Link SL to CKPT
 		self._counter = counter
-		self._counter_chpt = counter_ckpt
+		self._counter_ckpt = counter_ckpt
 		self._learner_ckpt = learner_ckpt
 		self._replay_client = replay_client
 		self._max_steps = max_steps
@@ -116,7 +116,7 @@ class StepsLimiter:
 								self._max_steps)
 					
 					# TODO(rami): Checkpoint {counter, learner, replay}
-					self._counter_chpt.save()
+					self._counter_ckpt.save()
 					self._learner_ckpt.save()
 					self._replay_client.checkpoint()
 

@@ -418,10 +418,10 @@ def make_distributed_training(
 
 	"""Parent Counter"""
 	counter = program.add_node(lp.CourierNode(build_counter), label='counter')
-	counter, counter_ckpt = build_checkpointer(
-		key='counter',
-		checkpointee=counter
-	)
+	# counter, counter_ckpt = build_checkpointer(
+	# 	key='counter',
+	# 	checkpointee=counter
+	# )
 
 	# if experiment.max_num_actor_steps is not None:
 	# 	program.add_node(
@@ -453,7 +453,7 @@ def make_distributed_training(
 		program.add_node(
 			lp.CourierNode(
 				lp_utils.StepsLimiter,
-				counter, counter_ckpt,
+				counter, None,
 				replay, learner_ckpt,
 				experiment.max_num_actor_steps
 			),
