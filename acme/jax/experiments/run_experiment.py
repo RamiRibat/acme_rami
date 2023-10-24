@@ -461,21 +461,15 @@ def run_experiment(
 		train_loop.run(num_steps=0) # init csv columns
 		eval_loop.run(num_episodes=eval_episodes) # eval at t=0
 
-	# Actor steps to go?
-	max_num_actor_steps = (
-		experiment.max_num_actor_steps -
-		counter.get_counts().get(train_counter.get_steps_key(), 0)
-	)
-
 	# eval_points = [10_000, 50_000, 100_000]
+	current_steps = counter.get_counts().get(train_counter.get_steps_key(), 0)
 
 	if eval_episodes:
-		prev_steps = max_num_actor_steps
 		for steps in eval_points:
-			steps_to_run = steps - prev_steps
-			print('steps_to_run: ', steps_to_run)
+			steps_to_run = steps - current_steps
+
 			if steps_to_run > 0:
-				prev_steps += train_loop.run(num_steps=steps_to_run)
+				current_steps += train_loop.run(num_steps=steps_to_run)
 				eval_loop.run(num_episodes=eval_episodes)
 				# Save chechpoint.
 				if experiment.checkpointing is not None:
@@ -483,9 +477,13 @@ def run_experiment(
 					counter_ckpt.save()
 					learner_ckpt.save()
 					replay_client.checkpoint()
+
+			if current_steps >= experiment.max_num_actor_steps:
+				break
 	else:
 		# Run training loop (full episodes ~ time steps).
-		train_loop.run(num_steps=max_num_actor_steps)
+		steps_to_run = experiment.max_num_actor_steps - current_steps
+		train_loop.run(num_steps=steps_to_run)
 		# Save chechpoint.
 		if experiment.checkpointing is not None:
 			# checkpointer.save()
