@@ -78,17 +78,17 @@ class StepsLimiter:
 	def __init__(
 		self,
 		counter: counting.Counter,
-        counter_ckpt,
-        learner_ckpt,
-        replay_client,
+        # counter_ckpt,
+        # learner_ckpt,
+        # replay_client,
 		max_steps: int,
 		steps_key: str = 'actor_steps'
     ):
         # TODO(rami): Link SL to CKPT
 		self._counter = counter
-		self._counter_ckpt = counter_ckpt
-		self._learner_ckpt = learner_ckpt
-		self._replay_client = replay_client
+		# self._counter_ckpt = counter_ckpt
+		# self._learner_ckpt = learner_ckpt
+		# self._replay_client = replay_client
 		self._max_steps = max_steps
 		self._steps_key = steps_key
 
@@ -115,10 +115,10 @@ class StepsLimiter:
 					logging.info('StepsLimiter: Max steps of %d was reached, terminating',
 								self._max_steps)
 					
-					# TODO(rami): Checkpoint {counter, learner, replay}
-					self._counter_ckpt.save()
-					self._learner_ckpt.save()
-					self._replay_client.checkpoint()
+					# # TODO(rami): Checkpoint {counter, learner, replay}
+					# self._counter_ckpt.save()
+					# self._learner_ckpt.save()
+					# self._replay_client.checkpoint()
 
 					# Avoid importing Launchpad until it is actually used.
 					import launchpad as lp  # pylint: disable=g-import-not-at-top
