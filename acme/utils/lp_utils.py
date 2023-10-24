@@ -112,13 +112,15 @@ class StepsLimiter:
 				if num_steps > self._max_steps:
 					logging.info('StepsLimiter: Max steps of %d was reached, terminating',
 								self._max_steps)
-					# Avoid importing Launchpad until it is actually used.
-					import launchpad as lp  # pylint: disable=g-import-not-at-top
-					lp.stop()
+					
 					# TODO(rami): Checkpoint {counter, learner, replay}
 					self._counter_chpt.save()
 					self._learner_ckpt.save()
 					self._replay_client.checkpoint()
+
+					# Avoid importing Launchpad until it is actually used.
+					import launchpad as lp  # pylint: disable=g-import-not-at-top
+					lp.stop()
 
 				# Don't spam the counter.
 				for _ in range(10):
