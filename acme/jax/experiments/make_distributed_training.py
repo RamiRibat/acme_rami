@@ -152,19 +152,29 @@ def make_distributed_training(
 
 	def build_counter():
 		counter = counting.Counter(time_delta=0.)
-		# if experiment.checkpointing:
-		# 	checkpointing = experiment.checkpointing
-		# 	counter = savers.CheckpointingRunner(
-		# 		counter,
-		# 		key='counter',
-		# 		subdirectory='counter',
-		# 		time_delta_minutes=checkpointing.time_delta_minutes,
-		# 		directory=checkpointing.directory,
-		# 		add_uid=checkpointing.add_uid,
-		# 		max_to_keep=checkpointing.max_to_keep,
-		# 		keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# 		checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		# 	)
+		if experiment.checkpointing:
+			checkpointing = experiment.checkpointing
+			counter_ckpt = savers.Checkpointer(
+				object_to_save={'counter': counter},
+				subdirectory='counter',
+				time_delta_minutes=checkpointing.time_delta_minutes,
+				directory=checkpointing.directory,
+				add_uid=checkpointing.add_uid,
+				max_to_keep=checkpointing.max_to_keep,
+				keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+				checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+			)
+			# counter = savers.CheckpointingRunner(
+			# 	counter,
+			# 	key='counter',
+			# 	subdirectory='counter',
+			# 	time_delta_minutes=checkpointing.time_delta_minutes,
+			# 	directory=checkpointing.directory,
+			# 	add_uid=checkpointing.add_uid,
+			# 	max_to_keep=checkpointing.max_to_keep,
+			# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+			# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+			# )
 		return counter
 
 
@@ -199,43 +209,43 @@ def make_distributed_training(
 			logger_fn=experiment.logger_factory,
 			environment_spec=environment_spec,
 			replay_client=replay_client,
-			counter=counting.Counter(counter, prefix='learner', time_delta=-1.)
+			counter=counting.Counter(counter, prefix='learner', time_delta=0.)
 		)
 
-		if primary_learner is not None:
-			learner.restore(primary_learner.save())
-
-		# if experiment.checkpointing:
-		# 	if primary_learner is None:
-		# 		checkpointing = experiment.checkpointing
-		# 		learner_ckpt = savers.Checkpointer(
-		# 			object_to_save={'learner': learner},
-		# 			subdirectory='learner',
-		# 			time_delta_minutes=checkpointing.time_delta_minutes,
-		# 			directory=checkpointing.directory,
-		# 			add_uid=checkpointing.add_uid,
-		# 			max_to_keep=checkpointing.max_to_keep,
-		# 			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# 			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		# 		)
-		# 		# learner = savers.CheckpointingRunner(
-		# 		# 	learner,
-		# 		# 	key='learner',
-		# 		# 	subdirectory='learner',
-		# 		# 	time_delta_minutes=5,
-		# 		# 	directory=checkpointing.directory,
-		# 		# 	add_uid=checkpointing.add_uid,
-		# 		# 	max_to_keep=checkpointing.max_to_keep,
-		# 		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# 		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		# 		# )
-		# else:
+		# if primary_learner is not None:
 		# 	learner.restore(primary_learner.save())
-		# 	# NOTE: This initially synchronizes secondary learner states with the
-		# 	# primary one. Further synchronization should be handled by the learner
-		# 	# properly doing a pmap/pmean on the loss/gradients, respectively.
 
-		return learner
+		if experiment.checkpointing:
+			if primary_learner is None:
+				checkpointing = experiment.checkpointing
+				learner_ckpt = savers.Checkpointer(
+					object_to_save={'learner': learner},
+					subdirectory='learner',
+					time_delta_minutes=checkpointing.time_delta_minutes,
+					directory=checkpointing.directory,
+					add_uid=checkpointing.add_uid,
+					max_to_keep=checkpointing.max_to_keep,
+					keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+					checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+				)
+				# learner = savers.CheckpointingRunner(
+				# 	learner,
+				# 	key='learner',
+				# 	subdirectory='learner',
+				# 	time_delta_minutes=5,
+				# 	directory=checkpointing.directory,
+				# 	add_uid=checkpointing.add_uid,
+				# 	max_to_keep=checkpointing.max_to_keep,
+				# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+				# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+				# )
+		else:
+			learner.restore(primary_learner.save())
+			# NOTE: This initially synchronizes secondary learner states with the
+			# primary one. Further synchronization should be handled by the learner
+			# properly doing a pmap/pmean on the loss/gradients, respectively.
+
+		return learner, learner_ckpt
 
 
 	def build_inference_server(
@@ -421,10 +431,10 @@ def make_distributed_training(
 	counter = program.add_node(lp.CourierNode(build_counter), label='counter')
 	# counter_node = lp.CourierNode(build_counter)
 	# counter = counter_node.create_handle()
-	counter, counter_ckpt = build_checkpointer(
-		key='counter',
-		checkpointee=counter
-	)
+	# counter, counter_ckpt = build_checkpointer(
+	# 	key='counter',
+	# 	checkpointee=counter
+	# )
 	# program.add_node(counter_node, label='counter')
 
 	# if experiment.max_num_actor_steps is not None:
@@ -447,10 +457,10 @@ def make_distributed_training(
 	)
 
 	learner = learner_node.create_handle()
-	learner, learner_ckpt = build_checkpointer(
-		key='learner',
-		checkpointee=learner
-	)
+	# learner, learner_ckpt = build_checkpointer(
+	# 	key='learner',
+	# 	checkpointee=learner
+	# )
 
 
 	"""StepsLimiter."""
@@ -458,8 +468,10 @@ def make_distributed_training(
 		program.add_node(
 			lp.CourierNode(
 				lp_utils.StepsLimiter,
-				counter, counter_ckpt,
-				replay, learner_ckpt,
+				counter,
+				counter_ckpt,
+				learner_ckpt,
+				replay,
 				experiment.max_num_actor_steps
 			),
 			label='counter'
