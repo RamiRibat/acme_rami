@@ -165,7 +165,7 @@ def make_distributed_experiment(
 			# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 			# )
 			counter = savers.CheckpointingRunner(
-				object_to_save=counter, key='counter',
+				wrapped=counter, key='counter',
 				subdirectory='counter',
 				time_delta_minutes=checkpointing.time_delta_minutes,
 				directory=checkpointing.directory,
@@ -223,7 +223,7 @@ def make_distributed_experiment(
 				# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 				# )
 				learner = savers.CheckpointingRunner(
-					object_to_save=learner, key='learner',
+					wrapped=learner, key='learner',
 					subdirectory='learner',
 					time_delta_minutes=checkpointing.time_delta_minutes,
 					directory=checkpointing.directory,
@@ -394,7 +394,7 @@ def make_distributed_experiment(
 		checkpoint_ctor=build_raplay_checkpointer,
 		# checkpoint_time_delta_minutes=checkpoint_time_delta_minutes
 	)
-	
+
 	# Create replay client
 	replay = replay_node.create_handle()
 
