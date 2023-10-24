@@ -106,7 +106,7 @@ class StepsLimiter:
 			while True:
 				# Update the counts.
 				counts = self._counter.get_counts()
-				print(colored(f'StepsLimiter.counts: {counts}', 'green'))
+				# print(colored(f'StepsLimiter.counts: {counts}', 'green'))
 				num_steps = counts.get(self._steps_key, 0)
 
 				logging.info(
