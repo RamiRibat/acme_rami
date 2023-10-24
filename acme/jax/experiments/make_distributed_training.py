@@ -525,7 +525,8 @@ def make_distributed_training(
 			first_actor_id = node_id * num_actors_per_node
 
 			for actor_id in range(
-				first_actor_id, min(first_actor_id + num_actors_per_node, num_actors)
+				first_actor_id,
+				min(first_actor_id + num_actors_per_node, num_actors)
 			):
 				actor = lp.CourierNode(
 					build_actor,
