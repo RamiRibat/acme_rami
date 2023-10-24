@@ -146,6 +146,7 @@ class CSVLogger(base.Logger):
 		self._writes += 1
 
 
+	# TODO(rami): Does this work?
 	# Handle preemption signal.
 	def _signal_handler(self):
 		logging.info('CSVLogger.Caught SIGTERM: forcing a CSVLogger close.')
