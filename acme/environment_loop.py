@@ -246,7 +246,7 @@ class EnvironmentLoop(core.Worker):
 		
 		print(colored(f'b.env_loop({self._label}): counter: {self._counter.get_counts()}', 'red'))
 
-		time.sleep(15)
+		# time.sleep(15)
 
 
 		return step_count
