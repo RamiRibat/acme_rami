@@ -339,6 +339,7 @@ def make_distributed_training(
 		env_loop = environment_loop.EnvironmentLoop(
 			environment=environment,
 			actor=actor,
+			label='train_loop',
 			counter=counter,
 			logger=logger,
 			observers=experiment.observers
