@@ -126,8 +126,8 @@ def run_evaluation(
 	"""Evaluation loop."""
 	if 'actor_steps' not in counter.get_counts().keys():
 		# init csv columns for eval_logger(eval_counter(parent_counter <- train_counter))
-		train_counter = counting.Counter(counter, prefix='actor')
-		counter.get_counts().get(train_counter.get_steps_key(), 0)
+		# train_counter = counting.Counter(counter, prefix='actor')
+		counter.get_counts().get(counter.get_steps_key(), 0)
 
 	# Create evaluation counter/logger (~evaluator(actor)).
 	eval_counter = counting.Counter(counter, prefix='evaluator', time_delta=0)
