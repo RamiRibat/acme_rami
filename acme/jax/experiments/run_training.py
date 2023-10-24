@@ -16,6 +16,7 @@
 
 # Python
 import sys, time
+from termcolor import colored
 from typing import Optional, Sequence, Tuple
 
 # ML/DL
@@ -36,8 +37,6 @@ import reverb
 
 def run_training(
     experiment: config.ExperimentConfig,
-	# eval_every: int = 100,
-	# num_eval_episodes: int = 1
 ):
 	"""Runs a simple, single-threaded training loop using the default evaluators.
 
@@ -50,6 +49,9 @@ def run_training(
 		num_eval_episodes: How many evaluation episodes to execute at each
 		evaluation step.
 	"""
+
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
 
 	# TODO(rami): should I add ckpt'er for replay (on/off-policy)
 	# and/or actor(latent_h)?
@@ -64,9 +66,9 @@ def run_training(
 
 
 	"""Network/Policy."""
-	# Create networks.
+	# Create networks -> [ policy, learner ]
 	networks = experiment.network_factory(environment_spec)
-	# Create training policy.
+	# Create training policy -> [ replay_tables, adder, actor(training) ]
 	policy = config.make_policy(
 		experiment=experiment,
 		networks=networks,
@@ -76,7 +78,7 @@ def run_training(
 
 
 	"""Replay/Iterator."""
-	# Create the (replay server) and grab its address.
+	# Create the (replay server) and grab its address -> [ repaly_server, actor' ]
 	replay_tables = experiment.builder.make_replay_tables(environment_spec, policy)
 
 	# Disable blocking of inserts by tables' rate limiters, as this function
@@ -85,8 +87,8 @@ def run_training(
 	# which could result in blocked insert making the algorithm hang.
 	replay_tables, rate_limiters_max_diff = _disable_insert_blocking(replay_tables)
 
+	# Create replay_server -> [ replay_client ]
 	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
 		ckpt_path = paths.process_path(
 			checkpointing.directory,
 			# 'checkpoints',
@@ -119,7 +121,7 @@ def run_training(
 			port=None,
 		)
 
-	# dfn replay_client: used by dataset(iterator), learner, and adder
+	# Create replay_client -> [ dataset(iterator), learner, and adder ]
 	replay_client = reverb.Client(f'localhost:{replay_server.port}')
 
 	# dataset = experiment.builder.make_dataset_iterator(replay_client)
@@ -133,7 +135,6 @@ def run_training(
 	# data respectively. (by Builder)
 	# NOTE: These are created in (reverse order) as the actor needs to be given the
 	# adder and the learner (as a source of variables).
-
 
 	"""Parent Counter"""
 	# Parent counter allows to (share step counts) between train and eval loops and
@@ -154,7 +155,9 @@ def run_training(
 		)
 
 	"""Learner."""
+	# Create learner -> [ actor, actor' ]
 	key, learner_key = jax.random.split(key)
+	learner_counter = counting.Counter(counter, prefix='learner', time_delta=0.)
 	learner = experiment.builder.make_learner(
 		random_key=learner_key,
 		networks=networks,
@@ -162,7 +165,7 @@ def run_training(
 		logger_fn=experiment.logger_factory,
 		environment_spec=environment_spec,
 		replay_client=replay_client, # *
-		counter=counting.Counter(counter, prefix='learner', time_delta=0.),
+		counter=learner_counter,
 	)
 	
 	if experiment.checkpointing is not None:
@@ -179,6 +182,7 @@ def run_training(
 
 
 	"""Adder."""
+	# Create adder -> [ actor ]
 	adder = experiment.builder.make_adder(
 		replay_client=replay_client,
 		environment_spec=environment_spec,
@@ -187,7 +191,7 @@ def run_training(
 
 
 	"""Actor (training)."""
-	# actor_key, key = jax.random.split(key)
+	# Create actor -> [ actor', train_loop ]
 	key, actor_key = jax.random.split(key)
 	actor = experiment.builder.make_actor(
 		random_key=actor_key,
@@ -214,6 +218,7 @@ def run_training(
 
 	"""Training loop."""
 	# Create training counter/logger (~actor).
+	print(colored(f'a.run_training: counter: {counter.get_counts()}', 'red'))
 	train_counter = counting.Counter(counter, prefix='actor', time_delta=0.)
 	train_logger = experiment.logger_factory('actor', train_counter.get_steps_key(), 0)
 
@@ -227,14 +232,20 @@ def run_training(
 		observers=experiment.observers
 	)
 
+	print(colored(f'b.run_training: counter: {counter.get_counts()}', 'red'))
+
 	# Actor steps to go?
 	max_num_actor_steps = (
 		experiment.max_num_actor_steps -
 		counter.get_counts().get(train_counter.get_steps_key(), 0)
 	)
+
+	print(colored(f'c.run_training: counter: {counter.get_counts()}', 'red'))
 	
 	# Run training loop (full episodes ~ time steps).
 	train_loop.run(num_steps=max_num_actor_steps)
+
+	print(colored(f'd.run_training: counter: {counter.get_counts()}', 'red'))
 
 	# Save chechpoint.
 	if experiment.checkpointing is not None:

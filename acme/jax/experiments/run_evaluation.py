@@ -14,21 +14,24 @@
 
 """Runners used for executing local agents."""
 
-import sys
-import time
-from typing import Optional, Sequence, Tuple
+# Python
+# import sys, time
+from termcolor import colored
+# from typing import Optional, Sequence, Tuple
 
+# ML/DL
+import jax
+
+# ACME/DeepMind
 import acme
-from acme import core
-from acme import specs
-from acme import types
-from acme.jax import utils
+from acme import core, specs, types
+# from acme.jax import utils
 from acme.jax.experiments import config
 from acme.tf import savers
 from acme.utils import counting
-import dm_env
-import jax
-import reverb
+
+# import dm_env
+# import reverb
 
 
 def run_evaluation(
@@ -48,6 +51,9 @@ def run_evaluation(
 		evaluation step.
 	"""
 
+	if experiment.checkpointing is not None:
+		checkpointing = experiment.checkpointing
+
 	key = jax.random.PRNGKey(experiment.seed)
 
 
@@ -58,9 +64,9 @@ def run_evaluation(
 
 
 	"""Network/Policy."""
-	# Create networks.
+	# Create networks -> [ policy(evaluation), learner ]
 	networks = experiment.network_factory(environment_spec)
-	# Create evaluation policy.
+	# Create evaluation policy -> [ actor(evaluation) ]
 	eval_policy = config.make_policy(
 		experiment=experiment,
 		networks=networks,
@@ -76,7 +82,6 @@ def run_evaluation(
 	counter = counting.Counter(time_delta=0.)
 	
 	if experiment.checkpointing is not None:
-		checkpointing = experiment.checkpointing
 		counter_ckpt = savers.Checkpointer(
 			objects_to_save={'counter': counter},
 			subdirectory='counter',
@@ -90,6 +95,7 @@ def run_evaluation(
 
 
 	"""Learner."""
+	# Create learner -> [ actor(evaluation) ]
 	key, learner_key = jax.random.split(key)
 	learner = experiment.builder.make_learner(
 		random_key=learner_key,
@@ -97,6 +103,8 @@ def run_evaluation(
 		iterator=None,
 		logger_fn=experiment.logger_factory,
 		environment_spec=environment_spec,
+		# replay_client=replay_client, # *
+		# counter=learner_counter,
 	)
 	
 	if experiment.checkpointing is not None:
@@ -120,18 +128,26 @@ def run_evaluation(
 		environment_spec=environment_spec,
 		variable_source=learner,
 		# no adder neede
+		# adder=adder,
 	)
 
 
 	"""Evaluation loop."""
+
+	print(colored(f'a.run_evaluation: counter: {counter.get_counts()}', 'red'))
+
 	if 'actor_steps' not in counter.get_counts().keys():
 		# init csv columns for eval_logger(eval_counter(parent_counter <- train_counter))
 		# train_counter = counting.Counter(counter, prefix='actor')
 		counter.get_counts().get(counter.get_steps_key(), 0)
 
+	print(colored(f'b.run_evaluation: counter: {counter.get_counts()}', 'red'))
+
 	# Create evaluation counter/logger (~evaluator(actor)).
 	eval_counter = counting.Counter(counter, prefix='evaluator', time_delta=0)
 	eval_logger = experiment.logger_factory('evaluator', eval_counter.get_steps_key(), 0)
+
+	print(colored(f'c.run_evaluation: counter: {counter.get_counts()}', 'red'))
 
 	# Create the environment loop used for evaluation.
 	eval_loop = acme.EnvironmentLoop(
@@ -145,6 +161,8 @@ def run_evaluation(
 
 	# Run evaluation loop (full episodes).
 	eval_loop.run(num_episodes=num_eval_episodes)
+
+	print(colored(f'd.run_evaluation: counter: {counter.get_counts()}', 'red'))
 
 	# Close evaluation logger.
 	eval_logger.close()
