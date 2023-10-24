@@ -214,9 +214,9 @@ def run_experiment_v0(
 
 def run_experiment(
     experiment: config.ExperimentConfig,
-	eval_episodes: Optional[int] = None,
 	# eval_freq: Optional[int] = None,
-	eval_points: Optional[Sequence[int]] = None
+	eval_points: Optional[Sequence[int]] = None,
+	eval_episodes: Optional[int] = None,
 ):
 	"""Runs a simple, single-threaded training loop using the default evaluators.
 
