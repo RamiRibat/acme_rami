@@ -14,8 +14,8 @@
 
 """A simple agent-environment training loop."""
 
-import operator
-import time
+import operator, time
+from termcolor import colored
 from typing import List, Optional, Sequence
 
 from acme import core
@@ -219,6 +219,8 @@ class EnvironmentLoop(core.Worker):
 		episode_count: int = 0
 		step_count: int = 0
 
+		print(colored(f'a.env_loop: counter: {self._counter.get_counts()}', 'red'))
+
 		if num_steps == 0:
 			episode_start = time.time()
 			result = self.run_dummy_episode()
@@ -241,7 +243,8 @@ class EnvironmentLoop(core.Worker):
 			# if self._label == 'eval_loop':
 			# 	print('\n\nevaluator.logger')
 			# 	self._logger.flush()
-			
+		
+		print(colored(f'b.env_loop: counter: {self._counter.get_counts()}', 'red'))
 
 
 		return step_count
