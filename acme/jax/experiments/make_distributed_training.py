@@ -175,7 +175,7 @@ def make_distributed_training(
 			# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
 			# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
 			# )
-		return counter
+		return counter, counter_ckpt
 
 
 	def build_learner(
@@ -428,7 +428,7 @@ def make_distributed_training(
 
 
 	"""Parent Counter"""
-	counter = program.add_node(lp.CourierNode(build_counter), label='counter')
+	counter, counter_ckpt = program.add_node(lp.CourierNode(build_counter), label='counter')
 	# counter_node = lp.CourierNode(build_counter)
 	# counter = counter_node.create_handle()
 	# counter, counter_ckpt = build_checkpointer(
@@ -449,7 +449,7 @@ def make_distributed_training(
 
 	"""Learner."""
 	key, learner_key = jax.random.split(key)
-	learner_node = lp.CourierNode(
+	learner_node, learner_ckpt = lp.CourierNode(
 		build_learner,
 		learner_key, # random_key
 		replay, # replay_client
