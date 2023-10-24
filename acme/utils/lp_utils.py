@@ -109,7 +109,7 @@ class StepsLimiter:
 
 				logging.info('StepsLimiter: Reached %d recorded steps', num_steps)
 
-				if num_steps > self._max_steps:
+				if num_steps >= self._max_steps:
 					logging.info('StepsLimiter: Max steps of %d was reached, terminating',
 								self._max_steps)
 					
