@@ -357,12 +357,11 @@ def run_experiment(
 		time_delta=0.,
 		return_only_prefixed=False
 	)
-	# Create logger -> acme.utils.loggers.base.py [class LoggerFactory]
-	# -> acme.utils.loggers.default.py
+	# Create logger -> acme.utils.experiment_utils.py
 	learner_logger = experiment.logger_factory(
 		label='learner',
 		# steps_key=learner_counter.get_steps_key(),
-		# actor_counter=0,
+		# task_instance=0,
 	)
 	# Create learner -> [ actor, actor' ]
 	learner = experiment.builder.make_learner(
@@ -445,12 +444,11 @@ def run_experiment(
 		time_delta=0.,
 		return_only_prefixed=False
 		)
-	# Create logger -> acme.utils.loggers.base.py [class LoggerFactory]
-	# -> acme.utils.loggers.default.py
+	# Create logger -> acme.utils.experiment_utils.py
 	actor_logger = experiment.logger_factory(
 		label='actor',
 		steps_key=actor_counter.get_steps_key(),
-		instance=0,
+		task_instance=0,
 	)
 
 	# Create the environment loop used for training.
