@@ -151,7 +151,7 @@ def make_distributed_training(
 
 
 	def build_counter():
-		counter = counting.Counter()
+		counter = counting.Counter(time_delta=0.)
 		# if experiment.checkpointing:
 		# 	checkpointing = experiment.checkpointing
 		# 	counter = savers.CheckpointingRunner(
@@ -199,7 +199,7 @@ def make_distributed_training(
 			logger_fn=experiment.logger_factory,
 			environment_spec=environment_spec,
 			replay_client=replay_client,
-			counter=counting.Counter(counter, 'learner')
+			counter=counting.Counter(counter, prefix='learner', time_delta=0.)
 		)
 
 		if primary_learner is not None:
@@ -328,7 +328,7 @@ def make_distributed_training(
 		)
 
 		# Create logger and counter.
-		counter = counting.Counter(counter, 'actor')
+		counter = counting.Counter(counter, prefix='actor', time_delta=0.)
 		logger = experiment.logger_factory(
 			'actor',
 			counter.get_steps_key(),
