@@ -474,8 +474,8 @@ def run_experiment(
 				# Save chechpoint.
 				if experiment.checkpointing is not None:
 					# checkpointer.save()
-					counter_ckpt.save()
-					learner_ckpt.save()
+					counter_ckpt.save(force=True)
+					learner_ckpt.save(force=True)
 					replay_client.checkpoint()
 
 			if current_steps >= experiment.max_num_actor_steps:
@@ -487,8 +487,8 @@ def run_experiment(
 		# Save chechpoint.
 		if experiment.checkpointing is not None:
 			# checkpointer.save()
-			counter_ckpt.save()
-			learner_ckpt.save()
+			counter_ckpt.save(force=True)
+			learner_ckpt.save(force=True)
 			replay_client.checkpoint()
 			
 	# # checkpointer.save() # save only at the end of learning
