@@ -164,6 +164,13 @@ def run_evaluation(
 
 	print(colored(f'd.run_evaluation: counter: {counter.get_counts()}', 'red'))
 
+	# Save chechpoint.
+	if experiment.checkpointing is not None:
+		# checkpointer.save()
+		counter_ckpt.save()
+		# learner_ckpt.save()
+		# replay_client.checkpoint()
+
 	# Close evaluation logger.
 	eval_logger.close()
 
