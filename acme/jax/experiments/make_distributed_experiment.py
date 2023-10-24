@@ -549,18 +549,18 @@ def make_distributed_experiment(
 
 
 
-	for evaluator in experiment.get_evaluator_factories():
-		key, evaluator_key = jax.random.split(key)
-		program.add_node(
-			lp.CourierNode(
-				evaluator,
-				evaluator_key, # random_key
-				learner, # variable_source
-				counter, # counter
-				experiment.builder.make_actor, # make_actor
-			),
-			label='evaluator'
-		)
+	# for evaluator in experiment.get_evaluator_factories():
+	# 	key, evaluator_key = jax.random.split(key)
+	# 	program.add_node(
+	# 		lp.CourierNode(
+	# 			evaluator,
+	# 			evaluator_key, # random_key
+	# 			learner, # variable_source
+	# 			counter, # counter
+	# 			experiment.builder.make_actor, # make_actor
+	# 		),
+	# 		label='evaluator'
+	# 	)
 
 
 	# if make_snapshot_models and experiment.checkpointing:
