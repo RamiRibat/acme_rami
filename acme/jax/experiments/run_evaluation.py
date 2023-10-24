@@ -136,10 +136,10 @@ def run_evaluation(
 
 	print(colored(f'a.run_evaluation: counter: {counter.get_counts()}', 'red'))
 
-	if 'actor_steps' not in counter.get_counts().keys():
-		# init csv columns for eval_logger(eval_counter(parent_counter <- train_counter))
-		# train_counter = counting.Counter(counter, prefix='actor')
-		counter.get_counts().get(counter.get_steps_key(), 0)
+	# if 'actor_steps' not in counter.get_counts().keys():
+	# 	# init csv columns for eval_logger(eval_counter(parent_counter <- train_counter))
+	# 	# train_counter = counting.Counter(counter, prefix='actor')
+	# 	counter.get_counts().get(counter.get_steps_key(), 0)
 
 	print(colored(f'b.run_evaluation: counter: {counter.get_counts()}', 'red'))
 
