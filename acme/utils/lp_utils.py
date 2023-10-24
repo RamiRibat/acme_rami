@@ -20,6 +20,7 @@ import inspect
 import os
 import sys
 import time
+from termcolor import colored
 from typing import Any, Callable, Optional
 
 from absl import flags
@@ -105,6 +106,7 @@ class StepsLimiter:
 			while True:
 				# Update the counts.
 				counts = self._counter.get_counts()
+				print(colored(f'StepsLimiter.counts: {counts}', 'red'))
 				num_steps = counts.get(self._steps_key, 0)
 
 				logging.info('StepsLimiter: Reached %d recorded steps', num_steps)
