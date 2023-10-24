@@ -191,7 +191,8 @@ class CheckpointingRunner(core.Worker):
 		time_delta_minutes: int = 30,
 		**kwargs,
 	):
-		print(colored('CheckpointingRunner', 'dark_grey'))
+		self._key = key
+		print(colored(f'CheckpointingRunner({self._key})', 'dark_grey'))
 
 		if isinstance(wrapped, TFSaveable):
 			# If the object to be wrapped exposes its TF State, checkpoint that.
@@ -215,7 +216,7 @@ class CheckpointingRunner(core.Worker):
 
 
 	def step(self):
-		print(colored('CheckpointingRunner.step', 'dark_grey'))
+		print(colored(f'CheckpointingRunner({self._key}).step', 'dark_grey'))
 		if isinstance(self._wrapped, core.Learner):
 			# Learners have a step() method, so alternate between that and ckpt call.
 			self._wrapped.step()
@@ -227,14 +228,14 @@ class CheckpointingRunner(core.Worker):
 
 	def run(self):
 		"""Runs the checkpointer."""
-		print(colored('CheckpointingRunner.run', 'dark_grey'))
+		print(colored(f'CheckpointingRunner({self._key}).run', 'dark_grey'))
 		with signals.runtime_terminator(self._signal_handler):
 			while True:
 				self.step()
 
 
 	def checkpoint(self):
-		print(colored('CheckpointingRunner.checkpoint', 'dark_grey'))
+		print(colored(f'CheckpointingRunner({self._key}).checkpoint', 'dark_grey'))
 		self._checkpointer.save()
 		# Do not sleep for a long period of time to avoid LaunchPad program
 		# termination hangs (time.sleep is not interruptible).
