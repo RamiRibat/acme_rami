@@ -75,8 +75,8 @@ def make_default_logger(
 		logger = async_logger.AsyncLogger(logger)
 
 	if label == 'actor':
-		logger = filters.TimeFilter(logger, 30)
+		logger = filters.TimeFilter(logger, 0)
 	elif label == 'learner':
-		logger = filters.TimeFilter(logger, 60)
+		logger = filters.TimeFilter(logger, 0)
 
 	return logger
