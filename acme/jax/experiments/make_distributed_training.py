@@ -345,7 +345,8 @@ def make_distributed_training(
 
 		return env_loop
 
-	
+
+	# TODO(rami): Test checkpointing
 	def build_checkpointer(
 		key,
 		checkpointee,
