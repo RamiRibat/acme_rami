@@ -152,30 +152,30 @@ def make_distributed_training(
 
 	def build_counter():
 		counter = counting.Counter(time_delta=0.)
-		if experiment.checkpointing:
-			checkpointing = experiment.checkpointing
-			counter_ckpt = savers.Checkpointer(
-				object_to_save={'counter': counter},
-				subdirectory='counter',
-				time_delta_minutes=checkpointing.time_delta_minutes,
-				directory=checkpointing.directory,
-				add_uid=checkpointing.add_uid,
-				max_to_keep=checkpointing.max_to_keep,
-				keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-				checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-			)
-			# counter = savers.CheckpointingRunner(
-			# 	counter,
-			# 	key='counter',
-			# 	subdirectory='counter',
-			# 	time_delta_minutes=checkpointing.time_delta_minutes,
-			# 	directory=checkpointing.directory,
-			# 	add_uid=checkpointing.add_uid,
-			# 	max_to_keep=checkpointing.max_to_keep,
-			# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-			# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-			# )
-		return counter, counter_ckpt
+		# if experiment.checkpointing:
+		# 	checkpointing = experiment.checkpointing
+		# 	counter_ckpt = savers.Checkpointer(
+		# 		object_to_save={'counter': counter},
+		# 		subdirectory='counter',
+		# 		time_delta_minutes=checkpointing.time_delta_minutes,
+		# 		directory=checkpointing.directory,
+		# 		add_uid=checkpointing.add_uid,
+		# 		max_to_keep=checkpointing.max_to_keep,
+		# 		keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		# 		checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		# 	)
+		# 	# counter = savers.CheckpointingRunner(
+		# 	# 	counter,
+		# 	# 	key='counter',
+		# 	# 	subdirectory='counter',
+		# 	# 	time_delta_minutes=checkpointing.time_delta_minutes,
+		# 	# 	directory=checkpointing.directory,
+		# 	# 	add_uid=checkpointing.add_uid,
+		# 	# 	max_to_keep=checkpointing.max_to_keep,
+		# 	# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		# 	# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		# 	# )
+		return counter
 
 
 	def build_learner(
@@ -429,12 +429,12 @@ def make_distributed_training(
 
 	"""Parent Counter"""
 	# counter = program.add_node(lp.CourierNode(build_counter), label='counter')
-	counter_node, counter_ckpt = lp.CourierNode(build_counter)
-	# counter = counter_node.create_handle()
-	# counter, counter_ckpt = build_checkpointer(
-	# 	key='counter',
-	# 	checkpointee=counter
-	# )
+	counter_node = lp.CourierNode(build_counter)
+	counter = counter_node.create_handle()
+	counter, counter_ckpt = build_checkpointer(
+		key='counter',
+		checkpointee=counter
+	)
 	counter = program.add_node(counter_node, label='counter')
 
 	# if experiment.max_num_actor_steps is not None:
