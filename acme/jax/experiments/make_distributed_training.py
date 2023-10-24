@@ -37,6 +37,7 @@ from acme.jax import utils
 from acme.jax import variable_utils
 from acme.jax.experiments import config
 from acme.jax import snapshotter
+from acme.tf import savers as tf_savers
 
 from acme.utils import counting, lp_utils, paths
 
@@ -201,38 +202,38 @@ def make_distributed_training(
 			counter=counting.Counter(counter, 'learner')
 		)
 
-		# if primary_learner is not None:
-		# 	learner.restore(primary_learner.save())
-
-		if experiment.checkpointing:
-			if primary_learner is None:
-				checkpointing = experiment.checkpointing
-				learner_ckpt = savers.Checkpointer(
-					objects_to_save={'learner': learner},
-					subdirectory='learner',
-					time_delta_minutes=checkpointing.time_delta_minutes,
-					directory=checkpointing.directory,
-					add_uid=checkpointing.add_uid,
-					max_to_keep=checkpointing.max_to_keep,
-					keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-					checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-				)
-				# learner = savers.CheckpointingRunner(
-				# 	learner,
-				# 	key='learner',
-				# 	subdirectory='learner',
-				# 	time_delta_minutes=5,
-				# 	directory=checkpointing.directory,
-				# 	add_uid=checkpointing.add_uid,
-				# 	max_to_keep=checkpointing.max_to_keep,
-				# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-				# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-				# )
-		else:
+		if primary_learner is not None:
 			learner.restore(primary_learner.save())
-			# NOTE: This initially synchronizes secondary learner states with the
-			# primary one. Further synchronization should be handled by the learner
-			# properly doing a pmap/pmean on the loss/gradients, respectively.
+
+		# if experiment.checkpointing:
+		# 	if primary_learner is None:
+		# 		checkpointing = experiment.checkpointing
+		# 		learner_ckpt = savers.Checkpointer(
+		# 			object_to_save={'learner': learner},
+		# 			subdirectory='learner',
+		# 			time_delta_minutes=checkpointing.time_delta_minutes,
+		# 			directory=checkpointing.directory,
+		# 			add_uid=checkpointing.add_uid,
+		# 			max_to_keep=checkpointing.max_to_keep,
+		# 			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		# 			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		# 		)
+		# 		# learner = savers.CheckpointingRunner(
+		# 		# 	learner,
+		# 		# 	key='learner',
+		# 		# 	subdirectory='learner',
+		# 		# 	time_delta_minutes=5,
+		# 		# 	directory=checkpointing.directory,
+		# 		# 	add_uid=checkpointing.add_uid,
+		# 		# 	max_to_keep=checkpointing.max_to_keep,
+		# 		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		# 		# 	checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+		# 		# )
+		# else:
+		# 	learner.restore(primary_learner.save())
+		# 	# NOTE: This initially synchronizes secondary learner states with the
+		# 	# primary one. Further synchronization should be handled by the learner
+		# 	# properly doing a pmap/pmean on the loss/gradients, respectively.
 
 		return learner
 
@@ -354,7 +355,7 @@ def make_distributed_training(
 		if experiment.checkpointing:
 			checkpointing = experiment.checkpointing
 			checkpointer = savers.Checkpointer(
-				objects_to_save={f'{key}': checkpointee},
+				object_to_save={f'{key}': checkpointee},
 				time_delta_minutes=checkpointing.time_delta_minutes,
 				directory=checkpointing.directory,
 				add_uid=checkpointing.add_uid,
