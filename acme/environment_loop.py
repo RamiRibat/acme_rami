@@ -225,7 +225,7 @@ class EnvironmentLoop(core.Worker):
 		episode_count: int = 0
 		step_count: int = 0
 
-		print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
+		# print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 		
 		# TODO(rami): make sure to run actor x 0 steps -> eval @ 0 before start
 		# if not run actor x 0 steps
@@ -278,7 +278,7 @@ class EnvironmentLoop(core.Worker):
 					# Log the given episode results.
 					self._logger.write(result)
 		
-		print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
+		# print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 
 		return step_count
 	
