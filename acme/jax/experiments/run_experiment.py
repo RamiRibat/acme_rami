@@ -476,8 +476,6 @@ def run_experiment(
 			if steps_to_run > 0:
 				current_steps += actor_loop.run(num_steps=steps_to_run)
 				eval_loop.run(num_episodes=eval_episodes)
-				# Flush loggers
-				actor_logger.flush(), learner_logger.flush()
 				# Save chechpoint.
 				if experiment.checkpointing is not None:
 					# checkpointer.save()
@@ -491,8 +489,6 @@ def run_experiment(
 		# Run training loop (full episodes ~ time steps).
 		steps_to_run = experiment.max_num_actor_steps - current_steps
 		actor_loop.run(num_steps=steps_to_run)
-		# Flush loggers
-		actor_logger.flush(), learner_logger.flush()
 		# Save chechpoint.
 		if experiment.checkpointing is not None:
 			# checkpointer.save()
@@ -500,8 +496,8 @@ def run_experiment(
 			learner_ckpt.save(force=True)
 			replay_client.checkpoint()
 
-	# # Flush loggers
-	# actor_logger.flush(), learner_logger.flush()
+	# Close loggers
+	actor_logger.close(), learner_logger.close()
 
 	# Close environment.
 	environment.close()
