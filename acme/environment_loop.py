@@ -259,15 +259,16 @@ class EnvironmentLoop(core.Worker):
 						while True:
 							if 'evaluator' in self._counter.get_counts().keys():
 								break
-						with signals.runtime_terminator(self._signal_handler):
-							while not should_terminate(episode_count, step_count):
-								episode_start = time.time()
-								result = self.run_episode()
-								result = {**result, **{'episode_duration': time.time() - episode_start}}
-								episode_count += 1
-								step_count += int(result['episode_length'])
-								# Log the given episode results.
-								self._logger.write(result)
+
+					with signals.runtime_terminator(self._signal_handler):
+						while not should_terminate(episode_count, step_count):
+							episode_start = time.time()
+							result = self.run_episode()
+							result = {**result, **{'episode_duration': time.time() - episode_start}}
+							episode_count += 1
+							step_count += int(result['episode_length'])
+							# Log the given episode results.
+							self._logger.write(result)
 
 			else: # iterative calls
 				with signals.runtime_terminator(self._signal_handler):
