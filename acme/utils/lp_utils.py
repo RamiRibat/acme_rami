@@ -356,10 +356,10 @@ def make_xm_docker_resources(
 			acme_location,
 			requirements,
 			hw_requirements=xm.JobRequirements(
-				cpu=6,
-				ram=6 * xm.GiB,
+				cpu=12,
+				ram=12 * xm.GiB,
 				# P100=1,
-				LOCAL_GPU=1,
+				# LOCAL_GPU=1,
 			),
 			python_path=python_path)
 
