@@ -21,6 +21,7 @@ from acme.utils import loggers
 
 def make_experiment_logger(
 	label: str,
+	task: str = None,
 	steps_key: Optional[str] = None,
 	task_instance: int = 0
 ) -> loggers.Logger:
@@ -32,6 +33,7 @@ def make_experiment_logger(
 
 	return loggers.make_default_logger(
 		label=label,
+		task=task,
 		# time_delta=0.,
 		steps_key=steps_key
 	)
