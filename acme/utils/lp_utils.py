@@ -189,6 +189,11 @@ class Limiter:
 				# Update the counts.
 				current_steps = self._counter.get_counts().get(self._steps_key, 0)
 
+				logging.info(
+					colored('Limiter: Reached %d recorded steps', 'green'),
+			 		current_steps
+				)
+
 				# Run evaluation
 				if bool(self._eval_dict):
 					if current_steps >= self._eval_points[eval_pointer]:
