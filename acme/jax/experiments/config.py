@@ -318,18 +318,7 @@ def default_evaluator_factory(
 			steps_key=counter.get_steps_key(),
 			task_instance=0,
 		)
-
-		# # Create the run loop and return it.
-		# if distributed:
-		# 	env_loop = environment_loop.EnvironmentLoop(
-		# 		label='eval_loop',
-		# 		environment=environment,
-		# 		actor=actor,
-		# 		counter=counter,
-		# 		logger=logger,
-		# 		observers=observers,
-		# 	)
-		# else:
+        
 		env_loop = environment_loop.EnvironmentLoop(
 			label='eval_loop',
 			environment=environment,
