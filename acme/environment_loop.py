@@ -218,7 +218,7 @@ class EnvironmentLoop(core.Worker):
 		episode_count: int = 0
 		step_count: int = 0
 
-		print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
+		# print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 
 		if num_steps == 0:
 			episode_start = time.time()
