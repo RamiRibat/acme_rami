@@ -349,10 +349,10 @@ def make_xm_docker_resources(
 			),
 			python_path=python_path)
 
-	# if 'environment_loop' in num_nodes:
-	if 'actor_loop' in num_nodes:
-		# xm_resources['environment_loop'] = lp.DockerConfig(
-		xm_resources['actor_loop'] = lp.DockerConfig(
+	if 'environment_loop' in num_nodes:
+	# if 'actor_loop' in num_nodes:
+		xm_resources['environment_loop'] = lp.DockerConfig(
+		# xm_resources['actor_loop'] = lp.DockerConfig(
 			acme_location,
 			requirements,
 			hw_requirements=xm.JobRequirements(

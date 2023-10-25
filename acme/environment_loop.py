@@ -229,7 +229,7 @@ class EnvironmentLoop(core.Worker):
 		
 		# TODO(rami): make sure to run actor x 0 steps -> eval @ 0 before start
 		# if not run actor x 0 steps
-		if 'actor_loop' in self._label:
+		if 'eval_loop' not in self._label:
 			# init csv labels for evaluation
 			if self._counter.get_steps_key() not in self._counter.get_counts().keys():
 				episode_start = time.time()
@@ -266,7 +266,8 @@ class EnvironmentLoop(core.Worker):
 
 		
 		# Run eval @ 0 after 0 actor steps
-		if 'eval_loop' in self._label:
+		# if 'eval_loop' in self._label:
+		else:
 			# if 'actor_steps' in self._counter.get_counts().keys():
 			with signals.runtime_terminator(self._signal_handler):
 				while not should_terminate(episode_count, step_count):
