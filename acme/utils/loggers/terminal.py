@@ -84,7 +84,12 @@ class TerminalLogger(base.Logger):
 
 		self._print_fn = print_fn
 		self._serialize_fn = serialize_fn
-		self._label = label and f'[{_format_key(label)}({task})] '
+		
+		if task:
+			self._label = label and f'[{_format_key(label)}({task})] '
+		else:
+			self._label = label and f'[{_format_key(label)}] '
+
 		self._time = time.time()
 		self._time_delta = time_delta
 		if label == 'actor':
