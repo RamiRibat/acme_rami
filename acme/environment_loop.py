@@ -15,6 +15,7 @@
 """A simple agent-environment training loop."""
 
 import operator, time
+from absl import logging
 from termcolor import colored
 from typing import List, Optional, Sequence
 
@@ -219,7 +220,7 @@ class EnvironmentLoop(core.Worker):
 		episode_count: int = 0
 		step_count: int = 0
 
-		print(colored(f'a.env_loop({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
+		print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 
 		if num_steps == 0:
 			episode_start = time.time()
@@ -230,7 +231,7 @@ class EnvironmentLoop(core.Worker):
 			# Log the given episode results.
 			self._logger.write(result)
 		else:
-			with signals.runtime_terminator():
+			with signals.runtime_terminator(self._signal_handler):
 				while not should_terminate(episode_count, step_count):
 					episode_start = time.time()
 					result = self.run_episode()
@@ -244,12 +245,21 @@ class EnvironmentLoop(core.Worker):
 			# 	print('\n\nevaluator.logger')
 			# 	self._logger.flush()
 		
-		print(colored(f'b.env_loop({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
+		print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 
 		# time.sleep(15)
 
 
 		return step_count
+	
+
+	# TODO(rami): Does this work?
+	# Handle preemption signal.
+	def _signal_handler(self):
+		logging.info(
+			colored('EnvironmentLoop.SH: Caught SIGTERM: forcing a Logger(S) close.', 'dark_grey')
+		)
+		self._logger.close()
 
 
 def _generate_zeros_from_spec(spec: specs.Array) -> np.ndarray:
