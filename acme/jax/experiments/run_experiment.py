@@ -466,6 +466,7 @@ def run_experiment(
 	if eval_episodes:
 		for steps in eval_points:
 			steps_to_run = steps - current_steps
+			print('steps_to_run: ', steps_to_run)
 
 			if steps_to_run > 0:
 				current_steps += actor_loop.run(num_steps=steps_to_run)
