@@ -139,55 +139,68 @@ class StepsLimiter:
 
 
 # TODO(rami): Add and limiter for evaluation
-class EvaluationLimiter:
+class Limiter:
 	"""Process that xxx."""
 
 	def __init__(
 		self,
 		counter: counting.Counter,
-        eval_loop,
-		eval_points,
-		eval_episodes,
+        replay_client,
+		eval_dict,
+        # eval_loop,
+		# eval_points,
+		# eval_episodes,
 		steps_key: str = 'actor_steps'
     ):
         # TODO(rami): Link SL to CKPT
 		self._counter = counter
-		self._eval_loop = eval_loop
-		self._eval_points = eval_points
-		self._eval_episodes = eval_episodes
+		self._replay_client = replay_client
+		self._eval_dict = eval_dict
+		if bool(self._eval_dict):
+			self._eval_loop = eval_dict['eval_loop']
+			self._eval_points = eval_dict['eval_points']
+			self._eval_episodes = eval_dict['eval_episodes']
 
 		self._steps_key = steps_key
 
 	def run(self):
 		"""
-		Run steps limiter to terminate an experiment when max_steps is reached.
+		Run Limiter for:
+		
+			- terminate an experiment when max_steps is reached.
+			- run evaluation
 		"""
 
 		logging.info(
-            colored('EvaluationLimiter: Starting with max_steps = %d (%s)', 'green'),
+            colored('Limiter: Starting with max_steps = %d (%s)', 'green'),
             self._max_steps,
             self._steps_key
         )
 
 		# TODO(rami): Checkpoint replay client when terminated
 		with signals.runtime_terminator(self._signal_handler):
+
+			eval_pointer = 0
+
 			while True:
 				# Update the counts.
-				counts = self._counter.get_counts()
-				# print(colored(f'StepsLimiter.counts: {counts}', 'green'))
-				num_steps = counts.get(self._steps_key, 0)
+				current_steps = self._counter.get_counts().get(self._steps_key, 0)
 
-				logging.info(
-					colored('StepsLimiter: Reached %d recorded steps', 'green'),
-			 		num_steps
-				)
+				# Run evaluation
+				if bool(self._eval_dict):
+					if current_steps >= self._eval_points[eval_pointer]:
+						logging.info(
+							colored('EvalLimiter: Reached eval point %d', 'green'),
+							current_steps
+						)
+						self._eval_loop.run(num_episodes=self._eval_episodes)
+						eval_pointer += 1
 
-				if num_steps > self._max_steps:
+				if current_steps > self._max_steps:
 					logging.info(
-						colored('StepsLimiter: Max steps of %d was reached, terminating', 'green'),
+						colored('Limiter: Max steps of %d was reached, terminating', 'green'),
 						self._max_steps
 					)
-
 					# Avoid importing Launchpad until it is actually used.
 					import launchpad as lp  # pylint: disable=g-import-not-at-top
 					lp.stop()
@@ -201,7 +214,7 @@ class EvaluationLimiter:
 	# Handle preemption signal. Note that this must happen in the main thread.
 	def _signal_handler(self):
 		logging.info(
-			colored('StepsLimiter: Caught SIGTERM (replay client)-> forcing a checkpoint save.', 'green')
+			colored('Limiter: Caught SIGTERM (replay client)-> forcing a checkpoint save.', 'green')
 		)
 		self._replay_client.checkpoint()
 
