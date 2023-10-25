@@ -213,11 +213,11 @@ class Limiter:
 					import launchpad as lp  # pylint: disable=g-import-not-at-top
 					lp.stop()
 
-				# # Don't spam the counter.
-				# for _ in range(10):
-				# 	# Do not sleep for a long period of time to avoid LaunchPad program
-				# 	# termination hangs (time.sleep is not interruptible).
-				# 	time.sleep(1)
+				# Don't spam the counter.
+				for _ in range(10):
+					# Do not sleep for a long period of time to avoid LaunchPad program
+					# termination hangs (time.sleep is not interruptible).
+					time.sleep(1)
 
 	# Handle preemption signal. Note that this must happen in the main thread.
 	def _signal_handler(self):
