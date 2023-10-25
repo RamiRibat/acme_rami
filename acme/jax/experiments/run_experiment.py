@@ -462,9 +462,9 @@ def run_experiment(
 
 
 	"""Running loop(s)."""
-	if actor_counter.get_steps_key() not in counter.get_counts().keys():
-		actor_loop.run(num_steps=0) # init csv columns
-		eval_loop.run(num_episodes=eval_episodes) # eval at t=0
+	# if actor_counter.get_steps_key() not in counter.get_counts().keys():
+	# 	actor_loop.run(num_steps=0) # init csv columns
+	# 	eval_loop.run(num_episodes=eval_episodes) # eval at t=0
 
 	# eval_points = [10_000, 50_000, 100_000]
 	current_steps = counter.get_counts().get(actor_counter.get_steps_key(), 0)
