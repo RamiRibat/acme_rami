@@ -254,14 +254,6 @@ def run_experiment(
 		environment_spec=environment_spec,
 		evaluation=False
 	)
-	if eval_episodes:
-		# Create evaluation policy -> [ actor(evaluation) ]
-		eval_policy = config.make_policy(
-			experiment=experiment,
-			networks=networks,
-			environment_spec=environment_spec,
-			evaluation=True
-		)
 
 
 	"""Replay/Iterator."""

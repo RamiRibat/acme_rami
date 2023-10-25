@@ -146,7 +146,7 @@ class Limiter:
 		self,
 		counter: counting.Counter,
         replay_client,
-		eval_dict,
+		# eval_dict,
         # eval_loop,
 		# eval_points,
 		# eval_episodes,
@@ -157,11 +157,11 @@ class Limiter:
 		self._counter = counter
 		self._replay_client = replay_client
 		
-		self._eval_dict = eval_dict
-		if bool(self._eval_dict):
-			self._eval_loop = eval_dict['eval_loop']
-			self._eval_points = eval_dict['eval_points']
-			self._eval_episodes = eval_dict['eval_episodes']
+		# self._eval_dict = eval_dict
+		# if bool(self._eval_dict):
+		# 	self._eval_loop = eval_dict['eval_loop']
+		# 	self._eval_points = eval_dict['eval_points']
+		# 	self._eval_episodes = eval_dict['eval_episodes']
 
 		self._max_steps = max_steps
 		self._steps_key = steps_key
@@ -183,7 +183,7 @@ class Limiter:
 		# TODO(rami): Checkpoint replay client when terminated
 		with signals.runtime_terminator(self._signal_handler):
 
-			eval_pointer = 0
+			# eval_pointer = 0
 
 			while True:
 				# Update the counts.
@@ -194,15 +194,15 @@ class Limiter:
 			 		current_steps
 				)
 
-				# Run evaluation
-				if bool(self._eval_dict):
-					if current_steps >= self._eval_points[eval_pointer]:
-						logging.info(
-							colored('EvalLimiter: Reached eval point %d', 'green'),
-							current_steps
-						)
-						self._eval_loop.run(num_episodes=self._eval_episodes)
-						eval_pointer += 1
+				# # Run evaluation
+				# if bool(self._eval_dict):
+				# 	if current_steps >= self._eval_points[eval_pointer]:
+				# 		logging.info(
+				# 			colored('EvalLimiter: Reached eval point %d', 'green'),
+				# 			current_steps
+				# 		)
+				# 		self._eval_loop.run(num_episodes=self._eval_episodes)
+				# 		eval_pointer += 1
 
 				if current_steps > self._max_steps:
 					logging.info(

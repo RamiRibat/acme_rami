@@ -37,7 +37,7 @@ from acme.utils import counting
 def run_evaluation(
     experiment: config.ExperimentConfig,
 	# eval_every: int = 100,
-	num_eval_episodes: int = 1
+	eval_episodes: int = 1
 ):
 	"""Runs a simple, single-threaded training loop using the default evaluators.
 
@@ -63,23 +63,28 @@ def run_evaluation(
 	environment_spec = experiment.environment_spec or specs.make_environment_spec(environment)
 
 
-	"""Network/Policy."""
+	# """Network/Policy."""
 	# Create networks -> [ policy(evaluation), learner ]
 	networks = experiment.network_factory(environment_spec)
-	# Create evaluation policy -> [ actor(evaluation) ]
-	eval_policy = config.make_policy(
-		experiment=experiment,
-		networks=networks,
-		environment_spec=environment_spec,
-		evaluation=True
-	)
+	# # Create evaluation policy -> [ actor(evaluation) ]
+	# eval_policy = config.make_policy(
+	# 	experiment=experiment,
+	# 	networks=networks,
+	# 	environment_spec=environment_spec,
+	# 	evaluation=True
+	# )
 
 
 	"""Parent Counter"""
 	# Parent counter allows to (share step counts) between train and eval loops and
 	# the learner, so that it is possible to plot for example evaluator's return
 	# value as a function of the number of training episodes.
-	counter = counting.Counter(time_delta=0.)
+	counter = counting.Counter(
+		parent=None,
+		prefix='',
+		time_delta=0.,
+		return_only_prefixed=False
+	)
 	
 	if experiment.checkpointing is not None:
 		counter_ckpt = savers.Checkpointer(
@@ -97,14 +102,28 @@ def run_evaluation(
 	"""Learner."""
 	# Create learner -> [ actor(evaluation) ]
 	key, learner_key = jax.random.split(key)
+	learner_counter = counting.Counter(
+		parent=counter,
+		prefix='learner',
+		time_delta=0.,
+		return_only_prefixed=False
+	)
+	# Create logger -> acme.utils.experiment_utils.py
+	learner_logger = experiment.logger_factory(
+		label='learner',
+		# steps_key=learner_counter.get_steps_key(),
+		# task_instance=0,
+	)
+	# Create learner -> [ actor, actor' ]
 	learner = experiment.builder.make_learner(
 		random_key=learner_key,
 		networks=networks,
 		iterator=None,
-		logger_fn=experiment.logger_factory,
+		# logger_fn=experiment.logger_factory,
 		environment_spec=environment_spec,
 		# replay_client=replay_client, # *
 		# counter=learner_counter,
+		# logger=learner_logger
 	)
 	
 	if experiment.checkpointing is not None:
@@ -120,59 +139,26 @@ def run_evaluation(
 		)
 
 
-	"""Actor (evaluation)."""
-	key, eval_actor_key = jax.random.split(key)
-	eval_actor = experiment.builder.make_actor(
-		random_key=eval_actor_key,
-		policy=eval_policy,
-		environment_spec=environment_spec,
-		variable_source=learner,
-		# no adder neede
-		# adder=adder,
-	)
-
-
 	"""Evaluation loop."""
+	
+	if eval_episodes:
+		key, eval_actor_key = jax.random.split(key)
+		for evaluator in experiment.get_evaluator_factories():
+			eval_loop = evaluator(
+				random_key=eval_actor_key,
+				variable_source=learner,
+				counter=counter,
+				make_actor=experiment.builder.make_actor
+			)
 
-	print(colored(f'a.run_evaluation: counter: {counter.get_counts()}', 'red'))
+	"""Running loop(s)."""
+	# if actor_counter.get_steps_key() not in counter.get_counts().keys():
+	# 	actor_loop.run(num_steps=0) # init csv columns
+	# 	eval_loop.run(num_episodes=eval_episodes) # eval at t=0
 
-	# if 'actor_steps' not in counter.get_counts().keys():
-	# 	# init csv columns for eval_logger(eval_counter(parent_counter <- train_counter))
-	# 	# train_counter = counting.Counter(counter, prefix='actor')
-	# 	counter.get_counts().get(counter.get_steps_key(), 0)
+	eval_loop.run(num_episodes=eval_episodes)
 
-	print(colored(f'b.run_evaluation: counter: {counter.get_counts()}', 'red'))
-
-	# Create evaluation counter/logger (~evaluator(actor)).
-	eval_counter = counting.Counter(counter, prefix='evaluator', time_delta=0)
-	eval_logger = experiment.logger_factory('evaluator', eval_counter.get_steps_key(), 0)
-
-	print(colored(f'c.run_evaluation: counter: {counter.get_counts()}', 'red'))
-
-	# Create the environment loop used for evaluation.
-	eval_loop = acme.EnvironmentLoop(
-		environment=environment,
-		actor=eval_actor,
-		label='eval_loop',
-		counter=eval_counter,
-		logger=eval_logger,
-		observers=experiment.observers
-	)
-
-	# Run evaluation loop (full episodes).
-	eval_loop.run(num_episodes=num_eval_episodes)
-
-	print(colored(f'd.run_evaluation: counter: {counter.get_counts()}', 'red'))
-
-	# Save chechpoint.
-	if experiment.checkpointing is not None:
-		# checkpointer.save()
-		counter_ckpt.save()
-		# learner_ckpt.save()
-		# replay_client.checkpoint()
-
-	# Close evaluation logger.
-	eval_logger.close()
+	counter_ckpt.save(force=True)
 
 	# Close environment.
 	environment.close()
