@@ -359,7 +359,8 @@ def make_distributed_experiment(
 			label=f'actor_loop[{actor_id}]',
 			counter=counter,
 			logger=logger,
-			observers=experiment.observers
+			observers=experiment.observers,
+			wait_eval=bool(eval_episodes)
 		)
 
 		return env_loop

@@ -124,11 +124,11 @@ class StepsLimiter:
 					import launchpad as lp  # pylint: disable=g-import-not-at-top
 					lp.stop()
 
-				# # Don't spam the counter.
-				# for _ in range(10):
-				# 	# Do not sleep for a long period of time to avoid LaunchPad program
-				# 	# termination hangs (time.sleep is not interruptible).
-				# 	time.sleep(1)
+				# Don't spam the counter.
+				for _ in range(10):
+					# Do not sleep for a long period of time to avoid LaunchPad program
+					# termination hangs (time.sleep is not interruptible).
+					time.sleep(1)
 
 	# Handle preemption signal. Note that this must happen in the main thread.
 	def _signal_handler(self):
@@ -194,15 +194,15 @@ class Limiter:
 			 		current_steps
 				)
 
-				# Run evaluation
-				if bool(self._eval_dict):
-					if current_steps >= self._eval_points[eval_pointer]:
-						logging.info(
-							colored('EvalLimiter: Reached eval point %d', 'green'),
-							current_steps
-						)
-						self._eval_loop.run(num_episodes=self._eval_episodes)
-						eval_pointer += 1
+				# # Run evaluation
+				# if bool(self._eval_dict):
+				# 	if current_steps >= self._eval_points[eval_pointer]:
+				# 		logging.info(
+				# 			colored('EvalLimiter: Reached eval point %d', 'green'),
+				# 			current_steps
+				# 		)
+				# 		self._eval_loop.run(num_episodes=self._eval_episodes)
+				# 		eval_pointer += 1
 
 				if current_steps > self._max_steps:
 					logging.info(
@@ -213,11 +213,11 @@ class Limiter:
 					import launchpad as lp  # pylint: disable=g-import-not-at-top
 					lp.stop()
 
-				# Don't spam the counter.
-				for _ in range(10):
-					# Do not sleep for a long period of time to avoid LaunchPad program
-					# termination hangs (time.sleep is not interruptible).
-					time.sleep(1)
+				# # Don't spam the counter.
+				# for _ in range(10):
+				# 	# Do not sleep for a long period of time to avoid LaunchPad program
+				# 	# termination hangs (time.sleep is not interruptible).
+				# 	time.sleep(1)
 
 	# Handle preemption signal. Note that this must happen in the main thread.
 	def _signal_handler(self):
