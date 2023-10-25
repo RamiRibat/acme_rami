@@ -20,6 +20,7 @@ from absl import flags
 import launchpad as lp
 
 import helpers
+
 from absl import app
 from acme.jax import experiments
 from acme.utils import lp_utils
@@ -60,9 +61,9 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('config', 'config', 'Configurations')
 flags.DEFINE_string('acme_id', None, 'Experiment identifier to use for Acme.')
 flags.DEFINE_string('agent_id', 'd4pg', 'What agent in use.')
-flags.DEFINE_string('suite', 'dmc', 'Suite')
-flags.DEFINE_string('level', 'trivial', "Task level")
-flags.DEFINE_string('task', 'walker:walk', 'What environment to run')
+flags.DEFINE_string('suite', 'dmc:state', 'Suite')
+# flags.DEFINE_string('level', 'trivial', "Task level")
+flags.DEFINE_string('task', 'trivial/walker:walk', 'What environment to run')
 flags.DEFINE_integer('num_steps', 500_000, 'Number of env steps to run.')
 flags.DEFINE_integer('eval_every', 25_000, 'How often to run evaluation.')
 flags.DEFINE_integer('evaluation_episodes', 5, 'Evaluation episodes.')
