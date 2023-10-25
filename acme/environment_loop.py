@@ -62,6 +62,7 @@ class EnvironmentLoop(core.Worker):
 		should_update: bool = True,
 		label: str = 'environment_loop',
 		observers: Sequence[observers_lib.EnvLoopObserver] = (),
+		wait_eval: Optional[bool] = False,
 	):
 		# Internalize agent and environment.
 		self._environment = environment
@@ -73,6 +74,8 @@ class EnvironmentLoop(core.Worker):
 		self._observers = observers
 
 		self._label = label
+
+		self._wait_eval = wait_eval
 
 
 	def run_episode(self) -> loggers.LoggingData:
@@ -220,7 +223,7 @@ class EnvironmentLoop(core.Worker):
 
 		episode_count: int = 0
 		step_count: int = 0
-		
+
 		print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 
 		# ACME og
@@ -237,7 +240,7 @@ class EnvironmentLoop(core.Worker):
 		# TODO(rami): make sure to run actor x 0 steps -> eval @ 0 before start
 		# if not run actor x 0 steps
 		if 'actor_loop' in self._label:
-			# # init csv labels
+			# init csv labels for evaluation
 			if self._counter.get_steps_key() not in self._counter.get_counts().keys():
 				episode_start = time.time()
 				result = self.run_dummy_episode()
@@ -246,7 +249,13 @@ class EnvironmentLoop(core.Worker):
 				step_count += 0
 				# Log the given episode results.
 				self._logger.write(result)
-			# else:
+
+			if self._wait_eval:
+				# Start running after evaluation been initialized
+				while True:
+					if 'evaluator' in self._counter.get_counts().keys():
+						break
+
 			with signals.runtime_terminator(self._signal_handler):
 				while not should_terminate(episode_count, step_count):
 					episode_start = time.time()
@@ -257,18 +266,18 @@ class EnvironmentLoop(core.Worker):
 					# Log the given episode results.
 					self._logger.write(result)
 		
-		# # Run eval @ 0 after 0 actor steps
-		# if 'eval_loop' in self._label:
-		# 	# if 'actor_steps' in self._counter.get_counts().keys():
-		# 	with signals.runtime_terminator(self._signal_handler):
-		# 		while not should_terminate(episode_count, step_count):
-		# 			episode_start = time.time()
-		# 			result = self.run_episode()
-		# 			result = {**result, **{'episode_duration': time.time() - episode_start}}
-		# 			episode_count += 1
-		# 			step_count += int(result['episode_length'])
-		# 			# Log the given episode results.
-		# 			self._logger.write(result)
+		# Run eval @ 0 after 0 actor steps
+		if 'eval_loop' in self._label:
+			# if 'actor_steps' in self._counter.get_counts().keys():
+			with signals.runtime_terminator(self._signal_handler):
+				while not should_terminate(episode_count, step_count):
+					episode_start = time.time()
+					result = self.run_episode()
+					result = {**result, **{'episode_duration': time.time() - episode_start}}
+					episode_count += 1
+					step_count += int(result['episode_length'])
+					# Log the given episode results.
+					self._logger.write(result)
 		
 		print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 
