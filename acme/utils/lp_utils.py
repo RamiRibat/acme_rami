@@ -255,7 +255,7 @@ def make_xm_docker_resources(
 		requirements: file containing additional requirements to use.
 		If not specified, default Acme dependencies are used instead.
 	"""
-	
+
 	if (FLAGS.lp_launch_type != 'vertex_ai' and
 		FLAGS.lp_launch_type != 'local_docker'
 	):
@@ -349,7 +349,8 @@ def make_xm_docker_resources(
 			),
 			python_path=python_path)
 
-	if 'environment_loop' in num_nodes:
+	# if 'environment_loop' in num_nodes:
+	if 'loop' in num_nodes:
 		xm_resources['environment_loop'] = lp.DockerConfig(
 			acme_location,
 			requirements,
