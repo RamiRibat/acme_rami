@@ -23,8 +23,7 @@ import time
 from termcolor import colored
 from typing import Any, Callable, Optional
 
-from absl import flags
-from absl import logging
+from absl import flags, logging
 from acme.utils import counting
 from acme.utils import signals
 
@@ -80,7 +79,7 @@ class StepsLimiter:
 		counter: counting.Counter,
         # counter_ckpt,
         # learner_ckpt,
-        # replay_client,
+        replay_client,
 		max_steps: int,
 		steps_key: str = 'actor_steps'
     ):
@@ -88,7 +87,7 @@ class StepsLimiter:
 		self._counter = counter
 		# self._counter_ckpt = counter_ckpt
 		# self._learner_ckpt = learner_ckpt
-		# self._replay_client = replay_client
+		self._replay_client = replay_client
 		self._max_steps = max_steps
 		self._steps_key = steps_key
 
@@ -101,8 +100,9 @@ class StepsLimiter:
             self._max_steps,
             self._steps_key
         )
-    
-		with signals.runtime_terminator():
+
+		# TODO(rami): Checkpoint replay client when terminated
+		with signals.runtime_terminator(self._signal_handler):
 			while True:
 				# Update the counts.
 				counts = self._counter.get_counts()
@@ -119,11 +119,6 @@ class StepsLimiter:
 						colored('StepsLimiter: Max steps of %d was reached, terminating', 'green'),
 						self._max_steps
 					)
-					
-					# # TODO(rami): Checkpoint {counter, learner, replay}
-					# self._counter_ckpt.save()
-					# self._learner_ckpt.save()
-					# self._replay_client.checkpoint()
 
 					# Avoid importing Launchpad until it is actually used.
 					import launchpad as lp  # pylint: disable=g-import-not-at-top
@@ -135,6 +130,12 @@ class StepsLimiter:
 					# termination hangs (time.sleep is not interruptible).
 					time.sleep(1)
 
+	# Handle preemption signal. Note that this must happen in the main thread.
+	def _signal_handler(self):
+		logging.info(
+			colored('StepsLimiter -> Caught SIGTERM: forcing a replay client ckpt.', 'green')
+		)
+		self._replay_client.checkpoint()
 
 
 def is_local_run() -> bool:
