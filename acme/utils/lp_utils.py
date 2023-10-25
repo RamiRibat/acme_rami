@@ -255,8 +255,10 @@ def make_xm_docker_resources(
 		requirements: file containing additional requirements to use.
 		If not specified, default Acme dependencies are used instead.
 	"""
+	
 	if (FLAGS.lp_launch_type != 'vertex_ai' and
-		FLAGS.lp_launch_type != 'local_docker'):
+		FLAGS.lp_launch_type != 'local_docker'
+	):
 		# Avoid importing 'xmanager' for local runs.
 		return None
 
@@ -302,29 +304,15 @@ def make_xm_docker_resources(
 	if 'replay' in num_nodes:
 		replay_cpu = 6 + num_nodes.get('actor', 0) * 0.01
 		replay_cpu = min(40, replay_cpu)
-
 		xm_resources['replay'] = lp.DockerConfig(
 			acme_location,
 			requirements,
-			hw_requirements=xm.JobRequirements(cpu=replay_cpu, ram=10 * xm.GiB),
-			python_path=python_path)
-
-	if 'evaluator' in num_nodes:
-		xm_resources['evaluator'] = lp.DockerConfig(
-			acme_location,
-			requirements,
-			hw_requirements=xm.JobRequirements(cpu=2, ram=4 * xm.GiB),
-			python_path=python_path)
-
-	if 'actor' in num_nodes:
-		xm_resources['actor'] = lp.DockerConfig(
-			acme_location,
-			requirements,
 			hw_requirements=xm.JobRequirements(
-				cpu=2,
-				ram=4 * xm.GiB
+				cpu=replay_cpu,
+				ram=10 * xm.GiB
 			),
-			python_path=python_path)
+			python_path=python_path
+		)
 
 	if 'learner' in num_nodes:
 		learner_cpu = 6 + num_nodes.get('actor', 0) * 0.01
@@ -336,7 +324,28 @@ def make_xm_docker_resources(
 				cpu=learner_cpu,
 				ram=6 * xm.GiB,
 				# P100=1,
-				LOCAL_GPU=0,
+				LOCAL_GPU=1,
+			),
+			python_path=python_path
+		)
+
+	if 'actor' in num_nodes:
+		xm_resources['actor'] = lp.DockerConfig(
+			acme_location,
+			requirements,
+			hw_requirements=xm.JobRequirements(
+				cpu=2,
+				ram=4 * xm.GiB
+			),
+			python_path=python_path)
+
+	if 'evaluator' in num_nodes:
+		xm_resources['evaluator'] = lp.DockerConfig(
+			acme_location,
+			requirements,
+			hw_requirements=xm.JobRequirements(
+				cpu=2,
+				ram=4 * xm.GiB
 			),
 			python_path=python_path)
 
@@ -355,14 +364,22 @@ def make_xm_docker_resources(
 		xm_resources['counter'] = lp.DockerConfig(
 			acme_location,
 			requirements,
-			hw_requirements=xm.JobRequirements(cpu=3, ram=4 * xm.GiB),
-			python_path=python_path)
+			hw_requirements=xm.JobRequirements(
+				cpu=3,
+				ram=4 * xm.GiB
+			),
+			python_path=python_path
+		)
 
 	if 'cacher' in num_nodes:
 		xm_resources['cacher'] = lp.DockerConfig(
 			acme_location,
 			requirements,
-			hw_requirements=xm.JobRequirements(cpu=3, ram=6 * xm.GiB),
-			python_path=python_path)
+			hw_requirements=xm.JobRequirements(
+				cpu=3,
+				ram=6 * xm.GiB
+			),
+			python_path=python_path
+		)
 
 	return xm_resources
