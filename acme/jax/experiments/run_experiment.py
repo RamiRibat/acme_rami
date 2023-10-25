@@ -422,17 +422,17 @@ def run_experiment(
 	)
 	
 
-	"""Actor (evaluation)."""
-	if eval_episodes:
-		key, eval_actor_key = jax.random.split(key)
-		eval_actor = experiment.builder.make_actor(
-			random_key=eval_actor_key,
-			policy=eval_policy,
-			environment_spec=environment_spec,
-			variable_source=learner,
-			# no adder neede
-			# adder=adder,
-		)
+	# """Actor (evaluation)."""
+	# if eval_episodes:
+	# 	key, eval_actor_key = jax.random.split(key)
+	# 	eval_actor = experiment.builder.make_actor(
+	# 		random_key=eval_actor_key,
+	# 		policy=eval_policy,
+	# 		environment_spec=environment_spec,
+	# 		variable_source=learner,
+	# 		# no adder neede
+	# 		# adder=adder,
+	# 	)
 
 
 	"""Training loop."""
@@ -453,9 +453,9 @@ def run_experiment(
 
 	# Create the environment loop used for training.
 	actor_loop = acme.EnvironmentLoop(
+		label='actor_loop',
 		environment=environment,
 		actor=actor,
-		label='actor_loop',
 		counter=actor_counter,
 		logger=actor_logger,
 		observers=experiment.observers
@@ -464,23 +464,36 @@ def run_experiment(
 
 	"""Evaluation loop."""
 	if eval_episodes:
-		# Create evaluation counter/logger (~evaluator(actor)).
-		eval_counter = counting.Counter(counter, prefix='evaluator', time_delta=0.)
-		eval_logger = experiment.logger_factory(
-			'evaluator',
-			eval_counter.get_steps_key(),
-			0
-		)
+		key, eval_actor_key = jax.random.split(key)
+		# # Create evaluation counter/logger (~evaluator(actor)).
+		# eval_counter = counting.Counter(
+		# 	parent=counter,
+		# 	prefix='evaluator',
+		# 	time_delta=0.,
+		# 	return_only_prefixed=False
+		# )
+		# eval_logger = experiment.logger_factory(
+		# 	label='evaluator',
+		# 	steps_key=eval_counter.get_steps_key(),
+		# 	task_instance=0,
+		# )
 
-		# Create the environment loop used for evaluation.
-		eval_loop = acme.EnvironmentLoop(
-			environment=environment,
-			actor=eval_actor,
-			label='eval_loop',
-			counter=eval_counter,
-			logger=eval_logger,
-			observers=experiment.observers
-		)
+		# # Create the environment loop used for evaluation.
+		# eval_loop = acme.EnvironmentLoop(
+		# 	label='eval_loop',
+		# 	environment=environment,
+		# 	actor=eval_actor,
+		# 	counter=eval_counter,
+		# 	logger=eval_logger,
+		# 	observers=experiment.observers,
+		# )
+		for evaluator in experiment.get_evaluator_factories():
+			eval_loop = evaluator(
+				random_key=eval_actor_key,
+				variable_source=learner,
+				counter=counter,
+				make_actor=experiment.builder.make_actor
+			)
 
 
 	"""Running loop(s)."""
