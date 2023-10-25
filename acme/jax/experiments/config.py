@@ -289,7 +289,7 @@ def default_evaluator_factory(
 	def evaluator(
 		random_key: types.PRNGKey,
 		variable_source: core.VariableSource,
-		counter: counting.Counter,
+		counter: counting.Counter, # parent counter
 		make_actor: MakeActorFn[builders.Policy],
 	):
 		"""The evaluation process."""
@@ -304,16 +304,28 @@ def default_evaluator_factory(
 		actor = make_actor(actor_key, policy, environment_spec, variable_source)
 
 		# Create logger and counter.
-		counter = counting.Counter(counter, 'evaluator')
-		logger = logger_factory('evaluator', 'actor_steps', 0)
+		# counter = counting.Counter(counter, 'evaluator')
+		counter = counting.Counter(
+			parent=counter,
+			prefix='evaluator',
+			time_delta=0.,
+			return_only_prefixed=False
+		)
+		# logger = logger_factory('evaluator', 'actor_steps', 0)
+		logger = logger_factory(
+			label='evaluator',
+			steps_key=counter.get_steps_key(),
+			task_instance=0,
+		)
 
 		# Create the run loop and return it.
 		env_loop = environment_loop.EnvironmentLoop(
+			label='eval_loop',
 			environment=environment,
 			actor=actor,
 			counter=counter,
 			logger=logger,
-			observers=observers
+			observers=observers,
 		)
 		return env_loop
 
