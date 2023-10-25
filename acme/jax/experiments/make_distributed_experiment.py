@@ -360,8 +360,6 @@ def make_distributed_experiment(
 			counter=counter,
 			logger=logger,
 			observers=experiment.observers,
-			iterative=False,
-			wait_eval=bool(eval_episodes)
 		)
 
 		return env_loop
@@ -433,6 +431,20 @@ def make_distributed_experiment(
 	# 		),
 	# 		label='counter'
 	# 	)
+
+
+
+	"""Limiter (Counter/Replay/Evaluation)."""
+	if experiment.max_num_actor_steps is not None:
+		program.add_node(
+			lp.CourierNode(
+				lp_utils.Limiter,
+				counter, # counter
+				replay, # replay client
+				experiment.max_num_actor_steps
+			),
+			label='counter'
+		)
 		
 
 	"""Learner."""
@@ -570,21 +582,6 @@ def make_distributed_experiment(
 	# 		eval_dict['eval_loop'] = eval_loop
 	# 		eval_dict['eval_points'] = eval_points
 	# 		eval_dict['eval_episodes'] = eval_episodes
-
-
-
-	"""Limiter (Counter/Replay/Evaluation)."""
-	if experiment.max_num_actor_steps is not None:
-		program.add_node(
-			lp.CourierNode(
-				lp_utils.Limiter,
-				counter, # counter
-				replay, # replay client
-				# eval_dict,
-				experiment.max_num_actor_steps
-			),
-			label='counter'
-		)
 
 
 	# if make_snapshot_models and experiment.checkpointing:
