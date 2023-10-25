@@ -326,6 +326,8 @@ def default_evaluator_factory(
 			counter=counter,
 			logger=logger,
 			observers=observers,
+			# iterative=True,
+			# wait_eval=False
 		)
 		return env_loop
 
