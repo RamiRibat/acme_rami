@@ -571,7 +571,7 @@ def make_distributed_experiment(
 				lp_utils.Limiter,
 				counter, # counter
 				replay, # replay client
-				None,
+				eval_dict,
 				experiment.max_num_actor_steps
 			),
 			label='counter'
