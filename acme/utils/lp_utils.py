@@ -320,7 +320,10 @@ def make_xm_docker_resources(
 		xm_resources['actor'] = lp.DockerConfig(
 			acme_location,
 			requirements,
-			hw_requirements=xm.JobRequirements(cpu=2, ram=4 * xm.GiB),
+			hw_requirements=xm.JobRequirements(
+				cpu=2,
+				ram=4 * xm.GiB
+			),
 			python_path=python_path)
 
 	if 'learner' in num_nodes:
@@ -330,7 +333,11 @@ def make_xm_docker_resources(
 			acme_location,
 			requirements,
 			hw_requirements=xm.JobRequirements(
-				cpu=learner_cpu, ram=6 * xm.GiB, P100=1),
+				cpu=learner_cpu,
+				ram=6 * xm.GiB,
+				# P100=1,
+				LOCAL_GPU=0,
+			),
 			python_path=python_path)
 
 	if 'environment_loop' in num_nodes:
@@ -341,8 +348,7 @@ def make_xm_docker_resources(
 				cpu=6,
 				ram=6 * xm.GiB,
 				# P100=1,
-				LOCAL_GPU=0,
-				),
+			),
 			python_path=python_path)
 
 	if 'counter' in num_nodes:
