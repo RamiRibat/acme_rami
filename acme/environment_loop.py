@@ -316,7 +316,7 @@ class EnvironmentLoop(core.Worker):
 	# Handle preemption signal.
 	def _signal_handler(self):
 		logging.info(
-			colored('EnvironmentLoop.SH: Caught SIGTERM: forcing Logger(S) close.', 'dark_grey')
+			colored(f'Caught SIGTERM: EnvironmentLoop({self._label}) forcing Logger close.', 'dark_grey')
 		)
 		self._logger.close()
 
