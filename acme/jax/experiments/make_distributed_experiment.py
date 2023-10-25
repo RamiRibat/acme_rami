@@ -374,7 +374,7 @@ def make_distributed_experiment(
 	# Create checkpointer.
 	def build_raplay_checkpointer():
 		checkpointing = experiment.checkpointing
-		replay_ckpt_path = paths.process_path(
+		replay_ckpt_dir = paths.process_path(
 			checkpointing.directory,
 			# 'checkpoints',
 			'replay',
@@ -384,28 +384,17 @@ def make_distributed_experiment(
 		)
 
 		replay_ckpt = reverb.platform.checkpointers_lib.DefaultCheckpointer(
-			path=replay_ckpt_path,
+			path=replay_ckpt_dir,
 			group='' # non-empty is not supported :)
 		) if checkpointing else None
 		
-		# # Create a manager to maintain different checkpoints.
-		# replay_ckpt_manager = tf.train.CheckpointManager(
-		# 	replay_ckpt,
-		# 	directory=replay_ckpt_path,
-		# 	max_to_keep=checkpointing.max_to_keep,
-		# 	keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# )
-
-		# replay_ckpt = savers.CheckpointingRunner(
-		# 		wrapped=replay_ckpt, key='replay',
-		# 		subdirectory='replay',
-		# 		time_delta_minutes=checkpointing.time_delta_minutes,
-		# 		directory=checkpointing.directory,
-		# 		add_uid=checkpointing.add_uid,
-		# 		max_to_keep=checkpointing.max_to_keep,
-		# 		keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# 		checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		# )
+		# Create a manager to maintain different checkpoints.
+		replay_ckpt_manager = tf.train.CheckpointManager(
+			replay_ckpt,
+			directory=replay_ckpt_dir,
+			max_to_keep=checkpointing.max_to_keep,
+			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+		)
 
 		return replay_ckpt
 	
@@ -431,7 +420,8 @@ def make_distributed_experiment(
 		program.add_node(
 			lp.CourierNode(
 				lp_utils.StepsLimiter,
-				counter,
+				counter, # counter
+				replay, # replay client
 				experiment.max_num_actor_steps
 			),
 			label='counter'
@@ -556,7 +546,7 @@ def make_distributed_experiment(
 	# 			evaluator,
 	# 			evaluator_key, # random_key
 	# 			learner, # variable_source
-	# 			counter, # counter
+	# 			counter, # parent counter
 	# 			experiment.builder.make_actor, # make_actor
 	# 		),
 	# 		label='evaluator'
