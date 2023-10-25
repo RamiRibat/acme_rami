@@ -318,6 +318,7 @@ class EnvironmentLoop(core.Worker):
 		logging.info(
 			colored(f'Caught SIGTERM: EnvironmentLoop({self._label}) forcing Logger close.', 'dark_grey')
 		)
+		# Close actor logger
 		self._logger.close()
 
 
