@@ -25,8 +25,7 @@ from acme.agents.jax.impala import networks as impala_networks
 from acme.jax import losses
 from acme.jax import networks as networks_lib
 from acme.jax import utils
-from acme.utils import counting
-from acme.utils import loggers
+from acme.utils import counting, loggers, signals
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -140,7 +139,10 @@ class IMPALALearner(acme.Learner):
 		# Set up logging/counting.
 		self._counter = counter or counting.Counter()
 		self._logger = logger or loggers.make_default_logger(
-			'learner', steps_key=self._counter.get_steps_key())
+			label='learner',
+			steps_key=self._counter.get_steps_key(),
+			# task_instance=0
+		)
 
 
 	def _make_initial_state(self) -> TrainingState:
@@ -174,7 +176,17 @@ class IMPALALearner(acme.Learner):
 		counts = self._counter.increment(steps=1, time_elapsed=time.time() - start)
 
 		# Maybe write logs.
-		self._logger.write({**results, **counts})
+		with signals.runtime_terminator(self._signal_handler):
+			self._logger.write({**results, **counts})
+
+
+	# TODO(rami): Does this work?
+	# Handle preemption signal.
+	def _signal_handler(self):
+		logging.info(
+			colored('Learner.SH: Caught SIGTERM: forcing Logger(S) close.', 'magenta')
+		)
+		self._logger.close()
 
 
 	def get_variables(self, names: Sequence[str]) -> List[networks_lib.Params]:
