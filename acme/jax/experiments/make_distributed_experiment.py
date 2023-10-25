@@ -420,13 +420,28 @@ def make_distributed_experiment(
 	)
 
 
-	# """StepsLimiter (Counter/Replay)."""
+	"""StepsLimiter (Counter/Replay)."""
+	if experiment.max_num_actor_steps is not None:
+		program.add_node(
+			lp.CourierNode(
+				lp_utils.StepsLimiter,
+				counter, # counter
+				replay, # replay client
+				experiment.max_num_actor_steps
+			),
+			label='counter'
+		)
+
+
+
+	# """Limiter (Counter/Replay/Evaluation)."""
 	# if experiment.max_num_actor_steps is not None:
 	# 	program.add_node(
 	# 		lp.CourierNode(
-	# 			lp_utils.StepsLimiter,
+	# 			lp_utils.Limiter,
 	# 			counter, # counter
 	# 			replay, # replay client
+	# 			None,
 	# 			experiment.max_num_actor_steps
 	# 		),
 	# 		label='counter'
@@ -543,7 +558,7 @@ def make_distributed_experiment(
 				program.add_node(lp.MultiThreadingColocation(colocation_nodes))
 
 
-	eval_dict = {}
+	# eval_dict = {}
 
 	# for evaluator in experiment.get_evaluator_factories():
 	# 	key, evaluator_key = jax.random.split(key)
@@ -562,19 +577,6 @@ def make_distributed_experiment(
 	# 	eval_dict['eval_points'] = eval_points
 	# 	eval_dict['eval_episodes'] = eval_episodes
 
-
-	"""Limiter (Counter/Replay/Evaluation)."""
-	if experiment.max_num_actor_steps is not None:
-		program.add_node(
-			lp.CourierNode(
-				lp_utils.Limiter,
-				counter, # counter
-				replay, # replay client
-				eval_dict,
-				experiment.max_num_actor_steps
-			),
-			label='counter'
-		)
 
 	# if make_snapshot_models and experiment.checkpointing:
 	# 	program.add_node(
