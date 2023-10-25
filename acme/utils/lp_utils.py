@@ -150,17 +150,20 @@ class Limiter:
         # eval_loop,
 		# eval_points,
 		# eval_episodes,
+		max_steps: int,
 		steps_key: str = 'actor_steps'
     ):
         # TODO(rami): Link SL to CKPT
 		self._counter = counter
 		self._replay_client = replay_client
+		
 		self._eval_dict = eval_dict
 		if bool(self._eval_dict):
 			self._eval_loop = eval_dict['eval_loop']
 			self._eval_points = eval_dict['eval_points']
 			self._eval_episodes = eval_dict['eval_episodes']
 
+		self._max_steps = max_steps
 		self._steps_key = steps_key
 
 	def run(self):
