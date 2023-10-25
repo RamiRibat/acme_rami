@@ -223,8 +223,6 @@ class EnvironmentLoop(core.Worker):
 		if self._label == 'actor_loop':
 			# init csv labels
 			if self._counter.get_steps_key() not in self._counter.get_counts().keys():
-				# actor_loop.run(num_steps=0) # init csv columns
-				# eval_loop.run(num_episodes=eval_episodes) # eval at t=0
 				episode_start = time.time()
 				result = self.run_dummy_episode()
 				result = {**result, **{'episode_duration': time.time() - episode_start}}
