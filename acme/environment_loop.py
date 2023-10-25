@@ -20,10 +20,8 @@ from termcolor import colored
 from typing import List, Optional, Sequence
 
 from acme import core
-from acme.utils import counting
-from acme.utils import loggers
+from acme.utils import counting, loggers, signals
 from acme.utils import observers as observers_lib
-from acme.utils import signals
 
 import dm_env
 from dm_env import specs
@@ -257,7 +255,7 @@ class EnvironmentLoop(core.Worker):
 	# Handle preemption signal.
 	def _signal_handler(self):
 		logging.info(
-			colored('EnvironmentLoop.SH: Caught SIGTERM: forcing a Logger(S) close.', 'dark_grey')
+			colored('EnvironmentLoop.SH: Caught SIGTERM: forcing Logger(S) close.', 'dark_grey')
 		)
 		self._logger.close()
 
