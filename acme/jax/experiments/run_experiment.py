@@ -420,19 +420,6 @@ def run_experiment(
 		sample_sizes=rate_limiters_max_diff,
 		# checkpointer=checkpointer # remove internal checkpointing
 	)
-	
-
-	# """Actor (evaluation)."""
-	# if eval_episodes:
-	# 	key, eval_actor_key = jax.random.split(key)
-	# 	eval_actor = experiment.builder.make_actor(
-	# 		random_key=eval_actor_key,
-	# 		policy=eval_policy,
-	# 		environment_spec=environment_spec,
-	# 		variable_source=learner,
-	# 		# no adder neede
-	# 		# adder=adder,
-	# 	)
 
 
 	"""Training loop."""
@@ -465,28 +452,6 @@ def run_experiment(
 	"""Evaluation loop."""
 	if eval_episodes:
 		key, eval_actor_key = jax.random.split(key)
-		# # Create evaluation counter/logger (~evaluator(actor)).
-		# eval_counter = counting.Counter(
-		# 	parent=counter,
-		# 	prefix='evaluator',
-		# 	time_delta=0.,
-		# 	return_only_prefixed=False
-		# )
-		# eval_logger = experiment.logger_factory(
-		# 	label='evaluator',
-		# 	steps_key=eval_counter.get_steps_key(),
-		# 	task_instance=0,
-		# )
-
-		# # Create the environment loop used for evaluation.
-		# eval_loop = acme.EnvironmentLoop(
-		# 	label='eval_loop',
-		# 	environment=environment,
-		# 	actor=eval_actor,
-		# 	counter=eval_counter,
-		# 	logger=eval_logger,
-		# 	observers=experiment.observers,
-		# )
 		for evaluator in experiment.get_evaluator_factories():
 			eval_loop = evaluator(
 				random_key=eval_actor_key,
@@ -530,9 +495,6 @@ def run_experiment(
 			counter_ckpt.save(force=True)
 			learner_ckpt.save(force=True)
 			replay_client.checkpoint()
-			
-	# # checkpointer.save() # save only at the end of learning
-	# eval_logger.close()
 
 	# Close environment.
 	environment.close()
