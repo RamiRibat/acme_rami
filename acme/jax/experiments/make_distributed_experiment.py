@@ -420,17 +420,17 @@ def make_distributed_experiment(
 	)
 
 
-	"""StepsLimiter (Counter/Replay)."""
-	if experiment.max_num_actor_steps is not None:
-		program.add_node(
-			lp.CourierNode(
-				lp_utils.StepsLimiter,
-				counter, # counter
-				replay, # replay client
-				experiment.max_num_actor_steps
-			),
-			label='counter'
-		)
+	# """StepsLimiter (Counter/Replay)."""
+	# if experiment.max_num_actor_steps is not None:
+	# 	program.add_node(
+	# 		lp.CourierNode(
+	# 			lp_utils.StepsLimiter,
+	# 			counter, # counter
+	# 			replay, # replay client
+	# 			experiment.max_num_actor_steps
+	# 		),
+	# 		label='counter'
+	# 	)
 
 
 
@@ -560,18 +560,18 @@ def make_distributed_experiment(
 
 	# eval_dict = {}
 
-	# for evaluator in experiment.get_evaluator_factories():
-	# 	key, evaluator_key = jax.random.split(key)
-	# 	eval_loop = program.add_node(
-	# 		lp.CourierNode(
-	# 			evaluator,
-	# 			evaluator_key, # random_key
-	# 			learner, # variable_source
-	# 			counter, # parent counter
-	# 			experiment.builder.make_actor, # make_actor
-	# 		),
-	# 		label='evaluator'
-	# 	)
+	for evaluator in experiment.get_evaluator_factories():
+		key, evaluator_key = jax.random.split(key)
+		eval_loop = program.add_node(
+			lp.CourierNode(
+				evaluator,
+				evaluator_key, # random_key
+				learner, # variable_source
+				counter, # parent counter
+				experiment.builder.make_actor, # make_actor
+			),
+			label='evaluator'
+		)
 
 	# 	eval_dict['eval_loop'] = eval_loop
 	# 	eval_dict['eval_points'] = eval_points
