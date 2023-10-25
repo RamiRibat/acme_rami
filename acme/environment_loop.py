@@ -29,7 +29,7 @@ import numpy as np
 import tree
 
 
-class EnvironmentLoop(core.Worker):
+class EnvironmentLoopV1(core.Worker):
 	"""A simple RL environment loop.
 
 	This takes `Environment` and `Actor` instances and coordinates their
@@ -166,23 +166,23 @@ class EnvironmentLoop(core.Worker):
 		return result
 
 
-	# def run_dummy_episode(self):
-	# 	print(colored(f'EnvironmentLoop.run_dummy', 'dark_grey'))
-	# 	# Record counts.
-	# 	counts = self._counter.increment(episodes=0, steps=0)
-	# 	# print('counter: ', self._counter.get_counts())
-	# 	# print('logger: ', self._logger)
+	def run_dummy_episode(self):
+		print(colored(f'EnvironmentLoop.run_dummy', 'dark_grey'))
+		# Record counts.
+		counts = self._counter.increment(episodes=0, steps=0)
+		# print('counter: ', self._counter.get_counts())
+		# print('logger: ', self._logger)
 		
-	# 	result = {
-	# 		'episode_length': 0,
-	# 		'episode_return': 0,
-	# 		'steps_per_second': 0,
-	# 		'env_reset_duration_sec': 0,
-	# 		'select_action_duration_sec': 0,
-	# 		'env_step_duration_sec': 0,
-	# 	}
-	# 	result.update(counts)
-	# 	return result
+		result = {
+			'episode_length': 0,
+			'episode_return': 0,
+			'steps_per_second': 0,
+			'env_reset_duration_sec': 0,
+			'select_action_duration_sec': 0,
+			'env_step_duration_sec': 0,
+		}
+		result.update(counts)
+		return result
 
 
 	def run(
@@ -227,57 +227,43 @@ class EnvironmentLoop(core.Worker):
 
 		# print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 		
-		# # TODO(rami): make sure to run actor x 0 steps -> eval @ 0 before start
-		# # if not run actor x 0 steps
-		# if 'eval_loop' not in self._label:
-		# 	# init csv labels for evaluation
-		# 	if self._counter.get_steps_key() not in self._counter.get_counts().keys():
-		# 		episode_start = time.time()
-		# 		result = self.run_dummy_episode()
-		# 		result = {**result, **{'episode_duration': time.time() - episode_start}}
-		# 		episode_count += 0
-		# 		step_count += 0
-		# 		# Log the given episode results.
-		# 		self._logger.write(result)
-
-		# 	# iterative calls
-		# 	else:
-		# 		with signals.runtime_terminator(self._signal_handler):
-		# 			while not should_terminate(episode_count, step_count):
-		# 				episode_start = time.time()
-		# 				result = self.run_episode()
-		# 				result = {**result, **{'episode_duration': time.time() - episode_start}}
-		# 				episode_count += 1
-		# 				step_count += int(result['episode_length'])
-		# 				# Log the given episode results.
-		# 				self._logger.write(result)
-
-		# 	# non-iterative calls
-		# 	if not self._iterative:
-		# 		with signals.runtime_terminator(self._signal_handler):
-		# 			while not should_terminate(episode_count, step_count):
-		# 				episode_start = time.time()
-		# 				result = self.run_episode()
-		# 				result = {**result, **{'episode_duration': time.time() - episode_start}}
-		# 				episode_count += 1
-		# 				step_count += int(result['episode_length'])
-		# 				# Log the given episode results.
-		# 				self._logger.write(result)
-
+		# TODO(rami): make sure to run actor x 0 steps -> eval @ 0 before start
 		
 		# # Run eval @ 0 after 0 actor steps
-		# # if 'eval_loop' in self._label:
-		# else:
-		# if 'actor_steps' in self._counter.get_counts().keys():
-		with signals.runtime_terminator(self._signal_handler):
-			while not should_terminate(episode_count, step_count):
+		if 'eval_loop' in self._label:
+			# if 'actor_steps' in self._counter.get_counts().keys():
+			with signals.runtime_terminator(self._signal_handler):
+				while not should_terminate(episode_count, step_count):
+					episode_start = time.time()
+					result = self.run_episode()
+					result = {**result, **{'episode_duration': time.time() - episode_start}}
+					episode_count += 1
+					step_count += int(result['episode_length'])
+					# Log the given episode results.
+					self._logger.write(result)
+		# if not run actor x 0 steps
+		else:
+			# init csv labels for evaluation
+			if self._counter.get_steps_key() not in self._counter.get_counts().keys():
 				episode_start = time.time()
-				result = self.run_episode()
+				result = self.run_dummy_episode()
 				result = {**result, **{'episode_duration': time.time() - episode_start}}
-				episode_count += 1
-				step_count += int(result['episode_length'])
+				episode_count += 0
+				step_count += 0
 				# Log the given episode results.
 				self._logger.write(result)
+
+			# iterative calls
+			else:
+				with signals.runtime_terminator(self._signal_handler):
+					while not should_terminate(episode_count, step_count):
+						episode_start = time.time()
+						result = self.run_episode()
+						result = {**result, **{'episode_duration': time.time() - episode_start}}
+						episode_count += 1
+						step_count += int(result['episode_length'])
+						# Log the given episode results.
+						self._logger.write(result)
 		
 		# print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 
