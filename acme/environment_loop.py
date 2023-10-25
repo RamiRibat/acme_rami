@@ -167,7 +167,7 @@ class EnvironmentLoop(core.Worker):
 
 
 	def run_dummy_episode(self):
-		print(colored(f'EnvironmentLoop.run_dummy', 'dark_grey'))
+		# print(colored(f'EnvironmentLoop.run_dummy', 'dark_grey'))
 		# Record counts.
 		counts = self._counter.increment(episodes=0, steps=0)
 		# print('counter: ', self._counter.get_counts())

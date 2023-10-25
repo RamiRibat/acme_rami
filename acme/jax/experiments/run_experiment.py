@@ -463,33 +463,34 @@ def run_experiment(
 	# eval_points = [10_000, 50_000, 100_000]
 	current_steps = counter.get_counts().get(actor_counter.get_steps_key(), 0)
 
-	if eval_episodes:
-		for steps in eval_points:
-			steps_to_run = steps - current_steps
-			print('steps_to_run: ', steps_to_run)
+	# if eval_episodes:
+	for steps in eval_points:
+		steps_to_run = steps - current_steps
+		print('steps_to_run: ', steps_to_run)
 
-			if steps_to_run > 0:
-				current_steps += actor_loop.run(num_steps=steps_to_run)
-				eval_loop.run(num_episodes=eval_episodes)
-				# Save chechpoint.
-				if experiment.checkpointing is not None:
-					# checkpointer.save()
-					counter_ckpt.save(force=True)
-					learner_ckpt.save(force=True)
-					replay_client.checkpoint()
+		if steps_to_run > 0:
+			current_steps += actor_loop.run(num_steps=steps_to_run)
+			eval_loop.run(num_episodes=eval_episodes)
+			# Save chechpoint.
+			if experiment.checkpointing is not None:
+				# checkpointer.save()
+				counter_ckpt.save(force=True)
+				learner_ckpt.save(force=True)
+				replay_client.checkpoint()
 
-			if current_steps >= experiment.max_num_actor_steps:
-				break
-	else:
-		# Run training loop (full episodes ~ time steps).
-		steps_to_run = experiment.max_num_actor_steps - current_steps
-		actor_loop.run(num_steps=steps_to_run)
-		# Save chechpoint.
-		if experiment.checkpointing is not None:
-			# checkpointer.save()
-			counter_ckpt.save(force=True)
-			learner_ckpt.save(force=True)
-			replay_client.checkpoint()
+		if current_steps >= experiment.max_num_actor_steps:
+			break
+	# else:
+	# 	# Run training loop (full episodes ~ time steps).
+	# 	steps_to_run = experiment.max_num_actor_steps - current_steps
+	# 	print('steps_to_run: ', steps_to_run)
+	# 	actor_loop.run(num_steps=steps_to_run)
+	# 	# Save chechpoint.
+	# 	if experiment.checkpointing is not None:
+	# 		# checkpointer.save()
+	# 		counter_ckpt.save(force=True)
+	# 		learner_ckpt.save(force=True)
+	# 		replay_client.checkpoint()
 
 	# Close loggers
 	actor_logger.close(), learner_logger.close()
