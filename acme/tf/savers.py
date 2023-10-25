@@ -211,6 +211,9 @@ class CheckpointingRunner(core.Worker):
 
 	# Handle preemption signal. Note that this must happen in the main thread.
 	def _signal_handler(self):
+		logging.info(
+			colored(f'CheckpointingRunner: Caught SIGTERM ({self._key}) -> forcing a checkpoint save.', 'green')
+		)
 		logging.info('Caught SIGTERM: forcing a checkpoint save.')
 		self._checkpointer.save(force=True)
 

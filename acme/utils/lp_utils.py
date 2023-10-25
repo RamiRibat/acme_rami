@@ -133,7 +133,7 @@ class StepsLimiter:
 	# Handle preemption signal. Note that this must happen in the main thread.
 	def _signal_handler(self):
 		logging.info(
-			colored('StepsLimiter -> Caught SIGTERM: forcing a replay client ckpt.', 'green')
+			colored('StepsLimiter: Caught SIGTERM (replay client)-> forcing a checkpoint save.', 'green')
 		)
 		self._replay_client.checkpoint()
 
