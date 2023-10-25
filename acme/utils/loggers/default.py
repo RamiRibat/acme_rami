@@ -27,6 +27,7 @@ from acme.utils.loggers import terminal
 
 def make_default_logger(
 	label: str,
+	task: str = None,
 	save_data: bool = True,
 	time_delta: float = 1.0, # sec
 	asynchronous: bool = False,
@@ -57,6 +58,7 @@ def make_default_logger(
     
 	terminal_logger = terminal.TerminalLogger(
 		label=label,
+		task=task,
 		print_fn=print_fn
 	)
 

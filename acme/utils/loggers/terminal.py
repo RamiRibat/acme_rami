@@ -67,6 +67,7 @@ class TerminalLogger(base.Logger):
 	def __init__(
 		self,
 		label: str = '',
+		task: str = None,
 		print_fn: Callable[[str], None] = logging.info,
 		serialize_fn: Callable[[base.LoggingData], str] = serialize,
 		time_delta: float = 0.0,
@@ -83,7 +84,7 @@ class TerminalLogger(base.Logger):
 
 		self._print_fn = print_fn
 		self._serialize_fn = serialize_fn
-		self._label = label and f'[{_format_key(label)}] '
+		self._label = label and f'[{_format_key(label)}({task})] '
 		self._time = time.time()
 		self._time_delta = time_delta
 		if label == 'actor':

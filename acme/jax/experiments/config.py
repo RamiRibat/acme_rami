@@ -283,7 +283,8 @@ def default_evaluator_factory(
 	policy_factory: PolicyFactory[builders.Networks, builders.Policy],
 	logger_factory: loggers.LoggerFactory,
 	observers: Sequence[observers_lib.EnvLoopObserver] = (),
-    distributed: Optional[bool] = None
+    distributed: Optional[bool] = None,
+    task: str = None,
 ) -> EvaluatorFactory[builders.Policy]:
 	"""Returns a default evaluator process."""
 
@@ -315,6 +316,7 @@ def default_evaluator_factory(
 		# logger = logger_factory('evaluator', 'actor_steps', 0)
 		logger = logger_factory(
 			label='evaluator',
+			task=task,
 			steps_key=counter.get_steps_key(),
 			task_instance=0,
 		)

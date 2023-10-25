@@ -71,6 +71,7 @@ def make_distributed_experiment(
 		config.SnapshotModelFactory[builders.Networks]
 	] = None,
 	name: str = 'agent',
+	task: str = None,
 	program: Optional[lp.Program] = None,
 ) -> lp.Program:
 	"""Builds a Launchpad program for running the experiment.
@@ -210,6 +211,7 @@ def make_distributed_experiment(
 		# Create logger -> acme.utils.experiment_utils.py
 		logger = experiment.logger_factory(
 			label='learner',
+			task=task,
 			# steps_key=learner_counter.get_steps_key(),
 			# task_instance=0,
 		)
@@ -348,6 +350,7 @@ def make_distributed_experiment(
 		# Create logger -> acme.utils.experiment_utils.py
 		logger = experiment.logger_factory(
 			label='actor',
+			task=task,
 			steps_key=counter.get_steps_key(),
 			task_instance=actor_id,
 		)
