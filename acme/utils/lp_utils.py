@@ -338,7 +338,11 @@ def make_xm_docker_resources(
 			acme_location,
 			requirements,
 			hw_requirements=xm.JobRequirements(
-				cpu=6, ram=6 * xm.GiB, P100=1),
+				cpu=6,
+				ram=6 * xm.GiB,
+				# P100=1,
+				LOCAL_GPU=0,
+				),
 			python_path=python_path)
 
 	if 'counter' in num_nodes:
