@@ -446,7 +446,7 @@ def run_experiment(
 		counter=actor_counter,
 		logger=actor_logger,
 		observers=experiment.observers,
-		wait_eval=bool(eval_episodes)
+		wait_eval=False
 	)
 
 
