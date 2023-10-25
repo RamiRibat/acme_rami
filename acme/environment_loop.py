@@ -213,11 +213,15 @@ class EnvironmentLoop(core.Worker):
 			raise ValueError('Either "num_episodes" or "num_steps" should be None.')
 
 		def should_terminate(episode_count: int, step_count: int) -> bool:
-			return ((num_episodes is not None and episode_count >= num_episodes) or
-					(num_steps is not None and step_count >= num_steps))
+			return (
+				(num_episodes is not None and episode_count >= num_episodes) or
+					(num_steps is not None and step_count >= num_steps)
+			)
 
 		episode_count: int = 0
 		step_count: int = 0
+		
+		print(colored(f'EnvironmentLoop.run ({self._label}): counter: {self._counter.get_counts()}', 'dark_grey'))
 
 		# ACME og
 		# with signals.runtime_terminator(self._signal_handler):
@@ -234,14 +238,14 @@ class EnvironmentLoop(core.Worker):
 		# if not run actor x 0 steps
 		if 'actor_loop' in self._label:
 			# # init csv labels
-			# if self._counter.get_steps_key() not in self._counter.get_counts().keys():
-			# 	episode_start = time.time()
-			# 	result = self.run_dummy_episode()
-			# 	result = {**result, **{'episode_duration': time.time() - episode_start}}
-			# 	episode_count += 0
-			# 	step_count += 0
-			# 	# Log the given episode results.
-			# 	self._logger.write(result)
+			if self._counter.get_steps_key() not in self._counter.get_counts().keys():
+				episode_start = time.time()
+				result = self.run_dummy_episode()
+				result = {**result, **{'episode_duration': time.time() - episode_start}}
+				episode_count += 0
+				step_count += 0
+				# Log the given episode results.
+				self._logger.write(result)
 			# else:
 			with signals.runtime_terminator(self._signal_handler):
 				while not should_terminate(episode_count, step_count):
