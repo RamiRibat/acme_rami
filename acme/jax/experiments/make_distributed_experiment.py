@@ -545,31 +545,31 @@ def make_distributed_experiment(
 				program.add_node(lp.MultiThreadingColocation(colocation_nodes))
 
 
-	eval_dict = {}
+	# eval_dict = {}
 
-	if bool(eval_episodes):
-		for evaluator in experiment.get_evaluator_factories():
-			key, evaluator_key = jax.random.split(key)
-			# eval_loop = program.add_node(
-			# 	lp.CourierNode(
-			# 		evaluator,
-			# 		evaluator_key, # random_key
-			# 		learner, # variable_source
-			# 		counter, # parent counter
-			# 		experiment.builder.make_actor, # make_actor
-			# 	),
-			# 	label='evaluator'
-			# )
-			eval_loop = evaluator(
-				random_key=evaluator_key,
-				variable_source=learner,
-				counter=counter,
-				make_actor=experiment.builder.make_actor
-			)
+	# if bool(eval_episodes):
+	# 	for evaluator in experiment.get_evaluator_factories():
+	# 		key, evaluator_key = jax.random.split(key)
+	# 		# eval_loop = program.add_node(
+	# 		# 	lp.CourierNode(
+	# 		# 		evaluator,
+	# 		# 		evaluator_key, # random_key
+	# 		# 		learner, # variable_source
+	# 		# 		counter, # parent counter
+	# 		# 		experiment.builder.make_actor, # make_actor
+	# 		# 	),
+	# 		# 	label='evaluator'
+	# 		# )
+	# 		eval_loop = evaluator(
+	# 			random_key=evaluator_key,
+	# 			variable_source=learner,
+	# 			counter=counter,
+	# 			make_actor=experiment.builder.make_actor
+	# 		)
 
-			eval_dict['eval_loop'] = eval_loop
-			eval_dict['eval_points'] = eval_points
-			eval_dict['eval_episodes'] = eval_episodes
+	# 		eval_dict['eval_loop'] = eval_loop
+	# 		eval_dict['eval_points'] = eval_points
+	# 		eval_dict['eval_episodes'] = eval_episodes
 
 
 
@@ -580,7 +580,7 @@ def make_distributed_experiment(
 				lp_utils.Limiter,
 				counter, # counter
 				replay, # replay client
-				eval_dict,
+				# eval_dict,
 				experiment.max_num_actor_steps
 			),
 			label='counter'
