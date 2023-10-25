@@ -62,6 +62,7 @@ class EnvironmentLoop(core.Worker):
 		should_update: bool = True,
 		label: str = 'environment_loop',
 		observers: Sequence[observers_lib.EnvLoopObserver] = (),
+		iterative: Optional[bool] = True,
 		wait_eval: Optional[bool] = False,
 	):
 		# Internalize agent and environment.
@@ -75,6 +76,7 @@ class EnvironmentLoop(core.Worker):
 
 		self._label = label
 
+		self._iterative = iterative
 		self._wait_eval = wait_eval
 
 

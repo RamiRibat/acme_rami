@@ -446,6 +446,7 @@ def run_experiment(
 		counter=actor_counter,
 		logger=actor_logger,
 		observers=experiment.observers,
+		iterative=True,
 		wait_eval=False
 	)
 
