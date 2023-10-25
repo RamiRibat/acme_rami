@@ -62,7 +62,7 @@ class EnvironmentLoop(core.Worker):
 		should_update: bool = True,
 		label: str = 'environment_loop',
 		observers: Sequence[observers_lib.EnvLoopObserver] = (),
-		# iterative: Optional[bool] = True,
+		iterative: Optional[bool] = True,
 		# wait_eval: Optional[bool] = False,
 	):
 		# Internalize agent and environment.
@@ -75,6 +75,8 @@ class EnvironmentLoop(core.Worker):
 		self._observers = observers
 
 		self._label = label
+
+		self._iterative = iterative
 
 
 	def run_episode(self) -> loggers.LoggingData:
@@ -238,7 +240,20 @@ class EnvironmentLoop(core.Worker):
 				# Log the given episode results.
 				self._logger.write(result)
 
-			else: # iterative calls
+			# iterative calls
+			else:
+				with signals.runtime_terminator(self._signal_handler):
+					while not should_terminate(episode_count, step_count):
+						episode_start = time.time()
+						result = self.run_episode()
+						result = {**result, **{'episode_duration': time.time() - episode_start}}
+						episode_count += 1
+						step_count += int(result['episode_length'])
+						# Log the given episode results.
+						self._logger.write(result)
+
+			# non-iterative calls
+			if not self._iterative:
 				with signals.runtime_terminator(self._signal_handler):
 					while not should_terminate(episode_count, step_count):
 						episode_start = time.time()

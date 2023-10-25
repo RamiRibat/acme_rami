@@ -360,6 +360,7 @@ def make_distributed_experiment(
 			counter=counter,
 			logger=logger,
 			observers=experiment.observers,
+			iterative=False
 		)
 
 		return env_loop
