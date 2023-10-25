@@ -17,9 +17,7 @@
 Warning: Does not support preemption.
 """
 
-import csv
-import os
-import time
+import csv, os, time
 from typing import TextIO, Union
 
 from absl import logging
@@ -138,20 +136,12 @@ class CSVLogger(base.Logger):
 		self._writer.writerow(data)
 
 		# Flush every `flush_every` writes.
-		with signals.runtime_terminator(self._signal_handler):
-			if self._label != 'evaluator':
-				if self._writes % self._flush_every == 0: self.flush()
-			else:
-				self.flush()
+		if self._label != 'evaluator':
+			if self._writes % self._flush_every == 0: self.flush()
+		else:
+			self.flush()
 
 		self._writes += 1
-
-
-	# TODO(rami): Does this work?
-	# Handle preemption signal.
-	def _signal_handler(self):
-		logging.info('CSVLogger.Caught SIGTERM: forcing a CSVLogger close.')
-		self.close()
 
 
 	def close(self):
