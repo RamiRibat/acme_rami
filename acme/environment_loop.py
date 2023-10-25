@@ -29,7 +29,7 @@ import numpy as np
 import tree
 
 
-class EnvironmentLoopV1(core.Worker):
+class EnvironmentLoop(core.Worker):
 	"""A simple RL environment loop.
 
 	This takes `Environment` and `Actor` instances and coordinates their
