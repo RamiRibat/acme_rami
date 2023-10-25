@@ -214,6 +214,11 @@ class CheckpointingRunner(core.Worker):
 		logging.info(
 			colored(f'Caught SIGTERM: CheckpointingRunner({self._key}) -> forcing a checkpoint save.', 'green')
 		)
+
+		# Close learner logger
+		if isinstance(self._wrapped, core.Learner):
+			self._wrapped._logger.close()
+
 		self._checkpointer.save(force=True)
 
 
