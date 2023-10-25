@@ -356,7 +356,7 @@ def make_distributed_experiment(
 		env_loop = environment_loop.EnvironmentLoop(
 			environment=environment,
 			actor=actor,
-			# label=f'actor_loop[{actor_id}]',
+			label=f'actor_loop[{actor_id}]',
 			counter=counter,
 			logger=logger,
 			observers=experiment.observers,
