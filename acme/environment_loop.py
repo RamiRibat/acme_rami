@@ -132,8 +132,8 @@ class EnvironmentLoop(core.Worker):
 				observer.observe(self._environment, timestep, action)
 
 			# # Give the actor the opportunity to update itself.
-			# if self._should_update:
-			# 	self._actor.update()
+			if self._should_update:
+				self._actor.update()
 
 			# Equivalent to: episode_return += timestep.reward
 			# We capture the return value because if timestep.reward is a JAX

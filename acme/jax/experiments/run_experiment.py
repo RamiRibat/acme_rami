@@ -579,9 +579,9 @@ class _LearningActor(core.Actor):
 			# Update the actor weights only when learner was updated.
 			self._actor.update()
 		
-		# Cancel checkpointing here
-		if self._checkpointer:
-		  self._checkpointer.save()
+		# # Cancel checkpointing here
+		# if self._checkpointer:
+		#   self._checkpointer.save()
 
 
 def _disable_insert_blocking(
