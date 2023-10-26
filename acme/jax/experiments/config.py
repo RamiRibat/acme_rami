@@ -301,9 +301,21 @@ def default_evaluator_factory(
 		# Environments normally require uint32 as a seed.
 		environment = environment_factory(utils.sample_uint32(environment_key))
 		environment_spec = specs.make_environment_spec(environment)
-		networks = network_factory(environment_spec)
-		policy = policy_factory(networks, environment_spec, True)
-		actor = make_actor(actor_key, policy, environment_spec, variable_source)
+		networks = network_factory(
+            environment_spec=environment_spec
+        )
+		policy = policy_factory(
+            networks=networks,
+            environment_spec=environment_spec,
+            evaluation=True
+        )
+		actor = make_actor(
+            random_key=actor_key,
+            policy=policy,
+            environment_spec=environment_spec,
+            variable_source=variable_source,
+            # no adder needed
+        )
 
 		# Create logger and counter.
 		# counter = counting.Counter(counter, 'evaluator')
