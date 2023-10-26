@@ -165,13 +165,12 @@ class IMPALALearner(acme.Learner):
 
 		# Do a batch of SGD.
 		start = time.time()
-		# self._state, results = self._sgd_step(self._state, samples)
+		self._state, results = self._sgd_step(self._state, samples)
 
 		# Take results from first replica.
 		# NOTE: This measure will be a noisy estimate for the purposes of the logs
 		# as it does not pmean over all devices.
-		# results = utils.get_from_first_device(results)
-		results = {}
+		results = utils.get_from_first_device(results)
 
 		# Update our counts and record them.
 		counts = self._counter.increment(steps=1, time_elapsed=time.time() - start)
