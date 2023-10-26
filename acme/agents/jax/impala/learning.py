@@ -161,7 +161,7 @@ class IMPALALearner(acme.Learner):
 
 	def step(self):
 		"""Does a step of SGD and logs the results."""
-		# samples = next(self._iterator)
+		samples = next(self._iterator)
 
 		# Do a batch of SGD.
 		start = time.time()
