@@ -302,7 +302,7 @@ def default_evaluator_factory(
 		environment = environment_factory(utils.sample_uint32(environment_key))
 		environment_spec = specs.make_environment_spec(environment)
 		networks = network_factory(
-            environment_spec=environment_spec
+            spec=environment_spec
         )
 		policy = policy_factory(
             networks=networks,
