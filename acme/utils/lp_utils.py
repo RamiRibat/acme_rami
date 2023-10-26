@@ -324,7 +324,7 @@ def make_xm_docker_resources(
 				cpu=learner_cpu,
 				ram=6 * xm.GiB,
 				# P100=1,
-				LOCAL_GPU=1,
+				# LOCAL_GPU=1,
 			),
 			python_path=python_path
 		)
