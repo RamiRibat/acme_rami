@@ -171,13 +171,14 @@ class IMPALALearner(acme.Learner):
 		# NOTE: This measure will be a noisy estimate for the purposes of the logs
 		# as it does not pmean over all devices.
 		# results = utils.get_from_first_device(results)
+		results = {}
 
 		# Update our counts and record them.
 		counts = self._counter.increment(steps=1, time_elapsed=time.time() - start)
 
 		# # Maybe write logs.
-		# with signals.runtime_terminator(self._signal_handler):
-		# 	self._logger.write({**results, **counts})
+		with signals.runtime_terminator(self._signal_handler):
+			self._logger.write({**results, **counts})
 
 
 	# TODO(rami): Does this work?
