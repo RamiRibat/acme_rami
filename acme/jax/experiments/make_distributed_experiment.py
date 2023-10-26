@@ -227,24 +227,24 @@ def make_distributed_experiment(
 			logger=logger
 		)
 
-		# if experiment.checkpointing:
-		# 	if primary_learner is None:
-		# 		checkpointing = experiment.checkpointing
-		# 		learner = savers.CheckpointingRunner(
-		# 			wrapped=learner, key='learner',
-		# 			subdirectory='learner',
-		# 			time_delta_minutes=checkpointing.time_delta_minutes,
-		# 			directory=checkpointing.directory,
-		# 			add_uid=checkpointing.add_uid,
-		# 			max_to_keep=checkpointing.max_to_keep,
-		# 			keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
-		# 			checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
-		# 		)
-		# else:
-		# 	learner.restore(primary_learner.save())
-		# 	# NOTE: This initially synchronizes secondary learner states with the
-		# 	# primary one. Further synchronization should be handled by the learner
-		# 	# properly doing a pmap/pmean on the loss/gradients, respectively.
+		if experiment.checkpointing:
+			if primary_learner is None:
+				checkpointing = experiment.checkpointing
+				learner = savers.CheckpointingRunner(
+					wrapped=learner, key='learner',
+					subdirectory='learner',
+					time_delta_minutes=checkpointing.time_delta_minutes,
+					directory=checkpointing.directory,
+					add_uid=checkpointing.add_uid,
+					max_to_keep=checkpointing.max_to_keep,
+					keep_checkpoint_every_n_hours=checkpointing.keep_checkpoint_every_n_hours,
+					checkpoint_ttl_seconds=checkpointing.checkpoint_ttl_seconds,
+				)
+		else:
+			learner.restore(primary_learner.save())
+			# NOTE: This initially synchronizes secondary learner states with the
+			# primary one. Further synchronization should be handled by the learner
+			# properly doing a pmap/pmean on the loss/gradients, respectively.
 
 		return learner
 
