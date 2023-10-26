@@ -575,13 +575,14 @@ class _LearningActor(core.Actor):
 				time.sleep(0.001)
 
 	def update(self):  # pytype: disable=signature-mismatch  # overriding-parameter-count-checks
-		if self._maybe_train():
-			# Update the actor weights only when learner was updated.
-			self._actor.update()
+		# if self._maybe_train():
+		# 	# Update the actor weights only when learner was updated.
+		# 	self._actor.update()
 		
 		# Cancel checkpointing here
 		# if self._checkpointer:
 		#   self._checkpointer.save()
+		pass
 
 
 def _disable_insert_blocking(
