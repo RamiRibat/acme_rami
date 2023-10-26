@@ -161,23 +161,24 @@ class IMPALALearner(acme.Learner):
 
 	def step(self):
 		"""Does a step of SGD and logs the results."""
-		samples = next(self._iterator)
+		# samples = next(self._iterator)
 
-		# Do a batch of SGD.
-		start = time.time()
-		self._state, results = self._sgd_step(self._state, samples)
+		# # Do a batch of SGD.
+		# start = time.time()
+		# self._state, results = self._sgd_step(self._state, samples)
 
-		# Take results from first replica.
-		# NOTE: This measure will be a noisy estimate for the purposes of the logs
-		# as it does not pmean over all devices.
-		results = utils.get_from_first_device(results)
+		# # Take results from first replica.
+		# # NOTE: This measure will be a noisy estimate for the purposes of the logs
+		# # as it does not pmean over all devices.
+		# results = utils.get_from_first_device(results)
 
-		# Update our counts and record them.
-		counts = self._counter.increment(steps=1, time_elapsed=time.time() - start)
+		# # Update our counts and record them.
+		# counts = self._counter.increment(steps=1, time_elapsed=time.time() - start)
 
-		# Maybe write logs.
-		with signals.runtime_terminator(self._signal_handler):
-			self._logger.write({**results, **counts})
+		# # Maybe write logs.
+		# with signals.runtime_terminator(self._signal_handler):
+		# 	self._logger.write({**results, **counts})
+		pass
 
 
 	# TODO(rami): Does this work?
