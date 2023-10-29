@@ -259,10 +259,11 @@ class D4PGBuilder(builders.ActorLearnerBuilder[d4pg_networks.D4PGNetworks,
 		networks: d4pg_networks.D4PGNetworks,
 		# dataset: Iterator[reverb.ReplaySample],
 		iterator: Iterator[reverb.ReplaySample],
-		logger_fn: loggers.LoggerFactory,
+		# logger_fn: loggers.LoggerFactory,
 		environment_spec: specs.EnvironmentSpec,
 		replay_client: Optional[reverb.Client] = None,
 		counter: Optional[counting.Counter] = None,
+		logger: Optional[loggers.Logger] = None,
 	) -> core.Learner:
 		# TODO(rami): Add target_entropy_from_env_spec
 		del environment_spec, replay_client
@@ -291,7 +292,8 @@ class D4PGBuilder(builders.ActorLearnerBuilder[d4pg_networks.D4PGNetworks,
 			reset_interval=self._config.reset_interval,
 			iterator=iterator,
 			counter=counter,
-			logger=logger_fn('learner'),
+			# logger=logger_fn('learner'),
+			logger=logger,
         )
 
 
