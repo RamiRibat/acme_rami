@@ -264,7 +264,7 @@ class EnvironmentLoop(core.Worker):
 				self._logger.write(result)
 
 			# iterative calls
-			else:
+			elif num_steps > 0:
 				with signals.runtime_terminator(self._signal_handler):
 					while not should_terminate(episode_count, step_count):
 						episode_start = time.time()
