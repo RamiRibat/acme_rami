@@ -468,16 +468,18 @@ def run_experiment(
 		steps_to_run = steps - current_steps
 		# print('steps_to_run: ', steps_to_run)
 
-		# if steps_to_run > 0:
-		current_steps += actor_loop.run(num_steps=steps_to_run)
-		eval_loop.run(num_episodes=eval_episodes)
 		if steps_to_run > 0:
+			current_steps += actor_loop.run(num_steps=steps_to_run)
+			eval_loop.run(num_episodes=eval_episodes)
 			# Save chechpoint.
 			if experiment.checkpointing is not None:
 				# checkpointer.save()
 				counter_ckpt.save(force=True)
 				learner_ckpt.save(force=True)
 				replay_client.checkpoint()
+		elif current_steps == 0:
+			current_steps += actor_loop.run(num_steps=steps_to_run)
+			eval_loop.run(num_episodes=eval_episodes)
 
 		if current_steps >= experiment.max_num_actor_steps:
 			break

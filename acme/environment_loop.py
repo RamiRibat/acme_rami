@@ -254,7 +254,7 @@ class EnvironmentLoop(core.Worker):
 		# if not run actor x 0 steps
 		else:
 			# init csv labels for evaluation
-			if self._counter.get_steps_key() not in self._counter.get_counts().keys():
+			if num_steps == 0 or self._counter.get_steps_key() not in self._counter.get_counts().keys():
 				episode_start = time.time()
 				result = self.run_dummy_episode()
 				result = {**result, **{'episode_duration': time.time() - episode_start}}
