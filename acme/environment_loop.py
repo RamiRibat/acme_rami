@@ -97,8 +97,10 @@ class EnvironmentLoop(core.Worker):
 
 		# For evaluation, this keeps track of the total undiscounted reward
 		# accumulated during the episode.
-		episode_return = tree.map_structure(_generate_zeros_from_spec,
-											self._environment.reward_spec())
+		episode_return = tree.map_structure(
+			_generate_zeros_from_spec,
+			self._environment.reward_spec()
+		)
 		env_reset_start = time.time()
 		timestep = self._environment.reset()
 		env_reset_duration = time.time() - env_reset_start
