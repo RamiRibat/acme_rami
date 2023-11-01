@@ -36,6 +36,7 @@ class SinglePrecisionWrapper(base.EnvironmentWrapper):
     return self._convert_timestep(self._environment.step(action))
 
   def reset(self) -> dm_env.TimeStep:
+    print('SinglePrecisionWrapper.reset()')
     return self._convert_timestep(self._environment.reset())
 
   def action_spec(self):
