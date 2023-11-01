@@ -14,6 +14,8 @@
 
 """Environment wrapper which converts double-to-single precision."""
 
+from termcolor import colored
+
 from acme import specs
 from acme import types
 from acme.wrappers import base
@@ -36,7 +38,9 @@ class SinglePrecisionWrapper(base.EnvironmentWrapper):
     return self._convert_timestep(self._environment.step(action))
 
   def reset(self) -> dm_env.TimeStep:
-    print('SinglePrecisionWrapper.reset()')
+    print(
+      colored('SinglePrecisionWrapper.reset()', 'dark_grey')
+    )
     return self._convert_timestep(self._environment.reset())
 
   def action_spec(self):
