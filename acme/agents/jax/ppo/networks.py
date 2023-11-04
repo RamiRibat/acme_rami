@@ -15,13 +15,14 @@
 """PPO network definitions."""
 
 import dataclasses
-from typing import Callable, NamedTuple, Optional, Sequence
+from typing import Any, Callable, NamedTuple, Optional, Sequence
 
 from acme import specs
 from acme.agents.jax import actor_core as actor_core_lib
 from acme.jax import networks as networks_lib
 from acme.jax import utils
 import haiku as hk
+import flax
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -81,6 +82,33 @@ class PPONetworks:
 
 
 
+class PReLU(hk.Module):
+	""" PReLU activation function """
+
+	def __init__(
+		self,
+		size,
+		name: Optional[str] = None,
+	):
+		super().__init__(name=name)
+		self.size = size
+		self.negative_slope_init = hk.initializers.Constant(0.25)
+
+	def __call__(
+		self,
+		inputs: jax.Array,
+	) -> jax.Array:
+		"""Computes a linear transform of the input."""
+		negative_slope = hk.get_parameter(
+			"negative_slope",
+			shape=[1],
+			init=self.negative_slope_init
+		)
+		return jnp.where(
+			inputs >= 0, inputs, negative_slope * inputs
+		)
+
+
 def make_networks(
 	spec: specs.EnvironmentSpec,
 	hidden_layer_sizes: Sequence[int] = (256, 256),
@@ -115,6 +143,7 @@ def make_inference_fn(
 		key: networks_lib.PRNGKey,
 		observations: networks_lib.Observation,
 	):
+		# policy, value = ppo_networks 
 		dist_params, _ = ppo_networks.network.apply(params.model_params, observations)
         
 		if evaluation and ppo_networks.sample_eval:
@@ -155,10 +184,20 @@ def make_continuous_networks(
 		def _policy_network(obs: networks_lib.Observation):
 			h = utils.batch_concat(obs)
 			h = hk.nets.MLP(
-			output_sizes=policy_layer_sizes,
-			activation=jax.nn.tanh,
-			activate_final=True
+				output_sizes=policy_layer_sizes,
+				activation=jax.nn.relu,
+				activate_final=True
 			)(h)
+			# w_init = hk.initializers.TruncatedNormal(1e-4)
+			# b_init = hk.initializers.Constant(0.)
+			# actv1 = PReLU(policy_layer_sizes[0])
+			# actv2 = PReLU(policy_layer_sizes[1])
+			# _network = hk.Sequential([
+			# utils.batch_concat,
+			# hk.Linear(policy_layer_sizes[0], w_init=w_init, b_init=b_init), actv1,
+			# hk.Linear(policy_layer_sizes[1], w_init=w_init, b_init=b_init), actv2,
+			# ])
+			# h = _network(h)
 
 			# tfd distributions have a weird bug in jax when vmapping is used, so the
 			# safer implementation in general is for the policy network to output the
@@ -170,10 +209,11 @@ def make_continuous_networks(
 				min_scale = 1e-6
 				w_init = hk.initializers.VarianceScaling(1e-4)
 				b_init = hk.initializers.Constant(0.)
-				loc_layer = hk.Linear(num_dimensions, w_init=w_init, b_init=b_init)
-				scale_layer = hk.Linear(num_dimensions, w_init=w_init, b_init=b_init)
 
+				loc_layer = hk.Linear(num_dimensions, w_init=w_init, b_init=b_init)
 				loc = loc_layer(h)
+
+				scale_layer = hk.Linear(num_dimensions, w_init=w_init, b_init=b_init)
 				scale = jax.nn.softplus(scale_layer(h))
 				scale *= init_scale / jax.nn.softplus(0.)
 				scale += min_scale
@@ -182,6 +222,7 @@ def make_continuous_networks(
 
 			# Following networks_lib.NormalTanhDistribution
 			w_init = hk.initializers.VarianceScaling(1.0, 'fan_in', 'uniform')
+			# w_init = hk.initializers.TruncatedNormal(1e-4)
 			b_init = hk.initializers.Constant(0.)
 			loc_layer = hk.Linear(num_dimensions, w_init=w_init, b_init=b_init)
 			loc = loc_layer(h)
@@ -201,12 +242,23 @@ def make_continuous_networks(
 			utils.batch_concat,
 			hk.nets.MLP(
 				output_sizes=value_layer_sizes,
-				activation=jax.nn.tanh,
+				activation=jax.nn.relu,
 				activate_final=True
 			),
 			hk.Linear(1),
 			lambda x: jnp.squeeze(x, axis=-1)
 		])
+		# w_init = hk.initializers.VarianceScaling(1.0, "fan_avg", "truncated_normal")
+		# b_init = hk.initializers.RandomUniform(0.)
+		# actv1 = PReLU(value_layer_sizes[0])
+		# actv2 = PReLU(value_layer_sizes[1])
+		# value_network = hk.Sequential([
+		# 	utils.batch_concat,
+		# 	hk.Linear(value_layer_sizes[0], w_init=w_init, b_init=b_init), actv1,
+		# 	hk.Linear(value_layer_sizes[1], w_init=w_init, b_init=b_init), actv2,
+		# 	hk.Linear(1, w_init=w_init, b_init=b_init),
+		# 	lambda x: jnp.squeeze(x, axis=-1)
+		# ])
 
 		policy_output = _policy_network(inputs)
 		value = value_network(inputs)
@@ -368,71 +420,83 @@ def make_discrete_networks(
     hidden_layer_sizes: Sequence[int] = (512,),
     use_conv: bool = True,
 ) -> PPONetworks:
-  """Creates networks used by the agent for discrete action environments.
+	"""Creates networks used by the agent for discrete action environments.
 
-  Args:
-    environment_spec: Environment spec used to define number of actions.
-    hidden_layer_sizes: Network definition.
-    use_conv: Whether to use a conv or MLP feature extractor.
-  Returns:
-    PPONetworks
-  """
+	Args:
+		environment_spec: Environment spec used to define number of actions.
+		hidden_layer_sizes: Network definition.
+		use_conv: Whether to use a conv or MLP feature extractor.
+	Returns:
+		PPONetworks
+	"""
 
-  num_actions = environment_spec.actions.num_values
+	num_actions = environment_spec.actions.num_values
 
-  def forward_fn(inputs):
-    layers = []
-    if use_conv:
-      layers.extend([networks_lib.AtariTorso()])
-    layers.extend([hk.nets.MLP(hidden_layer_sizes, activate_final=True)])
-    trunk = hk.Sequential(layers)
-    h = utils.batch_concat(inputs)
-    h = trunk(h)
-    logits = hk.Linear(num_actions)(h)
-    values = hk.Linear(1)(h)
-    values = jnp.squeeze(values, axis=-1)
-    return (CategoricalParams(logits=logits), values)
+	def forward_fn(inputs):
+		layers = []
 
-  forward_fn = hk.without_apply_rng(hk.transform(forward_fn))
-  dummy_obs = utils.zeros_like(environment_spec.observations)
-  dummy_obs = utils.add_batch_dim(dummy_obs)  # Dummy 'sequence' dim.
-  network = networks_lib.FeedForwardNetwork(
-      lambda rng: forward_fn.init(rng, dummy_obs), forward_fn.apply)
-  # Create PPONetworks to add functionality required by the agent.
-  return make_categorical_ppo_networks(network)  # pylint:disable=undefined-variable
+		if use_conv:
+			layers.extend([networks_lib.AtariTorso()])
+
+		layers.extend([hk.nets.MLP(hidden_layer_sizes, activate_final=True)])
+
+		trunk = hk.Sequential(layers)
+
+		h = utils.batch_concat(inputs)
+
+		h = trunk(h)
+		
+		logits = hk.Linear(num_actions)(h)
+		values = hk.Linear(1)(h)
+		values = jnp.squeeze(values, axis=-1)
+
+		return (CategoricalParams(logits=logits), values)
+
+	forward_fn = hk.without_apply_rng(hk.transform(forward_fn))
+	
+	dummy_obs = utils.zeros_like(environment_spec.observations)
+	dummy_obs = utils.add_batch_dim(dummy_obs)  # Dummy 'sequence' dim.
+
+	network = networks_lib.FeedForwardNetwork(
+		lambda rng: forward_fn.init(rng, dummy_obs), forward_fn.apply)
+
+	# Create PPONetworks to add functionality required by the agent.
+	return make_categorical_ppo_networks(network)  # pylint:disable=undefined-variable
 
 
 def make_categorical_ppo_networks(
-    network: networks_lib.FeedForwardNetwork) -> PPONetworks:
-  """Constructs a PPONetworks for Categorical Policy from FeedForwardNetwork.
+	network: networks_lib.FeedForwardNetwork
+) -> PPONetworks:
+	"""Constructs a PPONetworks for Categorical Policy from FeedForwardNetwork.
 
-  Args:
-    network: a transformed Haiku network (or equivalent in other libraries) that
-      takes in observations and returns the action distribution and value.
+	Args:
+		network: a transformed Haiku network (or equivalent in other libraries) that
+		takes in observations and returns the action distribution and value.
 
-  Returns:
-    A PPONetworks instance with pure functions wrapping the input network.
-  """
+	Returns:
+		A PPONetworks instance with pure functions wrapping the input network.
+	"""
 
-  def log_prob(params: CategoricalParams, action):
-    return tfd.Categorical(logits=params.logits).log_prob(action)
+	def log_prob(params: CategoricalParams, action):
+		return tfd.Categorical(logits=params.logits).log_prob(action)
 
-  def entropy(
-      params: CategoricalParams, key: networks_lib.PRNGKey
-  ) -> networks_lib.Entropy:
-    del key
-    return tfd.Categorical(logits=params.logits).entropy()
+	def entropy(
+		params: CategoricalParams, key: networks_lib.PRNGKey
+	) -> networks_lib.Entropy:
+		del key
+		return tfd.Categorical(logits=params.logits).entropy()
 
-  def sample(params: CategoricalParams, key: networks_lib.PRNGKey):
-    return tfd.Categorical(logits=params.logits).sample(seed=key)
+	def sample(params: CategoricalParams, key: networks_lib.PRNGKey):
+		return tfd.Categorical(logits=params.logits).sample(seed=key)
 
-  def sample_eval(params: CategoricalParams, key: networks_lib.PRNGKey):
-    del key
-    return tfd.Categorical(logits=params.logits).mode()
+	def sample_eval(params: CategoricalParams, key: networks_lib.PRNGKey):
+		del key
+		return tfd.Categorical(logits=params.logits).mode()
 
-  return PPONetworks(
-      network=network,
-      log_prob=log_prob,
-      entropy=entropy,
-      sample=sample,
-      sample_eval=sample_eval)
+	return PPONetworks(
+		network=network,
+		log_prob=log_prob,
+		entropy=entropy,
+		sample=sample,
+		sample_eval=sample_eval
+		)
