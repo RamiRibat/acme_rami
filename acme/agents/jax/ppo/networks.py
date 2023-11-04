@@ -22,7 +22,7 @@ from acme.agents.jax import actor_core as actor_core_lib
 from acme.jax import networks as networks_lib
 from acme.jax import utils
 import haiku as hk
-import flax
+# import flax
 import jax
 import jax.numpy as jnp
 import numpy as np
