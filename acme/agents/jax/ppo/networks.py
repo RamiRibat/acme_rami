@@ -227,14 +227,14 @@ def make_continuous_networks(
 			loc_layer = hk.Linear(num_dimensions, w_init=w_init, b_init=b_init)
 			loc = loc_layer(h)
 
-			if independent_scale:
-				std = 2.72
-				scale = std * jnp.ones([1, num_dimensions], dtype=jnp.float32)
-			else:
-				min_scale = 1e-3
-				scale_layer = hk.Linear(num_dimensions, w_init=w_init, b_init=b_init)
-				scale = scale_layer(h)
-				scale = jax.nn.softplus(scale) + min_scale
+			# if independent_scale:
+			# 	std = 2.72
+			# 	scale = std * jnp.ones([1, num_dimensions], dtype=jnp.float32)
+			# else:
+			min_scale = 1e-3
+			scale_layer = hk.Linear(num_dimensions, w_init=w_init, b_init=b_init)
+			scale = scale_layer(h)
+			scale = jax.nn.softplus(scale) + min_scale
 
 			return TanhNormalParams(loc=loc, scale=scale)
 
