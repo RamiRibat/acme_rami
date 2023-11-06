@@ -23,7 +23,7 @@ from acme.agents.jax.ppo.networks import make_continuous_networks
 from acme.agents.jax.ppo.networks import make_discrete_networks
 from acme.agents.jax.ppo.networks import make_inference_fn
 from acme.agents.jax.ppo.networks import make_mvn_diag_ppo_networks
-from acme.agents.jax.ppo.networks import make_networks
+from acme.agents.jax.ppo.networks import make_networks, make_networks_v2
 from acme.agents.jax.ppo.networks import make_ppo_networks
 from acme.agents.jax.ppo.networks import make_tanh_normal_ppo_networks
 from acme.agents.jax.ppo.networks import PPONetworks

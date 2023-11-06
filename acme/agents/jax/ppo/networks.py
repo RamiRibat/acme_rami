@@ -28,6 +28,8 @@ import jax.numpy as jnp
 import numpy as np
 import tensorflow_probability
 
+from acme.agents.jax.ppo import config
+
 tfp = tensorflow_probability.substrates.jax
 tfd = tfp.distributions
 
@@ -116,6 +118,31 @@ def make_networks(
 	independent_scale=False,
 ) -> PPONetworks:
 	# print('ppo.networks.make_networks')
+	if isinstance(spec.actions, specs.DiscreteArray):
+		return make_discrete_networks(
+			spec,
+			hidden_layer_sizes
+		)
+	else:
+		return make_continuous_networks(
+			environment_spec=spec,
+			policy_layer_sizes=hidden_layer_sizes,
+			value_layer_sizes=hidden_layer_sizes,
+			use_tanh_gaussian_policy=use_tanh_gaussian_policy,
+			independent_scale=independent_scale,
+		)
+
+def make_networks_v2(
+	spec: specs.EnvironmentSpec,
+	config: config.PPOConfig,
+	# hidden_layer_sizes: Sequence[int] = (256, 256),
+	# use_tanh_gaussian_policy=True,
+	# independent_scale=False,
+) -> PPONetworks:
+	# print('ppo.networks.make_networks')
+	hidden_layer_sizes = config.hidden_layer_sizes
+	use_tanh_gaussian_policy = config.use_tanh_gaussian_policy
+	independent_scale = config.independent_scale
 	if isinstance(spec.actions, specs.DiscreteArray):
 		return make_discrete_networks(
 			spec,

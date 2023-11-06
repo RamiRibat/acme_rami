@@ -21,6 +21,7 @@ from acme import types
 from acme.agents.jax.ppo import networks
 from acme.agents.jax.ppo import normalization
 from acme.jax import networks as networks_lib
+from acme.jax import utils
 from acme.jax.utils import get_from_first_device
 from acme.utils import counting
 from acme.utils import loggers
@@ -85,7 +86,6 @@ class PPOLearner(acme.Learner):
 		random_key: networks_lib.PRNGKey,
 		ppo_networks: networks.PPONetworks,
 		optimizer: optax.GradientTransformation,
-		iterator: Iterator[reverb.ReplaySample],
 		num_epochs: int = 4,
 		num_minibatches: int = 1,
 		gae_lambda: float = 0.95,
@@ -102,6 +102,7 @@ class PPOLearner(acme.Learner):
 		pmap_axis_name: str = 'devices',
 		reset_interval: int = 0,
 		obs_normalization_fns: Optional[normalization.NormalizationFns] = None,
+		iterator: Iterator[reverb.ReplaySample] = None,
 		counter: Optional[counting.Counter] = None,
 		logger: Optional[loggers.Logger] = None,
 		log_global_norm_metrics: bool = False,
@@ -110,6 +111,7 @@ class PPOLearner(acme.Learner):
 		self.local_learner_devices = jax.local_devices()
 		self.num_local_learner_devices = jax.local_device_count()
 		self.learner_devices = jax.devices()
+		
 		self.num_epochs = num_epochs
 		self.num_minibatches = num_minibatches
 		self.metrics_logging_period = metrics_logging_period
@@ -122,7 +124,12 @@ class PPOLearner(acme.Learner):
 
 		# Set up logging/counting.
 		self._counter = counter or counting.Counter()
-		self._logger = logger or loggers.make_default_logger('learner')
+		# self._logger = logger or loggers.make_default_logger('learner')
+		self._logger = logger or loggers.make_default_logger(
+			'learner',
+			asynchronous=True,
+			serialize_fn=utils.fetch_devicearray,
+			steps_key=self._counter.get_steps_key())
 
 
 		def ppo_loss(
@@ -144,6 +151,7 @@ class PPOLearner(acme.Learner):
 			if normalize_value:
 				# values = values * jnp.fmax(value_std, 1e-6) + value_mean
 				target_values = (target_values - value_mean) / jnp.fmax(value_std, 1e-6)
+				
 			policy_log_probs = ppo_networks.log_prob(distribution_params, actions)
 			key, sub_key = jax.random.split(key)
 			policy_entropies = ppo_networks.entropy(distribution_params, sub_key)
@@ -275,11 +283,13 @@ class PPOLearner(acme.Learner):
 
 			# Extract the data.
 			data = trajectories.data
-			observations, actions, rewards, termination, extra = (data.observation,
-																data.action,
-																data.reward,
-																data.discount,
-																data.extras)
+			observations, actions, rewards, termination, extra = (
+				data.observation,
+				data.action,
+				data.reward,
+				data.discount,
+				data.extras
+			)
 
 			if normalize_obs:
 				obs_norm_params = obs_normalization_fns.update(
@@ -330,7 +340,8 @@ class PPOLearner(acme.Learner):
 			# Compute GAE using rlax
 			vmapped_rlax_truncated_generalized_advantage_estimation = jax.vmap(
 				rlax.truncated_generalized_advantage_estimation,
-				in_axes=(0, 0, None, 0))
+				in_axes=(0, 0, None, 0)
+			)
 			advantages = vmapped_rlax_truncated_generalized_advantage_estimation(
 				rewards[:, :-1], discounts[:, :-1], gae_lambda, behavior_values)
 			advantages = jax.lax.stop_gradient(advantages)
@@ -432,7 +443,7 @@ class PPOLearner(acme.Learner):
 
 	def _make_initial_state(self) -> TrainingState:
 		"""Initialises the training state (parameters and optimiser state)."""
-		print(colored('Learner._make_initial_state', 'red'))
+		print(colored('\nLearner._make_initial_state', 'red'))
 
 		all_keys = jax.random.split(self._key, num=self.num_local_learner_devices + 2)
 		self._key, key_init, key_state = all_keys[0], all_keys[1], all_keys[1:]
@@ -504,11 +515,13 @@ class PPOLearner(acme.Learner):
 		One learner step consists of (possibly multiple) epochs of PPO updates on
 		a batch of NxT steps collected by the actors.
 		"""
-		# if 'learner_steps' in self._counter.get_counts().keys():
-		# 	if self._reset_interval > 0:
-		# 		reset_freq = self._reset_interval/self._num_sgd_steps_per_step
-		# 		if self._counter.get_counts()['learner_steps'] % reset_freq == 0:
-		# 			self._state = self._make_initial_state()
+
+		if 'learner_steps' in self._counter.get_counts().keys():
+			# print('\ncounter: ', self._counter.get_counts())
+			if self._reset_interval > 0:
+				reset_freq = self._reset_interval
+				if self._counter.get_counts()['learner_steps'] % reset_freq == 0:
+					self._state = self._make_initial_state()
 
 		sample = next(self._iterator)
 		# print(f"trajectories: {sample.data.reward.shape}")

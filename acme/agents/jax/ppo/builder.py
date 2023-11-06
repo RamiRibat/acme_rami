@@ -68,19 +68,25 @@ class PPOBuilder(
 			'log_prob': np.ones(shape=(), dtype=np.float32),
 			'params_num_sgd_steps': np.ones(shape=(), dtype=np.float32),
 		}
+		
 		signature = adders_reverb.SequenceAdder.signature(
-			environment_spec, extra_spec, sequence_length=self._sequence_length)
+			environment_spec,
+			extra_spec,
+			sequence_length=self._sequence_length
+		)
     
-		return [
-			reverb.Table.queue( # trajetory-based
-				name=self._config.replay_table_name,
-				max_size=self._config.batch_size, # queue or all?
-				signature=signature)
-		]
+		queue = reverb.Table.queue( # trajetory-based
+			name=self._config.replay_table_name,
+			max_size=self._config.batch_size, # x sequences
+			signature=signature
+		)
+            
+		return [queue]
 
 
 	def make_dataset_iterator(
-		self, replay_client: reverb.Client
+		self,
+		replay_client: reverb.Client
 	) -> Iterator[reverb.ReplaySample]:
 		"""Creates a dataset.
 
@@ -125,12 +131,15 @@ class PPOBuilder(
 				2 * self._config.batch_size // jax.process_count()
 			),
 		)
+		
 		dataset = dataset.batch(iterator_batch_size, drop_remainder=True)
 		dataset = dataset.as_numpy_iterator()
+
+		devices = jax.local_devices()
           
 		return utils.multi_device_put(
             iterable=dataset,
-            devices=jax.local_devices()
+            devices=devices
         )
 
 
@@ -256,12 +265,20 @@ class PPOBuilder(
 			)
 		else:
 			variable_client = variable_utils.VariableClient(
-				variable_source,
-				'params',
+				client=variable_source,
+				key='params',
+				update_period=self._config.variable_update_period,
 				device='cpu',
-				update_period=self._config.variable_update_period
 			)
+			# actor = actors.GenericActor(
+			# 	actor_core, random_key, variable_client, adder, backend='cpu')
+
 			actor = actors.GenericActor(
-				actor_core, random_key, variable_client, adder, backend='cpu')
+				random_key=random_key,
+				actor=policy,
+				variable_client=variable_client,
+				adder=adder,
+				backend='cpu'
+			)
 			
 		return actor
