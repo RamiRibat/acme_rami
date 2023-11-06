@@ -70,6 +70,7 @@ class PPOConfig:
 	independent_scale: bool = False
 
 	""" Learning (Loss) hyper-parameters """
+	jit_learner: bool = True
 	num_epochs: int = 2
 	num_minibatches: int = 8
 	batch_size: int = 256 # (if actors=x -> 256/x traj for each actor | og: x=256)
