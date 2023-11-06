@@ -167,11 +167,12 @@ class PPOBuilder(
 		self,
 		random_key: networks_lib.PRNGKey,
 		networks: ppo_networks.PPONetworks,
-		dataset: Iterator[reverb.ReplaySample],
-		logger_fn: loggers.LoggerFactory,
+		iterator: Iterator[reverb.ReplaySample],
+		# logger_fn: loggers.LoggerFactory,
 		environment_spec: specs.EnvironmentSpec,
 		replay_client: Optional[reverb.Client] = None,
 		counter: Optional[counting.Counter] = None,
+		logger: Optional[loggers.Logger] = None,
 	) -> core.Learner:
 		del replay_client
 
@@ -212,11 +213,14 @@ class PPOBuilder(
 			pmap_axis_name=self._config.pmap_axis_name,
 			obs_normalization_fns=obs_normalization_fns,
 			reset_interval=self._config.reset_interval,
-			iterator=dataset,
+			# logger=logger_fn('learner'),
+			# log_global_norm_metrics=self._config.log_global_norm_metrics,
+			# metrics_logging_period=self._config.metrics_logging_period,
+			iterator=iterator,
 			counter=counter,
-			logger=logger_fn('learner'),
-			log_global_norm_metrics=self._config.log_global_norm_metrics,
-			metrics_logging_period=self._config.metrics_logging_period,
+			# logger=logger_fn('learner'),
+			logger=logger,
+			jit=self._config.jit_learner,
 		)
 
 

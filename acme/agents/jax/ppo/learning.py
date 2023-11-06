@@ -107,6 +107,7 @@ class PPOLearner(acme.Learner):
 		logger: Optional[loggers.Logger] = None,
 		log_global_norm_metrics: bool = False,
 		metrics_logging_period: int = 100,
+		jit: bool = True,
 	):
 		self.local_learner_devices = jax.local_devices()
 		self.num_local_learner_devices = jax.local_device_count()
