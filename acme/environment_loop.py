@@ -133,8 +133,14 @@ class EnvironmentLoop(core.Worker):
 				# environment, the current timestep and the action.
 				observer.observe(self._environment, timestep, action)
 
-			# # Give the actor the opportunity to update itself.
+			# Give the actor the opportunity to update itself.
 			if self._should_update:
+				print(
+					colored(
+						f'EnvironmentLoop.run_episode: steps={episode_steps}',
+						'dark_grey'
+					)
+				)
 				self._actor.update()
 
 			# Equivalent to: episode_return += timestep.reward
