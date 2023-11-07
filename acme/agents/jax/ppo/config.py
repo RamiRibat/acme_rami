@@ -74,8 +74,8 @@ class PPOConfig:
 	num_epochs: int = 2
 	num_minibatches: int = 8
 	batch_size: int = 256 # (if actors=x -> 256/x traj for each actor | og: x=256)
-	# queue_min_size: int = 32 * 8
-	queue_max_size: int = 32 * 8
+	queue_min_size: int = 32 * 8
+	queue_max_size: int = 32 * 8 + 32
 	queue_max_times_sampled: int = 1
 	learning_rate: Union[float, Callable[[int], float]] = 3e-4
 	discount: float = 0.99
