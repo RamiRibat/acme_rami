@@ -255,8 +255,11 @@ class PPOBuilder(
 		environment_spec: specs.EnvironmentSpec,
 		variable_source: Optional[core.VariableSource] = None,
 		adder: Optional[adders.Adder] = None,
+		evaluation: bool = True
 	) -> core.Actor:
 		assert variable_source is not None
+
+		update_period = 1 if evaluation else self._config.variable_update_period
 
 		actor_core = actor_core_lib.batched_feed_forward_with_extras_to_actor_core(policy)
 		
@@ -264,7 +267,7 @@ class PPOBuilder(
 			variable_client = variable_utils.VariableClient(
 				variable_source, ['params', 'obs_normalization_params'],
 				device='cpu',
-				update_period=self._config.variable_update_period)
+				update_period=update_period)
 			obs_normalization_fns = self._config.obs_normalization_fns_factory(
 				environment_spec.observations)
 			actor = normalization.NormalizedGenericActor(
@@ -281,7 +284,7 @@ class PPOBuilder(
 			variable_client = variable_utils.VariableClient(
 				client=variable_source,
 				key='params',
-				update_period=self._config.variable_update_period,
+				update_period=update_period,
 				device='cpu',
 			)
 			# actor = actors.GenericActor(

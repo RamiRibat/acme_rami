@@ -397,7 +397,8 @@ def run_experiment(
 		policy=policy,
 		environment_spec=environment_spec,
 		variable_source=learner,
-		adder=adder
+		adder=adder,
+		evaluation=False,
 	)
 	# Replace the actor with a LearningActor. This makes sure that every time
 	# that `update` is called on the actor it checks to see whether there is
