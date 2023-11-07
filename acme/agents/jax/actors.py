@@ -82,6 +82,7 @@ class GenericActor(core.Actor, Generic[actor_core.State, actor_core.Extras]):
     return utils.to_numpy(action)
 
   def observe_first(self, timestep: dm_env.TimeStep):
+    print('actor.observe_first: ', timestep)
     self._random_key, key = jax.random.split(self._random_key)
     self._state = self._init(key)
     if self._adder:
@@ -90,7 +91,7 @@ class GenericActor(core.Actor, Generic[actor_core.State, actor_core.Extras]):
       self._variable_client.update_and_wait()
 
   def observe(self, action: network_lib.Action, next_timestep: dm_env.TimeStep):
-    print('next_timestep: ', next_timestep)
+    # print('next_timestep: ', next_timestep)
     if self._adder:
       self._adder.add(
           action, next_timestep, extras=self._get_extras(self._state))
