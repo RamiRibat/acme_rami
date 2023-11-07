@@ -86,7 +86,7 @@ class PPOBuilder(
 			remover=reverb.selectors.Fifo(),
 			max_size=self._config.queue_max_size,
 			max_times_sampled=self._config.queue_max_times_sampled,
-			rate_limiter=reverb.rate_limiters.MinSize(self._config.queue_max_size),
+			rate_limiter=reverb.rate_limiters.MinSize(self._config.queue_min_size),
 			# extensions=queue_extensions,
 			signature=signature
 		)
