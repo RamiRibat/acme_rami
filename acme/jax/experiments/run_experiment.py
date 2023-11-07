@@ -602,6 +602,7 @@ def _disable_insert_blocking(
 			min_diff=rate_limiter_info.min_diff,
 			max_diff=sys.float_info.max
 		)
+		print('rate_limiter_info: ', rate_limiter_info)
 		
 		modified_tables.append(table.replace(rate_limiter=rate_limiter))
 		
