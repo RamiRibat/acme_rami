@@ -14,6 +14,8 @@
 
 """Variable utilities for JAX."""
 
+from termcolor import colored
+
 from concurrent import futures
 import datetime
 import time
@@ -96,6 +98,12 @@ class VariableClient:
       wait: Whether to execute asynchronous (False) or blocking updates (True).
         Defaults to False.
     """
+    print(
+      colored(
+        'VariableClient.update',
+        'yellow'
+      )
+    )
     # Track calls (we only update periodically).
     self._call_counter += 1
 
