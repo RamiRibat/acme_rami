@@ -545,12 +545,12 @@ class PPOLearner(acme.Learner):
 
 
 	def get_variables(self, names: List[str]) -> List[networks_lib.Params]:
-		print(
-			colored(
-				'PPOLearner.get_variables',
-				'magenta'
-			)
-		)
+		# print(
+		# 	colored(
+		# 		'PPOLearner.get_variables',
+		# 		'magenta'
+		# 	)
+		# )
 		variables = self._cached_state
 		return [getattr(variables, name) for name in names]
 
