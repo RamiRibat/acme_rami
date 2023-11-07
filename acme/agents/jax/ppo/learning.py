@@ -545,6 +545,7 @@ class PPOLearner(acme.Learner):
 
 
 	def get_variables(self, names: List[str]) -> List[networks_lib.Params]:
+		print('PPOLearner.get_variables')
 		variables = self._cached_state
 		return [getattr(variables, name) for name in names]
 
