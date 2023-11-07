@@ -162,10 +162,9 @@ def make_reverb_dataset(
 		
 	else:
 		dataset = _make_dataset(tf.constant(0))
+		dataset = dataset.batch(batch_size, drop_remainder=True)
 
 	if prefetch_size:
 		dataset = dataset.prefetch(prefetch_size)
-
-	dataset = dataset.batch(batch_size, drop_remainder=True)
 
 	return dataset
