@@ -78,7 +78,7 @@ def make_default_logger(
 
 	# if label == 'actor':
 	# 	logger = filters.TimeFilter(logger, 15)
-	# elif label == 'learner':
-	# 	logger = filters.TimeFilter(logger, 30)
+	elif label == 'learner':
+		logger = filters.TimeFilter(logger, 60)
 
 	return logger
