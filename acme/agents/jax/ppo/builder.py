@@ -75,21 +75,21 @@ class PPOBuilder(
 			sequence_length=self._sequence_length
 		)
     
-		# queue = reverb.Table.queue( # trajetory-based
-		# 	name=self._config.replay_table_name,
-		# 	max_size=self._config.batch_size, # x sequences
-		# 	signature=signature
-		# )
-		queue = reverb.Table(
+		queue = reverb.Table.queue( # trajetory-based
 			name=self._config.replay_table_name,
-			sampler=reverb.selectors.Uniform(),
-			remover=reverb.selectors.Fifo(),
-			max_size=self._config.queue_max_size,
-			max_times_sampled=self._config.queue_max_times_sampled,
-			rate_limiter=reverb.rate_limiters.MinSize(self._config.queue_min_size),
-			# extensions=queue_extensions,
+			max_size=self._config.batch_size, # x sequences
 			signature=signature
 		)
+		# queue = reverb.Table(
+		# 	name=self._config.replay_table_name,
+		# 	sampler=reverb.selectors.Uniform(),
+		# 	remover=reverb.selectors.Fifo(),
+		# 	max_size=self._config.queue_max_size,
+		# 	max_times_sampled=self._config.queue_max_times_sampled,
+		# 	rate_limiter=reverb.rate_limiters.MinSize(self._config.queue_min_size),
+		# 	# extensions=queue_extensions,
+		# 	signature=signature
+		# )
             
 		return [queue]
 
