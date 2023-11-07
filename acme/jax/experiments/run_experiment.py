@@ -516,7 +516,10 @@ class _LearningActor(core.Actor):
 	Intended to be used by the `run_experiment` only.
 	"""
 
-	def __init__(self, actor: core.Actor, learner: core.Learner,
+	def __init__(
+		self,
+		actor: core.Actor,
+		learner: core.Learner,
 		iterator: core.PrefetchingIterator,
 		replay_tables: Sequence[reverb.Table],
 		sample_sizes: Sequence[int],
@@ -602,7 +605,7 @@ def _disable_insert_blocking(
 			min_diff=rate_limiter_info.min_diff,
 			max_diff=sys.float_info.max
 		)
-		print('rate_limiter_info: ', rate_limiter_info)
+		# print('rate_limiter_info: ', rate_limiter_info)
 		
 		modified_tables.append(table.replace(rate_limiter=rate_limiter))
 		

@@ -82,7 +82,7 @@ class GenericActor(core.Actor, Generic[actor_core.State, actor_core.Extras]):
     return utils.to_numpy(action)
 
   def observe_first(self, timestep: dm_env.TimeStep):
-    print('actor.observe_first: ', timestep)
+    # print('actor.observe_first: ', timestep)
     self._random_key, key = jax.random.split(self._random_key)
     self._state = self._init(key)
     if self._adder:
