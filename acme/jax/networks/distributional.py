@@ -485,6 +485,7 @@ class DiscreteValuedTfpDistribution(tfd.Categorical):
     indices = super()._sample_n(key=key, n=n)
     return jnp.take_along_axis(self._values, indices, axis=-1)
   
+  # TODO(rami): Check if 2hot categorical works fine.
   def probs_parameter(self):
     if self._n_hot == 1:
       return self.probs_parameter()
