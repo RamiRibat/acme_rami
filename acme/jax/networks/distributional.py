@@ -16,9 +16,8 @@
 
 from typing import Any, List, Optional, Sequence, Union, Callable
 
-import chex
+import chex, jax, rlax
 import haiku as hk
-import jax
 import jax.numpy as jnp
 import numpy as np
 import tensorflow_probability as tf_tfp
@@ -350,6 +349,7 @@ class CategoricalCriticHead(hk.Module):
   """Critic head that uses a categorical to represent action values."""
 
   def __init__(self,
+               n_hot: int = 1,
                num_bins: int = 601,
                vmax: Optional[float] = None,
                vmin: Optional[float] = None,
@@ -359,11 +359,13 @@ class CategoricalCriticHead(hk.Module):
     vmin = vmin if vmin is not None else -1.0 * vmax
 
     self._head = DiscreteValuedTfpHead(
+        n_hot=n_hot,
+        num_atoms=num_bins,
         vmin=vmin,
         vmax=vmax,
         logits_shape=(1,),
-        num_atoms=num_bins,
-        w_init=w_init)
+        w_init=w_init
+      )
 
   def __call__(self, embedding: chex.Array) -> tfd.Distribution:
     output = self._head(embedding)
@@ -378,6 +380,7 @@ class DiscreteValuedTfpHead(hk.Module):
   """
 
   def __init__(self,
+               n_hot: int,
                vmin: float,
                vmax: float,
                num_atoms: int,
@@ -400,6 +403,7 @@ class DiscreteValuedTfpHead(hk.Module):
     """
     super().__init__(name='DiscreteValuedHead')
     self._values = np.linspace(vmin, vmax, num=num_atoms, axis=-1)
+    self._n_hot = n_hot
     if not logits_shape:
       logits_shape = ()
     self._logits_shape = logits_shape + (num_atoms,)
@@ -411,7 +415,7 @@ class DiscreteValuedTfpHead(hk.Module):
         np.prod(self._logits_shape), w_init=self._w_init, b_init=self._b_init)
     logits = net(inputs)
     logits = hk.Reshape(self._logits_shape, preserve_dims=1)(logits)
-    return DiscreteValuedTfpDistribution(values=self._values, logits=logits)
+    return DiscreteValuedTfpDistribution(values=self._values, logits=logits, n_hot=self._n_hot)
 
 
 @tf_tfp.experimental.auto_composite_tensor
@@ -425,6 +429,7 @@ class DiscreteValuedTfpDistribution(tfd.Categorical):
   """
 
   def __init__(self,
+               n_hot: int,
                values: chex.Array,
                logits: Optional[chex.Array] = None,
                probs: Optional[chex.Array] = None,
@@ -460,6 +465,8 @@ class DiscreteValuedTfpDistribution(tfd.Categorical):
 
     self._parameters = parameters
 
+    self._n_hot = n_hot
+
   @property
   def values(self):
     return self._values
@@ -477,6 +484,23 @@ class DiscreteValuedTfpDistribution(tfd.Categorical):
   def _sample_n(self, key: chex.PRNGKey, n: int) -> chex.Array:
     indices = super()._sample_n(key=key, n=n)
     return jnp.take_along_axis(self._values, indices, axis=-1)
+  
+  def probs_parameter(self):
+    if self._n_hot == 1:
+      return self.probs_parameter()
+    elif self._n_hot == 2:
+      scalar = self.probs_parameter()
+      min_value = self.values().min
+      max_value = self.values().max
+      num_bins = self.logits.shape[-1]
+      two_hot_probs = rlax.transform_from_2hot(
+        scalar=scalar,
+        min_value=min_value,
+        max_value=max_value,
+        num_bins=num_bins,
+      )
+      return two_hot_probs
+      
 
   def mean(self) -> chex.Array:
     """Overrides the Categorical mean by incorporating category values."""
