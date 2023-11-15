@@ -486,7 +486,7 @@ class DiscreteValuedTfpDistribution(tfd.Categorical):
     return jnp.take_along_axis(self._values, indices, axis=-1)
   
   # TODO(rami): Check if 2hot categorical works fine.
-  def probs_parameter(self):
+  def _probs_parameter(self):
     if self._n_hot == 1:
       return self.probs_parameter()
     elif self._n_hot == 2:
@@ -505,12 +505,12 @@ class DiscreteValuedTfpDistribution(tfd.Categorical):
 
   def mean(self) -> chex.Array:
     """Overrides the Categorical mean by incorporating category values."""
-    return jnp.sum(self.probs_parameter() * self._values, axis=-1)
+    return jnp.sum(self._probs_parameter() * self._values, axis=-1)
 
   def variance(self) -> chex.Array:
     """Overrides the Categorical variance by incorporating category values."""
     dist_squared = jnp.square(jnp.expand_dims(self.mean(), -1) - self._values)
-    return jnp.sum(self.probs_parameter() * dist_squared, axis=-1)
+    return jnp.sum(self._probs_parameter() * dist_squared, axis=-1)
 
   def _event_shape(self):
     return jnp.zeros((), dtype=jnp.int32)
