@@ -76,7 +76,7 @@ class D4PGLearner(acme.Learner):
 		def critic_mean(
 			critic_params: networks_lib.Params,
 			observation: types.NestedArray,
-			action: types.NestedArray,
+			action: types.NestedArray, # <- grad
 		) -> jnp.ndarray:
 			# We add batch dimension to make sure batch concat in critic_network
 			# works correctly.
@@ -89,9 +89,9 @@ class D4PGLearner(acme.Learner):
 			return jnp.sum(probabilities * atoms, axis=-1)
 
 		def policy_loss(
-			policy_params: networks_lib.Params,
+			policy_params: networks_lib.Params, # <- grad
 			critic_params: networks_lib.Params,
-			o_t: types.NestedArray,
+			o_t: types.NestedArray, # [B, ]
 		) -> jnp.ndarray:
 			# Computes the (discrete) policy gradient loss.
 			dpg_a_t = policy_network.apply(policy_params, o_t)
@@ -132,7 +132,8 @@ class D4PGLearner(acme.Learner):
 				transition.reward,
 				discount * transition.discount,
 				atoms_t,
-				q_t)
+				q_t
+			)
 			return jnp.mean(loss)
 
 		def sgd_step(

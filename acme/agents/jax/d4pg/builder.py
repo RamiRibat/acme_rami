@@ -322,6 +322,7 @@ class D4PGBuilder(builders.ActorLearnerBuilder[d4pg_networks.D4PGNetworks,
 		environment_spec: specs.EnvironmentSpec,
 		variable_source: Optional[core.VariableSource] = None,
 		adder: Optional[adders.Adder] = None,
+		evaluation: bool = True,
 	) -> acme.Actor:
 		del environment_spec
 

@@ -39,7 +39,7 @@ class D4PGConfig:
 	discount: float = 0.99
 	n_step: int = 5
 	target_update_period: int = 100
-	clipping: bool = True # ?
+	clipping: bool = True # optimizer
 
 	""" Replay hyper-parameters """
 	replay_table_name: str = adders_reverb.DEFAULT_PRIORITY_TABLE
